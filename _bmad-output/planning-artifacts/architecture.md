@@ -217,6 +217,27 @@ Notes:
   - Expose it via an npm script in the API workspace and (optionally) a root convenience script that runs the workspace script.
 - **E2E:** run the reset script before Playwright suites (and optionally per spec) to keep runs deterministic.
 
+### Task-by-Task Testing Strategy (Definition of Done)
+
+To keep quality high while moving quickly, every story/task is considered **done** only when it ships with the smallest appropriate set of tests at the right layer.
+
+**Test pyramid for this repo (MVP):**
+
+- **API integration (primary):** Vitest + `fastify.inject()` against a real test Postgres database. These tests protect contracts, DB behavior (ordering/filtering/soft delete), and error shapes.
+- **Web unit/component (primary):** Vitest + React Testing Library, with a mocked API client (or injected `fetch`) to validate UX states and failure handling deterministically.
+- **E2E (selective):** Playwright for the end-to-end critical loop and failure-mode regressions. Keep E2E small but representative; it should validate the system wiring (web ↔ api ↔ db) rather than re-test every edge case.
+
+**Incremental mapping to epics/stories (practical guidance):**
+
+- **Story 1.1 (scaffold):** establish runnable `test`, `test:ci`, and workspace test scripts; add one smoke test per workspace (API: boot app; Web: render App) to prove tooling.
+- **Story 1.2 (DB schema):** add a DB reset helper and prove it via one API test that creates and
+
+**Determinism rules (non-negotiable):**
+
+- API tests must start from a known DB state (truncate via helper) and must not depend on execution order.
+- Web tests must not hit the real network; they control responses via mock client / injected `fetch`.
+- E2E tests must reset the DB before the suite (and optionally between specs) using the reset script; do not add a public reset API.
+
 ### Data Architecture
 
 - **Database:** Postgres
