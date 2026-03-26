@@ -201,6 +201,7 @@ Notes:
 ### Testing Strategy & Tooling
 
 - **Web unit/component:** Vitest + React Testing Library (+ jest-dom)
+- **Web network mocking (component tests):** MSW (`msw` + `msw/node`) intercepting HTTP requests at the boundary (preferred over stubbing internal API clients)
 - **Web E2E:** Playwright
 - **API integration:** Vitest + `fastify.inject()` (no real network; deterministic + fast)
 
@@ -224,7 +225,7 @@ To keep quality high while moving quickly, every story/task is considered **done
 **Test pyramid for this repo (MVP):**
 
 - **API integration (primary):** Vitest + `fastify.inject()` against a real test Postgres database. These tests protect contracts, DB behavior (ordering/filtering/soft delete), and error shapes.
-- **Web unit/component (primary):** Vitest + React Testing Library, with a mocked API client (or injected `fetch`) to validate UX states and failure handling deterministically.
+- **Web unit/component (primary):** Vitest + React Testing Library, with MSW mocking HTTP requests (or, if needed, an injected `fetch`) to validate UX states and failure handling deterministically.
 - **E2E (selective):** Playwright for the end-to-end critical loop and failure-mode regressions. Keep E2E small but representative; it should validate the system wiring (web ↔ api ↔ db) rather than re-test every edge case.
 
 **Incremental mapping to epics/stories (practical guidance):**
@@ -235,7 +236,7 @@ To keep quality high while moving quickly, every story/task is considered **done
 **Determinism rules (non-negotiable):**
 
 - API tests must start from a known DB state (truncate via helper) and must not depend on execution order.
-- Web tests must not hit the real network; they control responses via mock client / injected `fetch`.
+- Web tests must not hit the real network; they control responses via MSW handlers (preferred) or injected `fetch`.
 - E2E tests must reset the DB before the suite (and optionally between specs) using the reset script; do not add a public reset API.
 
 ### Data Architecture
