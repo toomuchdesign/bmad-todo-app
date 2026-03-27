@@ -4,12 +4,34 @@
     "title": "bmad-todo API",
     "version": "0.0.0"
   },
+  "components": {
+    "schemas": {}
+  },
   "paths": {
     "/todos": {
       "get": {
+        "summary": "List todos",
+        "tags": [
+          "todos"
+        ],
         "responses": {
           "501": {
-            "description": "Not implemented"
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

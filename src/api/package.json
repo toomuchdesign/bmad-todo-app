@@ -5,22 +5,33 @@
   "private": true,
   "description": "Fastify API workspace for bmad-todo",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "docker-compose:start": "docker-compose -p bmad-todo up -d",
+    "dev": "npm run docker-compose:start && tsx watch src/server.ts",
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
-    "test": "vitest --watch",
-    "test:ci": "npm run test -- --run",
+    "test": "npm run docker-compose:start && vitest --watch",
+    "test:ci": "npm run docker-compose:start && npm run test -- --run",
     "type:check": "tsc -p tsconfig.json --noEmit",
-    "build:openapi": "node scripts/build-openapi.mjs"
+    "build:openapi": "tsx scripts/build-openapi.ts",
+    "db:generate": "npm run docker-compose:start && drizzle-kit generate",
+    "db:migrate": "npm run docker-compose:start && drizzle-kit migrate",
+    "db:reset": "npm run docker-compose:start && tsx scripts/reset-todos.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "fastify": "5.8.4"
+    "@fastify/swagger": "^9.7.0",
+    "@fastify/swagger-ui": "^5.2.5",
+    "drizzle-orm": "0.45.1",
+    "env-schema": "^6.1.0",
+    "fastify": "5.8.4",
+    "pg": "8.20.0"
   },
   "devDependencies": {
     "@types/node": "^24.12.0",
+    "@types/pg": "^8.15.6",
+    "drizzle-kit": "0.31.10",
     "tsx": "^4.20.0",
     "typescript": "6.0.2",
     "vitest": "4.1.2"

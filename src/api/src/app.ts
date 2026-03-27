@@ -1,3 +1,4 @@
+import swagger from "@fastify/swagger";
 import Fastify, {
   type FastifyInstance,
   type FastifyServerOptions,
@@ -9,6 +10,27 @@ export function buildApp(options: FastifyServerOptions = {}): FastifyInstance {
     logger: true,
     ...options,
   });
+
+  app.register(swagger, {
+    openapi: {
+      info: {
+        title: "bmad-todo API",
+        version: "0.0.0",
+      },
+    },
+  });
+
+  app.get(
+    "/openapi.json",
+    {
+      schema: {
+        hide: true,
+      },
+    },
+    async (_request, reply) => {
+      return reply.send(app.swagger());
+    },
+  );
 
   app.register(todosRoutes);
   return app;

@@ -20,6 +20,7 @@
     "biome:check": "biome check .",
     "biome:fix": "biome check --write .",
     "source:check": "npm run biome:check && npm run type:check",
+    "source:fix": "npm run biome:fix",
     "test": "concurrently -k --kill-others-on-fail -s first -n web,api \"npm run test:web\" \"npm run test:api\"",
     "test:ci": "npm -w src/web run test:ci && npm -w src/api run test:ci",
     "test:web": "npm -w src/web run test",

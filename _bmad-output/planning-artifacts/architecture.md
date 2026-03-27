@@ -250,6 +250,7 @@ Notes:
 - **Do not expose a public reset API endpoint** (avoids accidentally shipping a destructive capability).
 - **Tests:** reset state at the database level.
   - Use a dedicated test database via `DATABASE_URL_TEST` (or separate `.env.test`) to prevent wiping dev data.
+  - API Vitest loads `src/api/.env.test` by default; keep the test DB connection string there.
   - Before each test (or test file): `TRUNCATE TABLE todos;` (and/or `CASCADE` if needed later).
   - API integration tests should use the same helper the reset script uses (shared `resetTodos()`), so behavior stays consistent.
 - **Local usage:** provide a local script to clear todos in the dev database.
@@ -380,11 +381,16 @@ To keep quality high while moving quickly, every story/task is considered **done
 
 - **Node.js baseline:** Node ≥ 22.12 (compatible with Vite requirements)
 - **Package manager / monorepo:** npm workspaces (root `package.json` workspaces: `src/*`), single root `package-lock.json`
+- **Local development dependencies:**
+  - Git (used for hooks and normal workflow)
+  - Docker-compatible runtime (macOS: Colima; Docker Desktop also works)
+  - `docker-compose` (or `docker compose`) for local services
 - **Local Postgres (dev):** single root-level `docker-compose.yml` manages Postgres
   - API and migration tooling connect via `DATABASE_URL`
 - **Environment variables:**
-  - Commit `.env.example`, never commit real `.env`
-  - `src/api` reads config from env variables (and `.env` in dev)
+  - Commit `.env.example` and `.env.test`, never commit real `.env`
+  - API env access is centralized in `src/api/src/config.ts` and validated via `env-schema`
+  - The rest of the API codebase must not read `process.env` directly; it consumes the exported config object instead
 - **Migrations:** Drizzle Kit runs against `DATABASE_URL` (same URL used by API runtime)
 - **Deploy shape (MVP):**
   - Web: Vite static build output hosted as static assets
@@ -417,6 +423,12 @@ This section is the enforcement layer to prevent AI-agent divergence. The canoni
 - Tests run against a dedicated DB (`DATABASE_URL_TEST` or equivalent)
 - State resets are DB-level truncations; do not add a production reset endpoint
 
+### Testing Practices (must follow)
+
+- Vitest tests use nested `describe(...)` / `it(...)` blocks (no top-level `it`)
+- Each file starts with a high-level `describe` for the unit under test (e.g. route `GET /todos`, module `config`, etc.)
+- Prefer integration tests that mirror product surfaces (API: `fastify.inject()`, Web: RTL + MSW) and keep assertions scoped to observable behavior
+
 ### Anti-patterns (explicitly forbidden)
 
 - Returning error bodies without `code`/`message`
@@ -434,6 +446,7 @@ bmad-todo/
 ├── docker-compose.yml
 ├── .gitignore
 ├── .env.example
+├── .env.test
 ├── README.md
 ├── src/
 │   ├── shared/
@@ -448,8 +461,10 @@ bmad-todo/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   ├── .env.example
+│   │   ├── .env.test
 │   │   ├── openapi.json                  # committed OpenAPI (generated from route schemas)
 │   │   ├── src/
+│   │   │   ├── config.ts                   # validated env config (single access point)
 │   │   │   ├── server.ts                   # Fastify bootstrap + listen
 │   │   │   ├── app.ts                      # Fastify instance factory (used by tests)
 │   │   │   ├── plugins/

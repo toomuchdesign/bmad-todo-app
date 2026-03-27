@@ -9,7 +9,15 @@
     }
   },
   "files": {
-    "includes": ["**", "!!package-lock.json", "!!.*", "!!**/dist", "!!_bmad*"]
+    "includes": [
+      "**",
+      "!!package-lock.json",
+      "!!.*",
+      "!!**/dist",
+      "!!_bmad*",
+      "!!src/api/drizzle",
+      "!!src/api/openapi.json"
+    ]
   },
   "formatter": {
     "enabled": true,

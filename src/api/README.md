@@ -1,29 +1,61 @@
-# Getting Started with [Fastify-CLI](https://www.npmjs.com/package/fastify-cli)
+# bmad-todo API (`src/api`)
 
-This project was bootstrapped with Fastify-CLI.
+Fastify API workspace (TypeScript).
 
-## Available Scripts
+## Local prerequisites
 
-In the project directory, you can run:
+- Node.js `>= 22.12` (see repo root `.nvmrc`)
+- npm (npm workspaces)
+- Docker runtime for local Postgres
+  - macOS: we use Colima (Docker Desktop also works)
+- `docker-compose` (or `docker compose`) to run local Postgres
 
-### `npm run dev`
+macOS install hint (if you don't already have these):
 
-To start the app in dev mode.\
-Open [http://127.0.0.1:3001](http://127.0.0.1:3001) to view it in the browser.
+```bash
+brew install colima docker docker-compose
+```
 
-You can override the listen address with:
+## Database (local dev)
 
-- `PORT` (default: `3001`)
-- `HOST` (default: `127.0.0.1`)
+From the repo root:
 
-### `npm start`
+```bash
+colima start # macOS only
+docker-compose up -d
+```
 
-For production mode
+API expects `DATABASE_URL` (see `.env.example`).
 
-### `npm run test`
+- DB scripts (`db:*`) auto-load `src/api/.env` (copy from `.env.example`) so you don't need to export `DATABASE_URL`.
+- The API dev server command does not auto-load a `.env` file; use your preferred env loader when running `dev`.
 
-Run the test cases.
+## Tests (env vars)
 
-## Learn More
+- Vitest auto-loads environment variables from `src/api/.env.test` (see `vitest.config.ts`).
+- Put test-only values there (for example, point `DATABASE_URL` at a dedicated test database).
 
-To learn Fastify, check out the [Fastify documentation](https://fastify.dev/docs/latest/).
+## Scripts
+
+Run these from the repo root:
+
+```bash
+npm -w src/api run dev
+npm -w src/api run test
+npm -w src/api run test:ci
+npm -w src/api run type:check
+```
+
+Contract artifacts:
+
+```bash
+npm -w src/api run build:openapi
+```
+
+DB tasks:
+
+```bash
+npm -w src/api run db:generate
+npm -w src/api run db:migrate
+npm -w src/api run db:reset
+```

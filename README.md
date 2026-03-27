@@ -10,6 +10,16 @@ Monorepo scaffold for a Todo app:
 
 - Node.js `>= 22.12` (see `.nvmrc`)
 - npm (uses npm workspaces)
+- Git (used by `simple-git-hooks`)
+- Docker runtime for local Postgres
+  - macOS: we use Colima (Docker Desktop also works)
+- `docker-compose` (or `docker compose`) to run local Postgres
+
+macOS install hint (if you don't already have these):
+
+```bash
+brew install colima docker docker-compose
+```
 
 ## Install
 
@@ -20,6 +30,22 @@ npm install
 This creates a single root `package-lock.json` and installs all workspace dependencies.
 
 ## Develop
+
+Start local Postgres (required for API DB tasks; will be required by the API at runtime once DB integration lands):
+
+```bash
+# macOS (Colima)
+colima start
+
+# from the repo root
+docker-compose up -d
+```
+
+To stop and remove volumes:
+
+```bash
+docker-compose down -v
+```
 
 Run both workspaces together:
 
@@ -38,6 +64,13 @@ Defaults:
 
 - Web: http://localhost:5173
 - API: http://127.0.0.1:3001
+
+Environment variables:
+
+- The API expects config via environment variables (see `src/api/.env.example` for the required keys).
+- DB scripts in `src/api` auto-load `src/api/.env` (copy from `src/api/.env.example`) so you don't need to `export DATABASE_URL=...` before running `npm -w src/api run db:*`.
+- API tests (Vitest) auto-load `src/api/.env.test`.
+- Note: the current API dev server command does not auto-load a `.env` file.
 
 ## Tests (recommended)
 
