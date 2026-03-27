@@ -69,6 +69,10 @@ NFR9: No formal WCAG target is required for MVP, but regressions that block basi
 - Web state management: React built-ins + custom hooks; no Redux/Zustand/React Query for MVP.
 - Styling: CSS + CSS Modules; no UI kit; keep global base styles small.
 - Tooling: Biome for lint/format; TypeScript-only (`allowJs: false`).
+- API contract sharing: OpenAPI is generated from API route schemas and committed as `src/api/openapi.json`.
+- Contract automation: root scripts include `build:openapi` and `build:api-types`; changes to API schemas update OpenAPI and derived web client/types in the same PR.
+- Git hooks: use `simple-git-hooks` (not Husky) to keep contract artifacts in sync at commit time.
+- CI enforcement: CI regenerates OpenAPI + web types and fails if `git diff --exit-code` shows uncommitted contract artifacts.
 - Testing: API integration tests via `fastify.inject()`; web tests via Vitest + React Testing Library; E2E via Playwright.
 - Determinism: DB reset via scripts/DB truncation; no public reset endpoint.
 
@@ -146,7 +150,7 @@ So that development can start consistently with the agreed architecture.
 **Given** an empty repo state (no `src/web`, `src/api`, `src/shared` yet)
 **When** I scaffold the workspaces using the selected starters (Vite React TS, Fastify TS)
 **Then** the repository contains `src/web`, `src/api`, and `src/shared` workspaces wired via npm workspaces
-**And** root scripts exist for `dev:web`, `dev:api`, `test`, `test:e2e`, `biome:check`, `biome:fix`, and `type:check` (even if some are initially stubs)
+**And** root scripts exist for `dev:web`, `dev:api`, `test`, `test:ci`, `test:e2e`, `build`, `type:check`, `biome:check`, `biome:fix`, `source:check`, `build:openapi`, and `build:api-types` (even if some are initially stubs)
 
 **Given** the repo is scaffolded
 **When** I run `npm install`
@@ -168,6 +172,11 @@ So that the API can persist data durably and deterministically.
 **When** I generate and apply migrations
 **Then** a `todos` table exists with `id`, `text`, `completed`, `created_at`, `updated_at`, and `deleted_at`
 **And** soft delete is represented by `deleted_at` being null/non-null
+
+**Given** local development and automated tests need deterministic resets
+**When** I run the DB reset utility
+**Then** it truncates the `todos` table via a script (not an API endpoint)
+**And** it is exposed via an API workspace script (e.g., `db:reset`)
 
 ### Story 1.3: Implement shared contracts (Todo type, constants, ApiErrorResponse)
 
@@ -431,7 +440,7 @@ So that regressions in UX and failure handling are caught early.
 
 **Acceptance Criteria:**
 
-**Given** a mocked API client
+**Given** MSW intercepts HTTP requests at the network boundary
 **When** I run web tests
 **Then** tests cover: initial load success, initial load failure with Retry, empty state, create validation, create success, and create failure showing global error
 
@@ -446,6 +455,10 @@ So that the MVP flows are validated end-to-end.
 **Given** the app can run locally
 **When** I run Playwright E2E tests
 **Then** the suite covers: load success, load failure + retry, create with validation failure, create success, edit success/failure, toggle success/failure, delete success/failure
+
+**Given** E2E tests must be deterministic
+**When** the Playwright suite starts
+**Then** the todos table is reset via the DB reset script (not via a public reset API endpoint)
 
 ### Story 3.4: Accessibility and focus behavior baseline
 

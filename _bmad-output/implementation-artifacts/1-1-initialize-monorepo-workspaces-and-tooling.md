@@ -15,7 +15,7 @@ so that development can start consistently with the agreed architecture.
 1. **Given** an empty repo state (no `src/web`, `src/api`, `src/shared` yet)
    **When** I scaffold the workspaces using the selected starters (Vite React TS, Fastify TS)
    **Then** the repository contains `src/web`, `src/api`, and `src/shared` workspaces wired via npm workspaces
-   **And** root scripts exist for `dev:web`, `dev:api`, `test`, `test:e2e`, `biome:check`, `biome:fix`, and `type:check` (even if some are initially stubs)
+   **And** root scripts exist for `dev:web`, `dev:api`, `test`, `test:ci`, `test:e2e`, `build`, `type:check`, `biome:check`, `biome:fix`, `source:check`, `build:openapi`, and `build:api-types` (even if some are initially stubs)
 
 2. **Given** the repo is scaffolded
    **When** I run `npm install`
@@ -28,8 +28,13 @@ so that development can start consistently with the agreed architecture.
     - `private: true`
     - `workspaces: ["src/*"]`
     - add root scripts per architecture contract: `dev:web`, `dev:api`, `test`, `test:ci`, `test:e2e`, `build`, `type:check`, `biome:check`, `biome:fix`, `source:check`
+    - add contract scripts per architecture contract: `build:openapi`, `build:api-types`
     - prefer running workspace scripts via `npm -w src/web run ...` / `npm -w src/api run ...`
   - [ ] Add/record Node + npm expectations (engines or `.nvmrc`) so the repo matches the architecture’s runtime baseline
+
+- [ ] Set up contract automation hooks (supports Epic 1; AC: 1)
+  - [ ] Add `simple-git-hooks` and root `prepare` script to enable hooks
+  - [ ] Configure `pre-commit` to run `build:openapi` and `build:api-types` and stage generated artifacts
 
 - [ ] Scaffold the web workspace at `src/web` (AC: 1)
   - [ ] Create via Vite `react-ts` template (per architecture) and keep TypeScript-only
@@ -51,7 +56,7 @@ so that development can start consistently with the agreed architecture.
 
 - [ ] Prove the toolchain with smoke tests (supports Epic 3; AC: 1)
   - [ ] Web: add one minimal test that renders the App via React Testing Library
-  - [ ] API: add one minimal test that boots a Fastify instance and returns a simple health response (or equivalent) using `fastify.inject()`
+  - [ ] API: add one minimal test that boots the Fastify app instance (e.g., `await app.ready()`), without introducing extra public endpoints beyond `/todos`
 
 - [ ] Verification checklist (AC: 2)
   - [ ] `npm install` succeeds and produces a single root lockfile
@@ -66,6 +71,7 @@ so that development can start consistently with the agreed architecture.
 - Workspaces layout is fixed for MVP: `src/web`, `src/api`, `src/shared`. Avoid introducing additional top-level packages or tooling unless required by the architecture.
 - Keep dev scripts minimal: run `dev:web` and `dev:api` in separate terminals; do not add `concurrently` for MVP.
 - Tooling contract is considered stable: keep script names exactly as documented, even if underlying commands evolve.
+- Contract artifacts must be committed and kept in sync: `src/api/openapi.json` and web generated API types/client.
 - TypeScript-only: enforce `allowJs: false` in all workspace `tsconfig.json`.
 
 ### Suggested High-Level Implementation Shape

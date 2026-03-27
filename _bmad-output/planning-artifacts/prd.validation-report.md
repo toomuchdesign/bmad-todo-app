@@ -78,14 +78,14 @@ overallStatus: Warning
 
 **Needs clarification (density gaps):**
 
-- **Todo text length constraints:** FR7 requires validation for length limits, but the PRD does not specify the actual max length (and whether there is a min length beyond non-empty). Journey 2 suggests an example “>200 chars” but that is not a defined requirement.
+- **Todo text length constraints:** FR7 requires validation for length limits, but the PRD does not specify the actual max length (and whether there is a min length beyond non-empty). (Note: this has been made deterministic at the architecture level via `MAX_TODO_TEXT_LENGTH = 200`; consider backporting the constant into the PRD if you want the PRD to be fully self-contained.)
 - **Definition of “normal dev conditions” / “typical developer laptop” (NFR1–NFR3):** thresholds are good, but measurement conditions are underspecified (device/network baseline, local vs deployed API, cold vs warm cache).
 - **Expected scale / bounds:** the PRD does not state expected max todo count (previous drafts mentioned ~1,000). This affects performance expectations and test data sizing.
 - **Error code taxonomy:** FR22–FR23 require stable machine-readable error codes and optional validation details, but no minimal set of codes is listed (e.g., VALIDATION_ERROR, NOT_FOUND, CONFLICT, INTERNAL).
 
 **Recommendations (low effort, improves testability):**
 
-- Add explicit constants (e.g., `MAX_TODO_TEXT_LENGTH`) and make them part of the API error details schema.
+- Add explicit constants (e.g., `MAX_TODO_TEXT_LENGTH`) and make them part of the API error details schema. (Addressed in architecture: `MAX_TODO_TEXT_LENGTH = 200`.)
 - Define a minimal “measurement profile” for the performance targets (e.g., mobile device class + network type; local dev API; cold start).
 - State an expected upper bound for number of todos in the list and confirm sorting behavior when timestamps tie.
 - Enumerate the minimum error codes the API must emit for MVP.
@@ -111,6 +111,8 @@ overallStatus: Warning
 **Measurability Issues:** 1
 
 - FR7 references “length constraints” but does not define the constraint values, making validation non-deterministic. ([prd.md](../planning-artifacts/prd.md#L291))
+
+_Architecture alignment note:_ Implementation has been made deterministic via `MAX_TODO_TEXT_LENGTH = 200` in architecture; consider backporting this constant into the PRD if you want PRD-only determinism.
 
 **FR Violations Total:** 1
 
@@ -139,6 +141,8 @@ overallStatus: Warning
 **Severity:** Warning
 
 **Recommendation:** Define the todo text length limit(s) explicitly, and add a short “measurement profile” (device/network + local/deployed assumptions) so NFR1–NFR3 can be validated consistently.
+
+_Note:_ The architecture now defines `MAX_TODO_TEXT_LENGTH = 200` as the shared implementation constant.
 
 ## Traceability Validation
 

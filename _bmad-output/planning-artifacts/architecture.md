@@ -149,6 +149,40 @@ npm exec --package fastify-cli -- fastify generate src/api --lang=ts
   - `biome:fix`: `biome check --write .`
 - **TypeScript-only policy:** application source is TS/TSX only; TypeScript `allowJs: false` enforced in all `tsconfig.json`.
 
+### API Contract Sharing (BE → FE)
+
+Goal: if the backend changes its public API (request/response shapes), the frontend should fail fast during typechecking and/or code generation.
+
+**Contract source of truth:** API route schemas in `src/api`.
+
+**Published artifact (version controlled):** OpenAPI spec generated from those schemas.
+
+- **OpenAPI file path (committed):** `src/api/openapi.json`
+- **Generation is mandatory:** when API route schemas change, `src/api/openapi.json` must be updated in the same PR.
+- **Frontend types are derived from OpenAPI:** `npm run build:api-types` regenerates FE types/client from `src/api/openapi.json`.
+- **Automation:** a git `pre-commit` hook runs `npm run build:openapi` to keep the committed OpenAPI in sync.
+- **Hook tool:** use `simple-git-hooks` (not Husky).
+
+**CI enforcement (required):**
+
+- CI runs `npm run build:openapi` and `npm run build:api-types`.
+- CI then runs `git diff --exit-code` (or equivalent) to ensure contract artifacts are committed; this prevents merging API changes without updating the OpenAPI and the derived frontend types.
+
+Example hook configuration shape (to be applied in root `package.json` when scaffolding begins):
+
+```json
+{
+  "scripts": {
+    "prepare": "simple-git-hooks",
+    "build:openapi": "npm -w src/api run build:openapi",
+    "build:api-types": "npm -w src/web run build:api-types"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npm run build:openapi && npm run build:api-types && git add src/api/openapi.json src/web/src/api/generated"
+  }
+}
+```
+
 #### Canonical npm scripts (contract)
 
 Define script names and responsibilities _now_ to prevent divergence. Exact underlying commands can be adjusted during scaffolding, but the **names and intent below are treated as stable**.
@@ -156,6 +190,8 @@ Define script names and responsibilities _now_ to prevent divergence. Exact unde
 **Root (`/package.json`)**
 
 - `biome:check` / `biome:fix`: run Biome over the whole repo.
+- `build:openapi`: generate/update the committed OpenAPI spec (`src/api/openapi.json`).
+- `build:api-types`: regenerate frontend API types/client from the committed OpenAPI.
 - `type:check`: run TypeScript typechecking across all workspaces.
 - `source:check`: biome:check + type:check + any other static source check
 - `test`: run all non-E2E tests across all workspaces (web unit/component + API integration).
@@ -180,11 +216,13 @@ Notes:
 - `test:ci`: Vitest unit/component tests (non-watch, CI-friendly).
 - `test:e2e`: Playwright tests.
 - `type:check`: `tsc --noEmit` (workspace-local typecheck).
+- `build:api-types`: regenerate the FE types/client from the committed OpenAPI spec.
 
 **API workspace (`src/api/package.json`)**
 
 - `dev`: run Fastify in watch mode.
 - `build`: compile TypeScript to `dist/`.
+- `build:openapi`: generate/update `openapi.json` (OpenAPI spec) from route schemas.
 - `start`: run the compiled server (`dist/`) for production-like runs.
 - `test`: Vitest API integration tests using `fastify.inject()`.
 - `test:ci`: Vitest API integration tests using `fastify.inject()` (non-watch, CI-friendly).
@@ -275,6 +313,10 @@ To keep quality high while moving quickly, every story/task is considered **done
   - `POST /todos` (create)
   - `PATCH /todos/:id` (update text and/or completion)
   - `DELETE /todos/:id` (soft delete)
+
+- **OpenAPI contract:**
+  - OpenAPI generated/exposed with `@fastify/swagger` and `@fastify/swagger-ui`
+  - generated from route schemas and committed at `src/api/openapi.json`.
 
 - **JSON field naming:** `camelCase` in API JSON requests/responses
   - DB columns remain `snake_case` (Drizzle maps between DB and TS types)
@@ -405,6 +447,7 @@ bmad-todo/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   ├── .env.example
+│   │   ├── openapi.json                  # committed OpenAPI (generated from route schemas)
 │   │   ├── src/
 │   │   │   ├── server.ts                   # Fastify bootstrap + listen
 │   │   │   ├── app.ts                      # Fastify instance factory (used by tests)
@@ -442,6 +485,7 @@ bmad-todo/
 │       │   ├── api/
 │       │   │   ├── apiClient.ts            # typed fetch wrapper + error mapping
 │       │   │   └── todosApi.ts             # calls to /todos endpoints
+│       │   │   └── generated/              # optional: OpenAPI-generated types/client (kept in sync via hook/CI)
 │       │   ├── hooks/
 │       │   │   └── useTodos.ts             # React state + load/retry + mutations
 │       │   ├── components/

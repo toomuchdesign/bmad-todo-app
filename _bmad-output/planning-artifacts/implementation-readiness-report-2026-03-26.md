@@ -13,8 +13,10 @@ optionalDocuments:
 
 # Implementation Readiness Assessment Report
 
-**Date:** 2026-03-26
+**Date:** 2026-03-27
 **Project:** bmad-todo
+
+_Update note:_ This report was refreshed after an architecture course-correction to keep epics/stories and planning artifacts consistent.
 
 ## Document Discovery
 
@@ -23,7 +25,7 @@ optionalDocuments:
 **Whole Documents:**
 
 - `_bmad-output/planning-artifacts/prd.md` | 14496 bytes | modified 2026-03-26 15:00:38
-- `_bmad-output/planning-artifacts/prd.validation-report.md` | 19303 bytes | modified 2026-03-26 15:27:31 (optional reference)
+- `_bmad-output/planning-artifacts/prd.validation-report.md` | 19785 bytes | modified 2026-03-27 11:36:39 (optional reference)
 
 **Sharded Documents:**
 
@@ -33,7 +35,7 @@ optionalDocuments:
 
 **Whole Documents:**
 
-- `_bmad-output/planning-artifacts/architecture.md` | 27942 bytes | modified 2026-03-26 18:59:10
+- `_bmad-output/planning-artifacts/architecture.md` | 32015 bytes | modified 2026-03-27 11:13:02
 
 **Sharded Documents:**
 
@@ -43,7 +45,7 @@ optionalDocuments:
 
 **Whole Documents:**
 
-- `_bmad-output/planning-artifacts/epics.md` | 20029 bytes | modified 2026-03-26 19:03:34
+- `_bmad-output/planning-artifacts/epics.md` | 21069 bytes | modified 2026-03-27 11:16:27
 
 **Sharded Documents:**
 
@@ -53,7 +55,7 @@ optionalDocuments:
 
 **Whole Documents:**
 
-- `_bmad-output/planning-artifacts/ux-design-specification.md` | 12549 bytes | modified 2026-03-26 15:26:51
+- `_bmad-output/planning-artifacts/ux-design-specification.md` | 12590 bytes | modified 2026-03-27 11:23:12
 
 **Sharded Documents:**
 
@@ -208,6 +210,7 @@ Total FRs in epics: 24
 
 - UX allows optional behaviors (e.g., save-on-blur, dismissable banner). Keep MVP implementation minimal and consistent; avoid adding modals/bottom sheets unless inline edit becomes unworkable.
 - Ensure the global error banner is implemented as a consistent reusable component early, since many stories depend on it.
+- Todo text max length is now deterministic (`MAX_TODO_TEXT_LENGTH = 200` via architecture/shared constant); ensure UI copy and API validation details remain consistent.
 
 ## Epic Quality Review
 
@@ -232,6 +235,9 @@ Total FRs in epics: 24
 
 - Acceptance criteria in a few stories include “(or …)” alternatives (e.g., POST status `200 (or 201)`), which can lead to inconsistent implementations.
   - Recommendation: choose a single expected behavior in advance (prefer `201` for create if not constrained otherwise).
+
+- Architecture requires OpenAPI + generated web types/client to be committed and kept in sync via git hooks and CI.
+  - Recommendation: ensure Story 1.1 (or an explicit follow-up story if you prefer) includes the `simple-git-hooks` pre-commit setup and CI `git diff --exit-code` enforcement for contract artifacts.
 
 - Architecture calls out baseline security plugins and strict contracts (CORS restricted origin, helmet headers, centralized error mapping). These are partially implied by API contract stories but not always explicit as checklist items.
   - Recommendation: ensure Epic 1 includes explicit implementation tasks/AC for:

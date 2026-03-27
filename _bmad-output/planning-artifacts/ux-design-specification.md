@@ -189,9 +189,10 @@ A consistent global error surface used for:
 - Reject too-long input based on configured constraint.
 - Preserve typed text on validation failure.
 
-**Length constraint handling (PRD-aligned without hardcoding a number)**
+**Length constraint handling (architecture-aligned)**
 
-- Treat the max length as a product constant (e.g., `MAX_TODO_TEXT_LENGTH`) and/or derive it from API validation error details.
+- Use the shared product constant `MAX_TODO_TEXT_LENGTH = 200` (single source of truth in `src/shared`).
+- Optionally also derive `{max}` from API validation error details to avoid drift.
 - Inline message template: “Todo text must be between 1 and {max} characters.”
 
 ### Edit Todo (Inline)
@@ -352,7 +353,7 @@ flowchart TD
 
 ## Open Questions (PRD Clarifications)
 
-- **Todo text max length:** The PRD requires length validation but does not specify the limit; confirm the max and ensure the API returns it (or that the client has a shared constant).
+- **Todo text max length:** Resolved by architecture — `MAX_TODO_TEXT_LENGTH = 200` shared by web and API. API validation errors may include `details: [{ field: "text", max: 200 }]`.
 
 ### Reusable Interaction Helpers
 
