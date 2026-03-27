@@ -2,7 +2,7 @@ import Fastify, {
   type FastifyInstance,
   type FastifyServerOptions,
 } from "fastify";
-import todosRoutes from "./routes/todos";
+import todosRoutes from "./routes/todos.js";
 
 export function buildApp(options: FastifyServerOptions = {}): FastifyInstance {
   const app = Fastify({

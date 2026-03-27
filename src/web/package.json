@@ -10,7 +10,7 @@
     "test": "vitest --watch",
     "test:ci": "npm run test -- --run",
     "test:e2e": "echo \"TODO: add Playwright e2e tests\"",
-    "type:check": "tsc --noEmit",
+    "type:check": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "build:api-types": "node scripts/build-api-types.mjs"
   },
   "dependencies": {
