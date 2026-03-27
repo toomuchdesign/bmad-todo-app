@@ -1,4 +1,5 @@
 # Getting Started with [Fastify-CLI](https://www.npmjs.com/package/fastify-cli)
+
 This project was bootstrapped with Fastify-CLI.
 
 ## Available Scripts
@@ -8,7 +9,12 @@ In the project directory, you can run:
 ### `npm run dev`
 
 To start the app in dev mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Open [http://127.0.0.1:3001](http://127.0.0.1:3001) to view it in the browser.
+
+You can override the listen address with:
+
+- `PORT` (default: `3001`)
+- `HOST` (default: `127.0.0.1`)
 
 ### `npm start`
 

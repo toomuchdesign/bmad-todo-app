@@ -1,6 +1,6 @@
 # Story 1.1: Initialize monorepo workspaces and tooling
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -64,12 +64,25 @@ so that development can start consistently with the agreed architecture.
   - [ ] `npm run biome:check` succeeds (or is present as a stub with clear TODO)
   - [ ] `npm test` runs web + api non-E2E tests
 
+### Review Findings
+
+- [x] [Review][Decision] Pre-commit should run `test:ci` or only contract generation — decision: keep as-is (run `test:ci` + contract generation).
+
+- [x] [Review][Decision] Keep `concurrently` for root `dev`/`test` convenience.
+- [x] [Review][Decision] Keep `npm test` as a handy dev command (watch/interactive is fine); use `npm run test:ci` for single-shot/CI.
+- [x] [Review][Decision] Keep workspace `test:ci` scripts as-is — verified they run non-watch/single-shot in practice.
+- [x] [Review][Decision] Leave `prepare` unguarded (acceptable for this repo’s current workflows).
+- [x] [Review][Patch] Ensure API build output layout is stable for TS6 builds (set `rootDir: "src"`) [src/api/tsconfig.build.json]
+- [x] [Review][Patch] Update API dev docs to match actual default port (3001) and document `HOST`/`PORT` overrides [src/api/README.md]
+
+- [x] [Review][Decision] Keep current Biome file filtering. Biome schema has no `files.ignore`; ignore is handled via `files.includes` force-ignore syntax and/or VCS ignore.
+
 ## Dev Notes
 
 ### Hard Requirements / Guardrails
 
 - Workspaces layout is fixed for MVP: `src/web`, `src/api`, `src/shared`. Avoid introducing additional top-level packages or tooling unless required by the architecture.
-- Keep dev scripts minimal: run `dev:web` and `dev:api` in separate terminals; do not add `concurrently` for MVP.
+- Keep dev scripts ergonomic: root `dev` may orchestrate `dev:web` + `dev:api` (e.g., via `concurrently`), but `dev:web` and `dev:api` must remain available.
 - Tooling contract is considered stable: keep script names exactly as documented, even if underlying commands evolve.
 - Contract artifacts must be committed and kept in sync: `src/api/openapi.json` and web generated API types/client.
 - TypeScript-only: enforce `allowJs: false` in all workspace `tsconfig.json`.

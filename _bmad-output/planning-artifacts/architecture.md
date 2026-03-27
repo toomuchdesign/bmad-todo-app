@@ -161,7 +161,7 @@ Goal: if the backend changes its public API (request/response shapes), the front
 - **Generation is mandatory:** when API route schemas change, `src/api/openapi.json` must be updated in the same PR.
 - **Frontend types are derived from OpenAPI:** `npm run build:api-types` regenerates FE types/client from `src/api/openapi.json`.
 - **Automation:** a git `pre-commit` hook runs `npm run build:openapi` to keep the committed OpenAPI in sync.
-- **Hook tool:** use `simple-git-hooks` (not Husky).
+- **Hook tool:** use `simple-git-hooks.
 
 **CI enforcement (required):**
 
@@ -205,7 +205,8 @@ Define script names and responsibilities _now_ to prevent divergence. Exact unde
 Notes:
 
 - Prefer `npm -w <workspace> run <script>` for workspace-specific commands.
-- Avoid a root `dev` script for MVP; run `dev:web` and `dev:api` in separate terminals to keep tooling minimal (no `concurrently`).
+- A root `dev` script is allowed for convenience and may use `concurrently`; `dev:web` and `dev:api` remain the canonical entrypoints.
+- `test` is intended as a handy dev command (may be watch/interactive); `test:ci` is the non-watch single-shot entrypoint used by hooks/CI.
 
 **Web workspace (`src/web/package.json`)**
 

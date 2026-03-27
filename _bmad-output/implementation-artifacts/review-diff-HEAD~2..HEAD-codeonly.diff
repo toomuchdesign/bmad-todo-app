@@ -1,0 +1,1395 @@
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..c132ad9
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,10 @@
++node_modules/
++**/node_modules/
++dist/
++**/dist/
++coverage/
++**/coverage/
++.env
++.env.*
++!.env.example
++.DS_Store
+diff --git a/.nvmrc b/.nvmrc
+new file mode 100644
+index 0000000..1d9b783
+--- /dev/null
++++ b/.nvmrc
+@@ -0,0 +1 @@
++22.12.0
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..24ae5e6
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,83 @@
++# bmad-todo
++
++Monorepo scaffold for a Todo app:
++
++- `src/web`: React SPA (Vite + TypeScript)
++- `src/api`: Fastify API (TypeScript)
++- `src/shared`: shared TypeScript-only exports used by both web and api
++
++## Prerequisites
++
++- Node.js `>= 22.12` (see `.nvmrc`)
++- npm (uses npm workspaces)
++
++## Install
++
++```bash
++npm install
++```
++
++This creates a single root `package-lock.json` and installs all workspace dependencies.
++
++## Develop
++
++Run both workspaces together:
++
++```bash
++npm run dev
++```
++
++Or run these in separate terminals:
++
++```bash
++npm run dev:web
++npm run dev:api
++```
++
++Defaults:
++
++- Web: http://localhost:5173
++- API: http://127.0.0.1:3001
++
++## Tests (recommended)
++
++Run non-interactive tests across workspaces:
++
++```bash
++npm run test:ci
++```
++
++## Typecheck & formatting
++
++```bash
++npm run type:check
++npm run biome:check
++npm run biome:fix
++npm run source:check
++```
++
++## API contract artifacts (OpenAPI → frontend types)
++
++The committed contract artifacts are:
++
++- `src/api/openapi.json`
++- `src/web/src/api/generated/`
++
++Regenerate them with:
++
++```bash
++npm run build:openapi
++npm run build:api-types
++```
++
++A `pre-commit` hook (via `simple-git-hooks`) runs both and stages updates.
++
++## Useful workspace commands
++
++Run a script in a specific workspace:
++
++```bash
++npm -w src/web run <script>
++npm -w src/api run <script>
++npm -w src/shared run <script>
++```
+diff --git a/_bmad-output/planning-artifacts/architecture.md b/_bmad-output/planning-artifacts/architecture.md
+index ce7f14c..29480ea 100644
+--- a/_bmad-output/planning-artifacts/architecture.md
++++ b/_bmad-output/planning-artifacts/architecture.md
+@@ -178,7 +178,7 @@ Example hook configuration shape (to be applied in root `package.json` when scaf
+     "build:api-types": "npm -w src/web run build:api-types"
+   },
+   "simple-git-hooks": {
+-    "pre-commit": "npm run build:openapi && npm run build:api-types && git add src/api/openapi.json src/web/src/api/generated"
++    "pre-commit": "npm run test:ci && npm run build:openapi && npm run build:api-types && git add src/api/openapi.json src/web/src/api/generated"
+   }
+ }
+ ```
+diff --git a/biome.json b/biome.json
+new file mode 100644
+index 0000000..fc0ba73
+--- /dev/null
++++ b/biome.json
+@@ -0,0 +1,25 @@
++{
++  "$schema": "https://biomejs.dev/schemas/2.4.9/schema.json",
++  "assist": {
++    "enabled": true,
++    "actions": {
++      "source": {
++        "organizeImports": "on"
++      }
++    }
++  },
++  "files": {
++    "includes": ["**", "!!package-lock.json", "!!.*", "!!**/dist", "!!_bmad*"]
++  },
++  "formatter": {
++    "enabled": true,
++    "indentStyle": "space",
++    "indentWidth": 2
++  },
++  "linter": {
++    "enabled": true,
++    "rules": {
++      "recommended": true
++    }
++  }
++}
+diff --git a/package.json b/package.json
+index edfd9df..7569dad 100644
+--- a/package.json
++++ b/package.json
+@@ -1,11 +1,38 @@
+ {
+   "name": "bmad-todo",
+-  "version": "1.0.0",
+-  "main": "index.js",
++  "version": "0.0.0",
++  "private": true,
++  "workspaces": [
++    "src/*"
++  ],
++  "engines": {
++    "node": ">=22.12"
++  },
+   "scripts": {
+-    "test": "echo \"Error: no test specified\" && exit 1"
++    "prepare": "simple-git-hooks",
++    "dev": "concurrently -k --kill-others-on-fail -s first -n web,api \"npm run dev:web\" \"npm run dev:api\"",
++    "dev:web": "npm -w src/web run dev",
++    "dev:api": "npm -w src/api run dev",
++    "build": "npm -w src/shared run build && npm -w src/api run build && npm -w src/web run build",
++    "build:openapi": "npm -w src/api run build:openapi",
++    "build:api-types": "npm -w src/web run build:api-types",
++    "type:check": "npm -w src/shared run type:check && npm -w src/api run type:check && npm -w src/web run type:check",
++    "biome:check": "biome check .",
++    "biome:fix": "biome check --write .",
++    "source:check": "npm run biome:check && npm run type:check",
++    "test": "concurrently -k --kill-others-on-fail -s first -n web,api \"npm run test:web\" \"npm run test:api\"",
++    "test:ci": "npm -w src/web run test:ci && npm -w src/api run test:ci",
++    "test:web": "npm -w src/web run test",
++    "test:api": "npm -w src/api run test",
++    "test:e2e": "npm -w src/web run test:e2e"
++  },
++  "simple-git-hooks": {
++    "pre-commit": "npm run test:ci && npm run build:openapi && npm run build:api-types && git add src/api/openapi.json src/web/src/api/generated"
+   },
+-  "author": "",
+-  "license": "ISC",
+-  "description": ""
++  "devDependencies": {
++    "@biomejs/biome": "^2.0.0",
++    "concurrently": "^9.2.1",
++    "simple-git-hooks": "^2.12.1",
++    "typescript": "6.0.2"
++  }
+ }
+diff --git a/src/api/.gitignore b/src/api/.gitignore
+new file mode 100644
+index 0000000..f4cefe8
+--- /dev/null
++++ b/src/api/.gitignore
+@@ -0,0 +1,65 @@
++# Logs
++logs
++*.log
++npm-debug.log*
++
++# Runtime data
++pids
++*.pid
++*.seed
++
++# Directory for instrumented libs generated by jscoverage/JSCover
++lib-cov
++
++# Coverage directory used by tools like istanbul
++coverage
++
++# nyc test coverage
++.nyc_output
++
++# Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
++.grunt
++
++# node-waf configuration
++.lock-wscript
++
++# Compiled binary addons (http://nodejs.org/api/addons.html)
++build/Release
++
++# Dependency directories
++node_modules
++jspm_packages
++
++# Optional npm cache directory
++.npm
++
++# Optional REPL history
++.node_repl_history
++
++# 0x
++profile-*
++
++# mac files
++.DS_Store
++
++# vim swap files
++*.swp
++
++# webstorm
++.idea
++
++# vscode
++.vscode
++*code-workspace
++
++# clinic
++profile*
++*clinic*
++*flamegraph*
++
++# generated code
++examples/typescript-server.js
++test/types/index.js
++
++# compiled app
++dist
+diff --git a/src/api/README.md b/src/api/README.md
+new file mode 100644
+index 0000000..2d5e417
+--- /dev/null
++++ b/src/api/README.md
+@@ -0,0 +1,23 @@
++# Getting Started with [Fastify-CLI](https://www.npmjs.com/package/fastify-cli)
++This project was bootstrapped with Fastify-CLI.
++
++## Available Scripts
++
++In the project directory, you can run:
++
++### `npm run dev`
++
++To start the app in dev mode.\
++Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
++
++### `npm start`
++
++For production mode
++
++### `npm run test`
++
++Run the test cases.
++
++## Learn More
++
++To learn Fastify, check out the [Fastify documentation](https://fastify.dev/docs/latest/).
+diff --git a/src/api/package.json b/src/api/package.json
+new file mode 100644
+index 0000000..26003ce
+--- /dev/null
++++ b/src/api/package.json
+@@ -0,0 +1,28 @@
++{
++  "name": "api",
++  "type": "module",
++  "version": "0.0.0",
++  "private": true,
++  "description": "Fastify API workspace for bmad-todo",
++  "scripts": {
++    "dev": "tsx watch src/server.ts",
++    "build": "tsc -p tsconfig.build.json",
++    "start": "node dist/server.js",
++    "test": "vitest --watch",
++    "test:ci": "npm run test -- --run",
++    "type:check": "tsc -p tsconfig.json --noEmit",
++    "build:openapi": "node scripts/build-openapi.mjs"
++  },
++  "keywords": [],
++  "author": "",
++  "license": "ISC",
++  "dependencies": {
++    "fastify": "5.8.4"
++  },
++  "devDependencies": {
++    "@types/node": "^24.12.0",
++    "tsx": "^4.20.0",
++    "typescript": "6.0.2",
++    "vitest": "4.1.2"
++  }
++}
+diff --git a/src/api/scripts/build-openapi.mjs b/src/api/scripts/build-openapi.mjs
+new file mode 100644
+index 0000000..ca58c64
+--- /dev/null
++++ b/src/api/scripts/build-openapi.mjs
+@@ -0,0 +1,28 @@
++import fs from "node:fs/promises";
++import path from "node:path";
++import { fileURLToPath } from "node:url";
++
++const scriptDir = path.dirname(fileURLToPath(import.meta.url));
++const apiDir = path.resolve(scriptDir, "..");
++const outFile = path.resolve(apiDir, "openapi.json");
++
++const openapi = {
++  openapi: "3.0.3",
++  info: {
++    title: "bmad-todo API",
++    version: "0.0.0",
++  },
++  paths: {
++    "/todos": {
++      get: {
++        responses: {
++          501: {
++            description: "Not implemented",
++          },
++        },
++      },
++    },
++  },
++};
++
++await fs.writeFile(outFile, `${JSON.stringify(openapi, null, 2)}\n`, "utf8");
+diff --git a/src/api/src/app.ts b/src/api/src/app.ts
+new file mode 100644
+index 0000000..5e944ed
+--- /dev/null
++++ b/src/api/src/app.ts
+@@ -0,0 +1,17 @@
++import Fastify, {
++  type FastifyInstance,
++  type FastifyServerOptions,
++} from "fastify";
++import todosRoutes from "./routes/todos.js";
++
++export function buildApp(options: FastifyServerOptions = {}): FastifyInstance {
++  const app = Fastify({
++    logger: true,
++    ...options,
++  });
++
++  app.register(todosRoutes);
++  return app;
++}
++
++export default buildApp;
+diff --git a/src/api/src/routes/README.md b/src/api/src/routes/README.md
+new file mode 100644
+index 0000000..084748f
+--- /dev/null
++++ b/src/api/src/routes/README.md
+@@ -0,0 +1,30 @@
++# Routes Folder
++
++Routes define the pathways within your application.
++Fastify's structure supports the modular monolith approach, where your
++application is organized into distinct, self-contained modules.
++This facilitates easier scaling and future transition to a microservice architecture.
++In the future you might want
++to independently deploy some of those.
++
++In this folder you should define all the routes that define the endpoints
++of your web application.
++Each service is a [Fastify
++plugin](https://fastify.dev/docs/latest/Reference/Plugins/), it is
++encapsulated (it can have its own independent plugins) and it is
++typically stored in a file; be careful to group your routes logically,
++e.g. all `/users` routes in a `users.js` file. We have added
++a `root.js` file for you with a '/' root added.
++
++If a single file becomes too large, create a folder and add a `index.js` file there:
++this file must be a Fastify plugin, and it will be loaded automatically
++by the application. You can now add as many files as you want inside that folder.
++In this way you can create complex routes within a single monolith,
++and eventually extract them.
++
++If you need to share functionality between routes, place that
++functionality into the `plugins` folder, and share it via
++[decorators](https://fastify.dev/docs/latest/Reference/Decorators/).
++
++If you're a bit confused about using `async/await` to write routes, you would
++better take a look at [Promise resolution](https://fastify.dev/docs/latest/Reference/Routes/#promise-resolution) for more details.
+diff --git a/src/api/src/routes/todos.ts b/src/api/src/routes/todos.ts
+new file mode 100644
+index 0000000..4b91c84
+--- /dev/null
++++ b/src/api/src/routes/todos.ts
+@@ -0,0 +1,9 @@
++import type { FastifyPluginAsync } from "fastify";
++
++const todosRoutes: FastifyPluginAsync = async (app) => {
++  app.get("/todos", async (_request, reply) => {
++    return reply.code(501).send({ error: "Not implemented" });
++  });
++};
++
++export default todosRoutes;
+diff --git a/src/api/src/server.ts b/src/api/src/server.ts
+new file mode 100644
+index 0000000..ef8cd98
+--- /dev/null
++++ b/src/api/src/server.ts
+@@ -0,0 +1,11 @@
++import buildApp from "./app.js";
++
++const port = Number(process.env.PORT ?? 3001);
++const host = process.env.HOST ?? "127.0.0.1";
++
++const app = buildApp();
++
++app.listen({ port, host }).catch((err) => {
++  app.log.error(err);
++  process.exit(1);
++});
+diff --git a/src/api/test/app.test.ts b/src/api/test/app.test.ts
+new file mode 100644
+index 0000000..1b34f6b
+--- /dev/null
++++ b/src/api/test/app.test.ts
+@@ -0,0 +1,9 @@
++import { expect, it } from "vitest";
++import { buildApp } from "../src/app.js";
++
++it("boots the Fastify app", async () => {
++  const app = buildApp({ logger: false });
++  await app.ready();
++  await app.close();
++  expect(true).toBe(true);
++});
+diff --git a/src/api/tsconfig.build.json b/src/api/tsconfig.build.json
+new file mode 100644
+index 0000000..1a9050b
+--- /dev/null
++++ b/src/api/tsconfig.build.json
+@@ -0,0 +1,8 @@
++{
++  "extends": "./tsconfig.json",
++  "include": ["src/**/*.ts"],
++  "compilerOptions": {
++    "outDir": "dist",
++    "sourceMap": true
++  }
++}
+diff --git a/src/api/tsconfig.json b/src/api/tsconfig.json
+new file mode 100644
+index 0000000..f263a33
+--- /dev/null
++++ b/src/api/tsconfig.json
+@@ -0,0 +1,9 @@
++{
++  "extends": "../../tsconfig.base.json",
++  "compilerOptions": {
++    "target": "ES2022",
++    "module": "Node16",
++    "moduleResolution": "node16",
++    "esModuleInterop": true
++  }
++}
+diff --git a/src/api/vitest.config.ts b/src/api/vitest.config.ts
+new file mode 100644
+index 0000000..ed8bf77
+--- /dev/null
++++ b/src/api/vitest.config.ts
+@@ -0,0 +1,8 @@
++import { defineConfig } from "vitest/config";
++
++export default defineConfig({
++  test: {
++    environment: "node",
++    include: ["test/**/*.test.ts"],
++  },
++});
+diff --git a/src/shared/package.json b/src/shared/package.json
+new file mode 100644
+index 0000000..71e1904
+--- /dev/null
++++ b/src/shared/package.json
+@@ -0,0 +1,15 @@
++{
++  "name": "@bmad-todo/shared",
++  "version": "0.0.0",
++  "private": true,
++  "type": "module",
++  "main": "./dist/index.js",
++  "types": "./dist/index.d.ts",
++  "files": [
++    "dist"
++  ],
++  "scripts": {
++    "build": "tsc -p tsconfig.build.json",
++    "type:check": "tsc -p tsconfig.json --noEmit"
++  }
++}
+diff --git a/src/shared/src/index.ts b/src/shared/src/index.ts
+new file mode 100644
+index 0000000..cb0ff5c
+--- /dev/null
++++ b/src/shared/src/index.ts
+@@ -0,0 +1 @@
++export {};
+diff --git a/src/shared/tsconfig.build.json b/src/shared/tsconfig.build.json
+new file mode 100644
+index 0000000..c29986e
+--- /dev/null
++++ b/src/shared/tsconfig.build.json
+@@ -0,0 +1,10 @@
++{
++  "extends": "./tsconfig.json",
++  "compilerOptions": {
++    "outDir": "dist",
++    "declaration": true,
++    "declarationMap": true,
++    "sourceMap": true,
++    "emitDeclarationOnly": false
++  }
++}
+diff --git a/src/shared/tsconfig.json b/src/shared/tsconfig.json
+new file mode 100644
+index 0000000..440b417
+--- /dev/null
++++ b/src/shared/tsconfig.json
+@@ -0,0 +1,12 @@
++{
++  "extends": "../../tsconfig.base.json",
++  "compilerOptions": {
++    "target": "ES2022",
++    "module": "ESNext",
++    "moduleResolution": "Bundler",
++    "rootDir": "src",
++    "outDir": "dist",
++    "types": []
++  },
++  "include": ["src/**/*.ts"]
++}
+diff --git a/src/web/.gitignore b/src/web/.gitignore
+new file mode 100644
+index 0000000..a547bf3
+--- /dev/null
++++ b/src/web/.gitignore
+@@ -0,0 +1,24 @@
++# Logs
++logs
++*.log
++npm-debug.log*
++yarn-debug.log*
++yarn-error.log*
++pnpm-debug.log*
++lerna-debug.log*
++
++node_modules
++dist
++dist-ssr
++*.local
++
++# Editor directories and files
++.vscode/*
++!.vscode/extensions.json
++.idea
++.DS_Store
++*.suo
++*.ntvs*
++*.njsproj
++*.sln
++*.sw?
+diff --git a/src/web/README.md b/src/web/README.md
+new file mode 100644
+index 0000000..7dbf7eb
+--- /dev/null
++++ b/src/web/README.md
+@@ -0,0 +1,73 @@
++# React + TypeScript + Vite
++
++This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
++
++Currently, two official plugins are available:
++
++- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
++- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
++
++## React Compiler
++
++The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
++
++## Expanding the ESLint configuration
++
++If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
++
++```js
++export default defineConfig([
++  globalIgnores(['dist']),
++  {
++    files: ['**/*.{ts,tsx}'],
++    extends: [
++      // Other configs...
++
++      // Remove tseslint.configs.recommended and replace with this
++      tseslint.configs.recommendedTypeChecked,
++      // Alternatively, use this for stricter rules
++      tseslint.configs.strictTypeChecked,
++      // Optionally, add this for stylistic rules
++      tseslint.configs.stylisticTypeChecked,
++
++      // Other configs...
++    ],
++    languageOptions: {
++      parserOptions: {
++        project: ['./tsconfig.node.json', './tsconfig.app.json'],
++        tsconfigRootDir: import.meta.dirname,
++      },
++      // other options...
++    },
++  },
++])
++```
++
++You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
++
++```js
++// eslint.config.js
++import reactX from 'eslint-plugin-react-x'
++import reactDom from 'eslint-plugin-react-dom'
++
++export default defineConfig([
++  globalIgnores(['dist']),
++  {
++    files: ['**/*.{ts,tsx}'],
++    extends: [
++      // Other configs...
++      // Enable lint rules for React
++      reactX.configs['recommended-typescript'],
++      // Enable lint rules for React DOM
++      reactDom.configs.recommended,
++    ],
++    languageOptions: {
++      parserOptions: {
++        project: ['./tsconfig.node.json', './tsconfig.app.json'],
++        tsconfigRootDir: import.meta.dirname,
++      },
++      // other options...
++    },
++  },
++])
++```
+diff --git a/src/web/index.html b/src/web/index.html
+new file mode 100644
+index 0000000..5e3836a
+--- /dev/null
++++ b/src/web/index.html
+@@ -0,0 +1,13 @@
++<!doctype html>
++<html lang="en">
++  <head>
++    <meta charset="UTF-8" />
++    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
++    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
++    <title>web</title>
++  </head>
++  <body>
++    <div id="root"></div>
++    <script type="module" src="/src/main.tsx"></script>
++  </body>
++</html>
+diff --git a/src/web/package.json b/src/web/package.json
+new file mode 100644
+index 0000000..d2a25ac
+--- /dev/null
++++ b/src/web/package.json
+@@ -0,0 +1,32 @@
++{
++  "name": "web",
++  "private": true,
++  "version": "0.0.0",
++  "type": "module",
++  "scripts": {
++    "dev": "vite",
++    "build": "vite build",
++    "start": "vite preview",
++    "test": "vitest --watch",
++    "test:ci": "npm run test -- --run",
++    "test:e2e": "echo \"TODO: add Playwright e2e tests\"",
++    "type:check": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
++    "build:api-types": "node scripts/build-api-types.mjs"
++  },
++  "dependencies": {
++    "react": "^19.2.4",
++    "react-dom": "^19.2.4"
++  },
++  "devDependencies": {
++    "@types/node": "^24.12.0",
++    "@types/react": "^19.2.14",
++    "@types/react-dom": "^19.2.3",
++    "@testing-library/jest-dom": "6.9.1",
++    "@testing-library/react": "16.3.2",
++    "@vitejs/plugin-react": "^6.0.1",
++    "jsdom": "^26.0.0",
++    "typescript": "6.0.2",
++    "vite": "8.0.3",
++    "vitest": "4.1.2"
++  }
++}
+diff --git a/src/web/scripts/build-api-types.mjs b/src/web/scripts/build-api-types.mjs
+new file mode 100644
+index 0000000..ff55849
+--- /dev/null
++++ b/src/web/scripts/build-api-types.mjs
+@@ -0,0 +1,24 @@
++import fs from "node:fs/promises";
++import path from "node:path";
++import { fileURLToPath } from "node:url";
++
++const scriptDir = path.dirname(fileURLToPath(import.meta.url));
++const webDir = path.resolve(scriptDir, "..");
++const openapiPath = path.resolve(webDir, "..", "api", "openapi.json");
++const outDir = path.resolve(webDir, "src", "api", "generated");
++const outFile = path.resolve(outDir, "index.ts");
++
++const openapiRaw = await fs.readFile(openapiPath, "utf8");
++const openapi = JSON.parse(openapiRaw);
++
++const paths = Object.keys(openapi.paths ?? {});
++
++await fs.mkdir(outDir, { recursive: true });
++await fs.writeFile(
++  outFile,
++  `// GENERATED FILE - do not edit\n` +
++    `// Generated by: npm -w src/web run build:api-types\n\n` +
++    `export const apiPaths = ${JSON.stringify(paths)} as const;\n` +
++    `export type ApiPath = (typeof apiPaths)[number];\n`,
++  "utf8",
++);
+diff --git a/src/web/src/App.css b/src/web/src/App.css
+new file mode 100644
+index 0000000..f460279
+--- /dev/null
++++ b/src/web/src/App.css
+@@ -0,0 +1,184 @@
++.counter {
++  font-size: 16px;
++  padding: 5px 10px;
++  border-radius: 5px;
++  color: var(--accent);
++  background: var(--accent-bg);
++  border: 2px solid transparent;
++  transition: border-color 0.3s;
++  margin-bottom: 24px;
++
++  &:hover {
++    border-color: var(--accent-border);
++  }
++  &:focus-visible {
++    outline: 2px solid var(--accent);
++    outline-offset: 2px;
++  }
++}
++
++.hero {
++  position: relative;
++
++  .base,
++  .framework,
++  .vite {
++    inset-inline: 0;
++    margin: 0 auto;
++  }
++
++  .base {
++    width: 170px;
++    position: relative;
++    z-index: 0;
++  }
++
++  .framework,
++  .vite {
++    position: absolute;
++  }
++
++  .framework {
++    z-index: 1;
++    top: 34px;
++    height: 28px;
++    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
++      scale(1.4);
++  }
++
++  .vite {
++    z-index: 0;
++    top: 107px;
++    height: 26px;
++    width: auto;
++    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
++      scale(0.8);
++  }
++}
++
++#center {
++  display: flex;
++  flex-direction: column;
++  gap: 25px;
++  place-content: center;
++  place-items: center;
++  flex-grow: 1;
++
++  @media (max-width: 1024px) {
++    padding: 32px 20px 24px;
++    gap: 18px;
++  }
++}
++
++#next-steps {
++  display: flex;
++  border-top: 1px solid var(--border);
++  text-align: left;
++
++  & > div {
++    flex: 1 1 0;
++    padding: 32px;
++    @media (max-width: 1024px) {
++      padding: 24px 20px;
++    }
++  }
++
++  .icon {
++    margin-bottom: 16px;
++    width: 22px;
++    height: 22px;
++  }
++
++  @media (max-width: 1024px) {
++    flex-direction: column;
++    text-align: center;
++  }
++}
++
++#docs {
++  border-right: 1px solid var(--border);
++
++  @media (max-width: 1024px) {
++    border-right: none;
++    border-bottom: 1px solid var(--border);
++  }
++}
++
++#next-steps ul {
++  list-style: none;
++  padding: 0;
++  display: flex;
++  gap: 8px;
++  margin: 32px 0 0;
++
++  .logo {
++    height: 18px;
++  }
++
++  a {
++    color: var(--text-h);
++    font-size: 16px;
++    border-radius: 6px;
++    background: var(--social-bg);
++    display: flex;
++    padding: 6px 12px;
++    align-items: center;
++    gap: 8px;
++    text-decoration: none;
++    transition: box-shadow 0.3s;
++
++    &:hover {
++      box-shadow: var(--shadow);
++    }
++    .button-icon {
++      height: 18px;
++      width: 18px;
++    }
++  }
++
++  @media (max-width: 1024px) {
++    margin-top: 20px;
++    flex-wrap: wrap;
++    justify-content: center;
++
++    li {
++      flex: 1 1 calc(50% - 8px);
++    }
++
++    a {
++      width: 100%;
++      justify-content: center;
++      box-sizing: border-box;
++    }
++  }
++}
++
++#spacer {
++  height: 88px;
++  border-top: 1px solid var(--border);
++  @media (max-width: 1024px) {
++    height: 48px;
++  }
++}
++
++.ticks {
++  position: relative;
++  width: 100%;
++
++  &::before,
++  &::after {
++    content: "";
++    position: absolute;
++    top: -4.5px;
++    border: 5px solid transparent;
++  }
++
++  &::before {
++    left: 0;
++    border-left-color: var(--border);
++  }
++  &::after {
++    right: 0;
++    border-right-color: var(--border);
++  }
++}
+diff --git a/src/web/src/App.test.tsx b/src/web/src/App.test.tsx
+new file mode 100644
+index 0000000..33096cd
+--- /dev/null
++++ b/src/web/src/App.test.tsx
+@@ -0,0 +1,11 @@
++import { render, screen } from "@testing-library/react";
++import { expect, it } from "vitest";
++import App from "./App";
++
++it("renders the app", () => {
++  render(<App />);
++
++  expect(
++    screen.getByRole("heading", { name: /get started/i }),
++  ).toBeInTheDocument();
++});
+diff --git a/src/web/src/App.tsx b/src/web/src/App.tsx
+new file mode 100644
+index 0000000..b4f964f
+--- /dev/null
++++ b/src/web/src/App.tsx
+@@ -0,0 +1,130 @@
++import { useState } from "react";
++import heroImg from "./assets/hero.png";
++import reactLogo from "./assets/react.svg";
++import viteLogo from "./assets/vite.svg";
++import "./App.css";
++
++function App() {
++  const [count, setCount] = useState(0);
++
++  return (
++    <>
++      <section id="center">
++        <div className="hero">
++          <img src={heroImg} className="base" width="170" height="179" alt="" />
++          <img src={reactLogo} className="framework" alt="React logo" />
++          <img src={viteLogo} className="vite" alt="Vite logo" />
++        </div>
++        <div>
++          <h1>Get started</h1>
++          <p>
++            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
++          </p>
++        </div>
++        <button
++          type="button"
++          className="counter"
++          onClick={() => setCount((count) => count + 1)}
++        >
++          Count is {count}
++        </button>
++      </section>
++
++      <div className="ticks"></div>
++
++      <section id="next-steps">
++        <div id="docs">
++          <svg className="icon" role="presentation" aria-hidden="true">
++            <use href="/icons.svg#documentation-icon"></use>
++          </svg>
++          <h2>Documentation</h2>
++          <p>Your questions, answered</p>
++          <ul>
++            <li>
++              <a href="https://vite.dev/" target="_blank" rel="noopener">
++                <img className="logo" src={viteLogo} alt="" />
++                Explore Vite
++              </a>
++            </li>
++            <li>
++              <a href="https://react.dev/" target="_blank" rel="noopener">
++                <img className="button-icon" src={reactLogo} alt="" />
++                Learn more
++              </a>
++            </li>
++          </ul>
++        </div>
++        <div id="social">
++          <svg className="icon" role="presentation" aria-hidden="true">
++            <use href="/icons.svg#social-icon"></use>
++          </svg>
++          <h2>Connect with us</h2>
++          <p>Join the Vite community</p>
++          <ul>
++            <li>
++              <a
++                href="https://github.com/vitejs/vite"
++                target="_blank"
++                rel="noopener"
++              >
++                <svg
++                  className="button-icon"
++                  role="presentation"
++                  aria-hidden="true"
++                >
++                  <use href="/icons.svg#github-icon"></use>
++                </svg>
++                GitHub
++              </a>
++            </li>
++            <li>
++              <a href="https://chat.vite.dev/" target="_blank" rel="noopener">
++                <svg
++                  className="button-icon"
++                  role="presentation"
++                  aria-hidden="true"
++                >
++                  <use href="/icons.svg#discord-icon"></use>
++                </svg>
++                Discord
++              </a>
++            </li>
++            <li>
++              <a href="https://x.com/vite_js" target="_blank" rel="noopener">
++                <svg
++                  className="button-icon"
++                  role="presentation"
++                  aria-hidden="true"
++                >
++                  <use href="/icons.svg#x-icon"></use>
++                </svg>
++                X.com
++              </a>
++            </li>
++            <li>
++              <a
++                href="https://bsky.app/profile/vite.dev"
++                target="_blank"
++                rel="noopener"
++              >
++                <svg
++                  className="button-icon"
++                  role="presentation"
++                  aria-hidden="true"
++                >
++                  <use href="/icons.svg#bluesky-icon"></use>
++                </svg>
++                Bluesky
++              </a>
++            </li>
++          </ul>
++        </div>
++      </section>
++
++      <div className="ticks"></div>
++      <section id="spacer"></section>
++    </>
++  );
++}
++
++export default App;
+diff --git a/src/web/src/index.css b/src/web/src/index.css
+new file mode 100644
+index 0000000..b19f7bd
+--- /dev/null
++++ b/src/web/src/index.css
+@@ -0,0 +1,111 @@
++:root {
++  --text: #6b6375;
++  --text-h: #08060d;
++  --bg: #fff;
++  --border: #e5e4e7;
++  --code-bg: #f4f3ec;
++  --accent: #aa3bff;
++  --accent-bg: rgba(170, 59, 255, 0.1);
++  --accent-border: rgba(170, 59, 255, 0.5);
++  --social-bg: rgba(244, 243, 236, 0.5);
++  --shadow:
++    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
++
++  --sans: system-ui, "Segoe UI", Roboto, sans-serif;
++  --heading: system-ui, "Segoe UI", Roboto, sans-serif;
++  --mono: ui-monospace, Consolas, monospace;
++
++  font: 18px / 145% var(--sans);
++  letter-spacing: 0.18px;
++  color-scheme: light dark;
++  color: var(--text);
++  background: var(--bg);
++  font-synthesis: none;
++  text-rendering: optimizeLegibility;
++  -webkit-font-smoothing: antialiased;
++  -moz-osx-font-smoothing: grayscale;
++
++  @media (max-width: 1024px) {
++    font-size: 16px;
++  }
++}
++
++@media (prefers-color-scheme: dark) {
++  :root {
++    --text: #9ca3af;
++    --text-h: #f3f4f6;
++    --bg: #16171d;
++    --border: #2e303a;
++    --code-bg: #1f2028;
++    --accent: #c084fc;
++    --accent-bg: rgba(192, 132, 252, 0.15);
++    --accent-border: rgba(192, 132, 252, 0.5);
++    --social-bg: rgba(47, 48, 58, 0.5);
++    --shadow:
++      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
++  }
++
++  #social .button-icon {
++    filter: invert(1) brightness(2);
++  }
++}
++
++#root {
++  width: 1126px;
++  max-width: 100%;
++  margin: 0 auto;
++  text-align: center;
++  border-inline: 1px solid var(--border);
++  min-height: 100svh;
++  display: flex;
++  flex-direction: column;
++  box-sizing: border-box;
++}
++
++body {
++  margin: 0;
++}
++
++h1,
++h2 {
++  font-family: var(--heading);
++  font-weight: 500;
++  color: var(--text-h);
++}
++
++h1 {
++  font-size: 56px;
++  letter-spacing: -1.68px;
++  margin: 32px 0;
++  @media (max-width: 1024px) {
++    font-size: 36px;
++    margin: 20px 0;
++  }
++}
++h2 {
++  font-size: 24px;
++  line-height: 118%;
++  letter-spacing: -0.24px;
++  margin: 0 0 8px;
++  @media (max-width: 1024px) {
++    font-size: 20px;
++  }
++}
++p {
++  margin: 0;
++}
++
++code,
++.counter {
++  font-family: var(--mono);
++  display: inline-flex;
++  border-radius: 4px;
++  color: var(--text-h);
++}
++
++code {
++  font-size: 15px;
++  line-height: 135%;
++  padding: 4px 8px;
++  background: var(--code-bg);
++}
+diff --git a/src/web/src/main.tsx b/src/web/src/main.tsx
+new file mode 100644
+index 0000000..896d7cc
+--- /dev/null
++++ b/src/web/src/main.tsx
+@@ -0,0 +1,16 @@
++import { StrictMode } from "react";
++import { createRoot } from "react-dom/client";
++import "./index.css";
++import App from "./App.tsx";
++
++const rootElement = document.getElementById("root");
++
++if (!rootElement) {
++  throw new Error("Missing #root element");
++}
++
++createRoot(rootElement).render(
++  <StrictMode>
++    <App />
++  </StrictMode>,
++);
+diff --git a/src/web/src/setupTests.ts b/src/web/src/setupTests.ts
+new file mode 100644
+index 0000000..f149f27
+--- /dev/null
++++ b/src/web/src/setupTests.ts
+@@ -0,0 +1 @@
++import "@testing-library/jest-dom/vitest";
+diff --git a/src/web/tsconfig.app.json b/src/web/tsconfig.app.json
+new file mode 100644
+index 0000000..f30dcd5
+--- /dev/null
++++ b/src/web/tsconfig.app.json
+@@ -0,0 +1,29 @@
++{
++  "extends": "../../tsconfig.base.json",
++  "compilerOptions": {
++    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
++    "target": "ES2023",
++    "useDefineForClassFields": true,
++    "lib": ["ES2023", "DOM", "DOM.Iterable"],
++    "module": "ESNext",
++    "types": ["vite/client"],
++    "skipLibCheck": true,
++
++    /* Bundler mode */
++    "moduleResolution": "bundler",
++    "allowImportingTsExtensions": true,
++    "verbatimModuleSyntax": true,
++    "moduleDetection": "force",
++    "noEmit": true,
++    "jsx": "react-jsx",
++
++    /* Linting */
++    "strict": true,
++    "noUnusedLocals": true,
++    "noUnusedParameters": true,
++    "erasableSyntaxOnly": true,
++    "noFallthroughCasesInSwitch": true,
++    "noUncheckedSideEffectImports": true
++  },
++  "include": ["src"]
++}
+diff --git a/src/web/tsconfig.json b/src/web/tsconfig.json
+new file mode 100644
+index 0000000..1ffef60
+--- /dev/null
++++ b/src/web/tsconfig.json
+@@ -0,0 +1,7 @@
++{
++  "files": [],
++  "references": [
++    { "path": "./tsconfig.app.json" },
++    { "path": "./tsconfig.node.json" }
++  ]
++}
+diff --git a/src/web/tsconfig.node.json b/src/web/tsconfig.node.json
+new file mode 100644
+index 0000000..48ce9f1
+--- /dev/null
++++ b/src/web/tsconfig.node.json
+@@ -0,0 +1,27 @@
++{
++  "extends": "../../tsconfig.base.json",
++  "compilerOptions": {
++    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
++    "target": "ES2023",
++    "lib": ["ES2023"],
++    "module": "ESNext",
++    "types": ["node"],
++    "skipLibCheck": true,
++
++    /* Bundler mode */
++    "moduleResolution": "bundler",
++    "allowImportingTsExtensions": true,
++    "verbatimModuleSyntax": true,
++    "moduleDetection": "force",
++    "noEmit": true,
++
++    /* Linting */
++    "strict": true,
++    "noUnusedLocals": true,
++    "noUnusedParameters": true,
++    "erasableSyntaxOnly": true,
++    "noFallthroughCasesInSwitch": true,
++    "noUncheckedSideEffectImports": true
++  },
++  "include": ["vite.config.ts"]
++}
+diff --git a/src/web/vite.config.ts b/src/web/vite.config.ts
+new file mode 100644
+index 0000000..f16e2be
+--- /dev/null
++++ b/src/web/vite.config.ts
+@@ -0,0 +1,7 @@
++import react from "@vitejs/plugin-react";
++import { defineConfig } from "vite";
++
++// https://vite.dev/config/
++export default defineConfig({
++  plugins: [react()],
++});
+diff --git a/src/web/vitest.config.ts b/src/web/vitest.config.ts
+new file mode 100644
+index 0000000..87c3e42
+--- /dev/null
++++ b/src/web/vitest.config.ts
+@@ -0,0 +1,8 @@
++import { defineConfig } from "vitest/config";
++
++export default defineConfig({
++  test: {
++    environment: "jsdom",
++    setupFiles: ["./src/setupTests.ts"],
++  },
++});
+diff --git a/tsconfig.base.json b/tsconfig.base.json
+new file mode 100644
+index 0000000..22bbef8
+--- /dev/null
++++ b/tsconfig.base.json
+@@ -0,0 +1,12 @@
++{
++  "$schema": "https://json.schemastore.org/tsconfig",
++  "compilerOptions": {
++    "strict": true,
++    "allowJs": false,
++    "checkJs": false,
++    "noUncheckedIndexedAccess": true,
++    "exactOptionalPropertyTypes": true,
++    "forceConsistentCasingInFileNames": true,
++    "skipLibCheck": true
++  }
++}

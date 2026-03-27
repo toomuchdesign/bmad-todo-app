@@ -71,7 +71,7 @@ NFR9: No formal WCAG target is required for MVP, but regressions that block basi
 - Tooling: Biome for lint/format; TypeScript-only (`allowJs: false`).
 - API contract sharing: OpenAPI is generated from API route schemas and committed as `src/api/openapi.json`.
 - Contract automation: root scripts include `build:openapi` and `build:api-types`; changes to API schemas update OpenAPI and derived web client/types in the same PR.
-- Git hooks: use `simple-git-hooks` (not Husky) to keep contract artifacts in sync at commit time.
+- Git hooks: use `simple-git-hooks` to keep contract artifacts in sync at commit time.
 - CI enforcement: CI regenerates OpenAPI + web types and fails if `git diff --exit-code` shows uncommitted contract artifacts.
 - Testing: API integration tests via `fastify.inject()`; web tests via Vitest + React Testing Library; E2E via Playwright.
 - Determinism: DB reset via scripts/DB truncation; no public reset endpoint.

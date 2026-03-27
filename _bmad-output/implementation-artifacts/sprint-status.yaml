@@ -1,5 +1,5 @@
 # generated: 2026-03-26 19:38:27
-# last_updated: 2026-03-27 11:35:19
+# last_updated: 2026-03-27 22:06:30
 # project: bmad-todo
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26 19:38:27
-last_updated: 2026-03-27 11:35:19
+last_updated: 2026-03-27 22:06:30
 project: bmad-todo
 project_key: NOKEY
 tracking_system: file-system
@@ -43,7 +43,7 @@ story_location: "_bmad-output/implementation-artifacts"
 
 development_status:
   epic-1: in-progress
-  1-1-initialize-monorepo-workspaces-and-tooling: ready-for-dev
+  1-1-initialize-monorepo-workspaces-and-tooling: done
   1-2-provision-local-postgres-drizzle-baseline-and-todos-schema: backlog
   1-3-implement-shared-contracts-todo-type-constants-apierrorresponse: backlog
   1-4-implement-get-todos-with-ordering-soft-delete-filtering-and-error-contract: backlog
