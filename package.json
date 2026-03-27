@@ -1,11 +1,38 @@
 {
   "name": "bmad-todo",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "src/*"
+  ],
+  "engines": {
+    "node": ">=22.12"
   },
-  "author": "",
-  "license": "ISC",
-  "description": ""
+  "scripts": {
+    "prepare": "simple-git-hooks",
+    "dev": "concurrently -k --kill-others-on-fail -s first -n web,api \"npm run dev:web\" \"npm run dev:api\"",
+    "dev:web": "npm -w src/web run dev",
+    "dev:api": "npm -w src/api run dev",
+    "build": "npm -w src/shared run build && npm -w src/api run build && npm -w src/web run build",
+    "build:openapi": "npm -w src/api run build:openapi",
+    "build:api-types": "npm -w src/web run build:api-types",
+    "type:check": "npm -w src/shared run type:check && npm -w src/api run type:check && npm -w src/web run type:check",
+    "biome:check": "biome check .",
+    "biome:fix": "biome check --write .",
+    "source:check": "npm run biome:check && npm run type:check",
+    "test": "concurrently -k --kill-others-on-fail -s first -n web,api \"npm run test:web\" \"npm run test:api\"",
+    "test:ci": "npm -w src/web run test:ci && npm -w src/api run test:ci",
+    "test:web": "npm -w src/web run test",
+    "test:api": "npm -w src/api run test",
+    "test:e2e": "npm -w src/web run test:e2e"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npm run test:ci && npm run build:openapi && npm run build:api-types && git add src/api/openapi.json src/web/src/api/generated"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "concurrently": "^9.2.1",
+    "simple-git-hooks": "^2.12.1",
+    "typescript": "6.0.2"
+  }
 }

@@ -1,0 +1,18 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "bmad-todo API",
+    "version": "0.0.0"
+  },
+  "paths": {
+    "/todos": {
+      "get": {
+        "responses": {
+          "501": {
+            "description": "Not implemented"
+          }
+        }
+      }
+    }
+  }
+}

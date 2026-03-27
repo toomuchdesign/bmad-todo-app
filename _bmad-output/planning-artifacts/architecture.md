@@ -178,7 +178,7 @@ Example hook configuration shape (to be applied in root `package.json` when scaf
     "build:api-types": "npm -w src/web run build:api-types"
   },
   "simple-git-hooks": {
-    "pre-commit": "npm run build:openapi && npm run build:api-types && git add src/api/openapi.json src/web/src/api/generated"
+    "pre-commit": "npm run test:ci && npm run build:openapi && npm run build:api-types && git add src/api/openapi.json src/web/src/api/generated"
   }
 }
 ```
