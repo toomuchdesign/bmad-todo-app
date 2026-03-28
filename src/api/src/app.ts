@@ -1,12 +1,18 @@
 import swagger from "@fastify/swagger";
+import swaggerUi from "@fastify/swagger-ui";
 import type { JsonSchemaToTsProvider } from "@fastify/type-provider-json-schema-to-ts";
 import Fastify, {
   type FastifyInstance,
   type FastifyServerOptions,
 } from "fastify";
+import { closeDb } from "./db/client.js";
+import errorHandlerPlugin from "./plugins/error-handler.js";
+import requestIdPlugin from "./plugins/request-id.js";
 import todosRoutes from "./routes/todos.js";
 
-export function buildApp(options: FastifyServerOptions = {}): FastifyInstance {
+export async function buildApp(
+  options: FastifyServerOptions = {},
+): Promise<FastifyInstance> {
   const app = Fastify({
     logger: true,
     ...options,
@@ -21,19 +27,21 @@ export function buildApp(options: FastifyServerOptions = {}): FastifyInstance {
     },
   });
 
-  app.get(
-    "/openapi.json",
-    {
-      schema: {
-        hide: true,
-      },
-    },
-    async (_request, reply) => {
-      return reply.send(app.swagger());
-    },
-  );
+  app.register(swaggerUi, {
+    routePrefix: "/documentation",
+  });
+
+  await requestIdPlugin(app, {});
+  await errorHandlerPlugin(app, {});
 
   app.register(todosRoutes);
+
+  app.addHook("onClose", async () => {
+    await closeDb();
+  });
+
+  await app.ready();
+
   return app;
 }
 

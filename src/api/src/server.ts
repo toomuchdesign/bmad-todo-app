@@ -1,7 +1,7 @@
 import buildApp from "./app.js";
 import { getConfig } from "./config.js";
 
-const app = buildApp();
+const app = await buildApp();
 
 try {
   const config = getConfig();

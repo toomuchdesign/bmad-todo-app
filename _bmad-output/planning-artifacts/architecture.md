@@ -251,8 +251,8 @@ Notes:
 - **Tests:** reset state at the database level.
   - Use a dedicated test database via `DATABASE_URL_TEST` (or separate `.env.test`) to prevent wiping dev data.
   - API Vitest loads `src/api/.env.test` by default; keep the test DB connection string there.
-  - Before each test (or test file): `TRUNCATE TABLE todos;` (and/or `CASCADE` if needed later).
-  - API integration tests should use the same helper the reset script uses (shared `resetTodos()`), so behavior stays consistent.
+  - Before each test: run centralized cleanup from `src/api/vitest.setup.ts` (`cleanupTestDatabase` from `src/api/test/test-utils/db.ts`).
+  - Add new tables to the cleanup list in `src/api/test/test-utils/db.ts` as the schema grows.
 - **Local usage:** provide a local script to clear todos in the dev database.
   - Implement as a Node/TS script in `src/api/scripts/reset-todos.ts` that connects via `DATABASE_URL` and truncates `todos`.
   - Expose it via an npm script in the API workspace and (optionally) a root convenience script that runs the workspace script.
@@ -288,6 +288,7 @@ To keep quality high while moving quickly, every story/task is considered **done
   - `id`: Postgres `uuid`, generated in-app via `crypto.randomUUID()`
   - `created_at`, `updated_at`: `timestamptz`
   - Soft delete: `deleted_at timestamptz null`
+- **Timestamp wire format:** API responses expose `createdAt`, `updatedAt`, and `deletedAt` as ISO RFC 3339 date-time strings (UTC, `Z` suffix).
 - **Timestamp ownership:** server sets `created_at`/`updated_at` on create and sets `updated_at` on any update (text/completed/delete).
 - **List semantics:**
   - Default list excludes soft-deleted rows (`deleted_at is null`)
@@ -319,6 +320,7 @@ To keep quality high while moving quickly, every story/task is considered **done
 - **Route schema definitions:**
   - Routes should define strict input/output JSON schema definitions
   - Such schemas should be enforced and reused in the type handler using: `@fastify/type-provider-json-schema-to-ts`
+  - Canonical entity building blocks should be centralized under `src/api/src/definitions` and export both JSON schemas and `FromSchema` inferred TS types for reuse across routes/tests.
 
 - **OpenAPI contract:**
   - OpenAPI generated/exposed with `@fastify/swagger` and `@fastify/swagger-ui`
@@ -326,6 +328,7 @@ To keep quality high while moving quickly, every story/task is considered **done
 
 - **JSON field naming:** `camelCase` in API JSON requests/responses
   - DB columns remain `snake_case` (Drizzle maps between DB and TS types)
+- **Date-time field format:** all Todo date fields use JSON Schema / OpenAPI `format: date-time` (RFC 3339).
 
 - **Success response shapes (direct resources; no `{ data: ... }` wrapper):**
   - `GET /todos` → `{ todos: Todo[] }`
@@ -458,8 +461,8 @@ bmad-todo/
 │   │   ├── tsconfig.json
 │   │   └── src/
 │   │       ├── constants.ts                # exports MAX_TODO_TEXT_LENGTH = 200
-│   │       ├── todo.ts                     # Todo type + helpers
-│   │       └── api-error.ts                # ApiErrorResponse type
+│   │       ├── types.ts                    # Todo + ApiErrorResponse shared contracts
+│   │       └── index.ts                    # shared exports
 │   │
 │   ├── api/
 │   │   ├── package.json
@@ -472,26 +475,31 @@ bmad-todo/
 │   │   │   ├── server.ts                   # Fastify bootstrap + listen
 │   │   │   ├── app.ts                      # Fastify instance factory (used by tests)
 │   │   │   ├── plugins/
-│   │   │   │   ├── cors.ts                 # @fastify/cors config (origin restricted)
-│   │   │   │   ├── helmet.ts               # @fastify/helmet config
 │   │   │   │   ├── request-id.ts           # x-request-id generation/echo
 │   │   │   │   └── error-handler.ts        # maps errors -> ApiErrorResponse
 │   │   │   ├── db/
 │   │   │   │   ├── client.ts               # pg pool + drizzle instance
+│   │   │   │   ├── todos.ts                # db query mapping for todos
 │   │   │   │   └── schema.ts               # drizzle schema (todos table)
+│   │   │   ├── definitions/
+│   │   │   │   └── todo.ts                 # canonical Todo JSON schema + inferred type
 │   │   │   ├── routes/
-│   │   │   │   └── todos.ts                # GET/POST/PATCH/DELETE /todos
-│   │   │   └── validation/
-│   │   │       └── todo-text.ts            # trim + max length + empty checks
+│   │   │   │   ├── README.md
+│   │   │   │   ├── schemas.ts              # route response schemas
+│   │   │   │   └── todos.ts                # GET /todos
 │   │   ├── drizzle.config.ts               # drizzle-kit config
 │   │   ├── drizzle/
 │   │   │   └── migrations/                 # generated migrations
 │   │   ├── scripts/
-│   │   │   └── reset-todos.ts               # local/test utility (truncate todos); NOT an API endpoint
+│   │   │   ├── build-openapi.ts            # openapi artifact generation script
+│   │   │   └── reset-todos.ts              # local/test utility (truncate todos); NOT an API endpoint
 │   │   └── test/
-│   │       ├── helpers/
-│   │       │   └── build-app.ts            # creates Fastify app for inject tests
-│   │       └── todos.test.ts               # vitest + fastify.inject()
+│   │       ├── app.test.ts
+│   │       ├── todos.get.test.ts
+│   │       └── test-utils/
+│   │           ├── db.ts                   # db helpers + global cleanup helper
+│   │           ├── todos.ts                # todos seed/drop helpers
+│   │           └── index.ts                # test-utils barrel exports
 │   │
 │   └── web/
 │       ├── package.json
@@ -501,11 +509,10 @@ bmad-todo/
 │       ├── public/
 │       ├── src/
 │       │   ├── main.tsx
-│       │   ├── app.tsx
+│       │   ├── App.tsx
+│       │   ├── App.test.tsx
 │       │   ├── api/
-│       │   │   ├── apiClient.ts            # typed fetch wrapper + error mapping
-│       │   │   └── todosApi.ts             # calls to /todos endpoints
-│       │   │   └── generated/              # optional: OpenAPI-generated types/client (kept in sync via hook/CI)
+│       │   │   └── generated/              # OpenAPI-generated types/client
 │       │   ├── hooks/
 │       │   │   └── useTodos.ts             # React state + load/retry + mutations
 │       │   ├── components/
@@ -552,7 +559,7 @@ bmad-todo/
 - **FR3 edit:** `TodoItem.tsx` inline edit + API `PATCH /todos/:id`.
 - **FR4 toggle:** `TodoItem.tsx` + API `PATCH /todos/:id`.
 - **FR5 soft delete:** `TodoItem.tsx` delete action + API `DELETE /todos/:id` + DB `deleted_at`.
-- **FR22–FR23 error contract:** `src/shared/src/api-error.ts` + `src/api/src/plugins/error-handler.ts`.
+- **FR22–FR23 error contract:** `src/shared/src/types.ts` + `src/api/src/plugins/error-handler.ts`.
 
 ## Architecture Validation Results
 

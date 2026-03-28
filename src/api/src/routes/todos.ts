@@ -1,19 +1,17 @@
-import type { FastifyPluginAsyncJsonSchemaToTs } from "@fastify/type-provider-json-schema-to-ts";
+import type { FastifyPluginAsync } from "fastify";
+import { listTodosFromDatabase } from "../db/todos.js";
 import { getTodosRouteSchema } from "./schemas.js";
 
-const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
+const todosRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/todos",
     {
       schema: getTodosRouteSchema,
     },
     async (_request, reply) => {
-      const response = {
-        code: "NOT_IMPLEMENTED",
-        message: "Not implemented",
-      };
+      const todos = await listTodosFromDatabase();
 
-      return reply.code(501).send(response);
+      return reply.code(200).send({ todos });
     },
   );
 };

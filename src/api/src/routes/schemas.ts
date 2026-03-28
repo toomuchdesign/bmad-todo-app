@@ -1,13 +1,10 @@
-export const todoSchema = {
-  type: "object",
-  required: ["id", "text", "completed", "createdAt", "updatedAt"],
-  properties: {
-    id: { type: "string" },
-    text: { type: "string" },
-    completed: { type: "boolean" },
-    createdAt: { type: "string" },
-    updatedAt: { type: "string" },
-    deletedAt: { anyOf: [{ type: "string" }, { type: "null" }] },
+import { todoSchema } from "../definitions/todo.js";
+
+const responseHeadersSchema = {
+  "x-request-id": {
+    required: true,
+    type: "string",
+    description: "Request correlation identifier",
   },
 } as const;
 
@@ -39,10 +36,18 @@ export const getTodosRouteSchema = {
   summary: "List todos",
   response: {
     200: {
-      type: "array",
-      items: todoSchema,
+      headers: responseHeadersSchema,
+      type: "object",
+      required: ["todos"],
+      properties: {
+        todos: {
+          type: "array",
+          items: todoSchema,
+        },
+      },
     },
-    501: {
+    500: {
+      headers: responseHeadersSchema,
       ...apiErrorResponseSchema,
     },
   },

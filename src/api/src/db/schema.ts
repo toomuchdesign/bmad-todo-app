@@ -4,7 +4,13 @@ export const todos = pgTable("todos", {
   id: uuid("id").primaryKey().notNull(),
   text: text("text").notNull(),
   completed: boolean("completed").notNull().default(false),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
+  updatedAt: timestamp("updated_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "date" }),
 });

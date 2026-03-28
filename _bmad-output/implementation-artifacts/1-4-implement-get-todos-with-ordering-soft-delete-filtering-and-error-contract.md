@@ -1,6 +1,6 @@
 # Story 1.4: Implement GET /todos with ordering, soft-delete filtering, and error contract
 
-Status: ready-for-dev
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -29,47 +29,52 @@ so that I can immediately see what I need to do.
 
 ## Tasks / Subtasks
 
-- [ ] Implement DB-backed `GET /todos` route behavior in `src/api/src/routes/todos.ts` (AC: 1)
-  - [ ] Replace temporary `501 NOT_IMPLEMENTED` response
-  - [ ] Query `todos` from Postgres via Drizzle, filtering out soft-deleted rows (`deleted_at IS NULL`)
-  - [ ] Enforce newest-first sort (`created_at DESC`)
-  - [ ] Return `200` body shape as `{ todos: Todo[] }` (no array root, no extra envelope)
+- [x] Implement DB-backed `GET /todos` route behavior in `src/api/src/routes/todos.ts` (AC: 1)
+  - [x] Replace temporary `501 NOT_IMPLEMENTED` response
+  - [x] Query `todos` from Postgres via Drizzle, filtering out soft-deleted rows (`deleted_at IS NULL`)
+  - [x] Enforce newest-first sort (`created_at DESC`)
+  - [x] Return `200` body shape as `{ todos: Todo[] }` (no array root, no extra envelope)
 
-- [ ] Wire API runtime DB access pattern in API workspace (AC: 1)
-  - [ ] Add a DB client module under `src/api/src/db` (or equivalent existing pattern) and consume validated config
-  - [ ] Keep DB naming (`snake_case`) mapped to API JSON (`camelCase`) without leaking DB fields
-  - [ ] Ensure timestamp fields returned to API clients are serialized as strings compatible with shared `Todo`
+- [x] Wire API runtime DB access pattern in API workspace (AC: 1)
+  - [x] Add a DB client module under `src/api/src/db` (or equivalent existing pattern) and consume validated config
+  - [x] Keep DB naming (`snake_case`) mapped to API JSON (`camelCase`) without leaking DB fields
+  - [x] Ensure timestamp fields returned to API clients are serialized as strings compatible with shared `Todo`
 
-- [ ] Implement request ID propagation for all responses (AC: 2)
-  - [ ] Add/register request-id handling so every response includes `x-request-id`
-  - [ ] Reuse inbound `x-request-id` when provided, otherwise generate one
-  - [ ] Keep behavior centralized (plugin/hook), not duplicated per route
+- [x] Implement request ID propagation for all responses (AC: 2)
+  - [x] Add/register request-id handling so every response includes `x-request-id`
+  - [x] Reuse inbound `x-request-id` when provided, otherwise generate one
+  - [x] Keep behavior centralized (plugin/hook), not duplicated per route
 
-- [ ] Implement centralized unexpected-error mapping to shared error contract (AC: 3)
-  - [ ] Add/register error handling that emits stable `ApiErrorResponse`
-  - [ ] Map unexpected errors to `500` with `code = INTERNAL_ERROR` and user-displayable `message`
-  - [ ] Include `requestId` in error body when available
+- [x] Implement centralized unexpected-error mapping to shared error contract (AC: 3)
+  - [x] Add/register error handling that emits stable `ApiErrorResponse`
+  - [x] Map unexpected errors to `500` with `code = INTERNAL_ERROR` and user-displayable `message`
+  - [x] Include `requestId` in error body when available
 
-- [ ] Align route schemas and OpenAPI generation with implemented behavior (AC: 1, 2, 3)
-  - [ ] Update route response schema for `GET /todos` to `200: { todos: Todo[] }`
-  - [ ] Add error schemas/statuses needed for this story (at minimum `500` shared error contract)
-  - [ ] Keep `@fastify/type-provider-json-schema-to-ts` type inference consistent with runtime response
-  - [ ] Regenerate and commit `src/api/openapi.json`
+- [x] Align route schemas and OpenAPI generation with implemented behavior (AC: 1, 2, 3)
+  - [x] Update route response schema for `GET /todos` to `200: { todos: Todo[] }`
+  - [x] Add error schemas/statuses needed for this story (at minimum `500` shared error contract)
+  - [x] Keep `@fastify/type-provider-json-schema-to-ts` type inference consistent with runtime response
+  - [x] Regenerate and commit `src/api/openapi.json`
 
-- [ ] Add/upgrade integration tests for API contract and behavior (AC: 1, 2, 3)
-  - [ ] Replace temporary `501` test with green-path `200` contract test for `{ todos: Todo[] }`
-  - [ ] Add test proving soft-deleted rows are excluded
-  - [ ] Add test proving newest-first ordering by `createdAt`
-  - [ ] Add test proving `x-request-id` header exists on success and on error
-  - [ ] Add test proving unexpected failure returns stable `ApiErrorResponse` including `requestId`
-  - [ ] Keep Vitest style nested `describe` → `it` and AAA structure
+- [x] Add/upgrade integration tests for API contract and behavior (AC: 1, 2, 3)
+  - [x] Replace temporary `501` test with green-path `200` contract test for `{ todos: Todo[] }`
+  - [x] Add test proving soft-deleted rows are excluded
+  - [x] Add test proving newest-first ordering by `createdAt`
+  - [x] Add test proving `x-request-id` header exists on success and on error
+  - [x] Add test proving unexpected failure returns stable `ApiErrorResponse` including `requestId`
+  - [x] Keep Vitest style nested `describe` → `it` and AAA structure
 
-- [ ] Validate and gate quality before handoff (supports AC: 1, 2, 3)
-  - [ ] Run `npm run type:check`
-  - [ ] Run `npm run biome:check`
-  - [ ] Run `npm run test:ci`
-  - [ ] Run `npm run build:openapi`
-  - [ ] Ensure generated contract artifacts are committed
+- [x] Validate and gate quality before handoff (supports AC: 1, 2, 3)
+  - [x] Run `npm run type:check`
+  - [x] Run `npm run biome:check`
+  - [x] Run `npm run test:ci`
+  - [x] Run `npm run build:openapi`
+  - [x] Ensure generated contract artifacts are committed
+
+### Review Findings
+
+- [x] [Review][Patch] Document `x-request-id` response headers in route/OpenAPI contract [src/api/src/routes/schemas.ts:29]
+- [x] [Review][Patch] Add error-path test for generated `x-request-id` when inbound header is absent [src/api/test/todos.get.test.ts:95]
 
 ## Dev Notes
 
@@ -173,15 +178,36 @@ GPT-5.3-Codex
 
 ### Debug Log References
 
-- `git --no-pager log --oneline -n 5`
-- `git --no-pager show --name-only --oneline -n 3`
+- `npm -w src/api run test:ci`
+- `npm run build:openapi`
+- `npm run type:check`
+- `npm run biome:check`
+- `npm run source:fix`
+- `npm run test:ci`
 
 ### Completion Notes List
 
-- Story context prepared with implementation guardrails for API contract, request-id propagation, error handling, and deterministic tests.
-- Scope constrained to Story 1.4 only (GET path + cross-cutting API contract behavior needed by AC).
+- Replaced placeholder `GET /todos` handler with DB-backed implementation returning `{ todos: Todo[] }`.
+- Added DB client/query modules to fetch non-deleted todos ordered by `created_at DESC` and map DB timestamps to API ISO strings.
+- Implemented centralized request-id propagation and centralized unexpected error mapping in app bootstrap, producing `500` `ApiErrorResponse` with `INTERNAL_ERROR` and `requestId`.
+- Updated route schemas and regenerated `src/api/openapi.json` to reflect `200 { todos: Todo[] }` and shared `500` error contract.
+- Reworked API integration tests to verify success contract, soft-delete filtering, ordering, request-id behavior on success/error, and stable unexpected-error mapping.
+- Ran and passed all quality gates: `npm run type:check`, `npm run biome:check`, `npm run test:ci`, and `npm run build:openapi`.
 
 ### File List
 
 - \_bmad-output/implementation-artifacts/1-4-implement-get-todos-with-ordering-soft-delete-filtering-and-error-contract.md
 - \_bmad-output/implementation-artifacts/sprint-status.yaml
+- src/api/openapi.json
+- src/api/src/app.ts
+- src/api/src/db/client.ts
+- src/api/src/db/todos.ts
+- src/api/src/plugins/error-handler.ts
+- src/api/src/plugins/request-id.ts
+- src/api/src/routes/schemas.ts
+- src/api/src/routes/todos.ts
+- src/api/test/todos.get.test.ts
+
+## Change Log
+
+- 2026-03-28: Implemented Story 1.4 API read path and cross-cutting contracts (DB-backed `GET /todos`, request-id propagation, centralized error contract), updated OpenAPI, and passed all validation gates.

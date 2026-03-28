@@ -7,11 +7,9 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const apiDir = path.resolve(scriptDir, "..");
 const outFile = path.resolve(apiDir, "openapi.json");
 
-const app = buildApp({ logger: false });
+const app = await buildApp({ logger: false });
 
 try {
-  await app.ready();
-
   const openapi = app.swagger();
   await fs.writeFile(outFile, `${JSON.stringify(openapi, null, 2)}\n`, "utf8");
 } finally {
