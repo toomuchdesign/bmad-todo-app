@@ -316,6 +316,10 @@ To keep quality high while moving quickly, every story/task is considered **done
   - `PATCH /todos/:id` (update text and/or completion)
   - `DELETE /todos/:id` (soft delete)
 
+- **Route schema definitions:**
+  - Routes should define strict input/output JSON schema definitions
+  - Such schemas should be enforced and reused in the type handler using: `@fastify/type-provider-json-schema-to-ts`
+
 - **OpenAPI contract:**
   - OpenAPI generated/exposed with `@fastify/swagger` and `@fastify/swagger-ui`
   - generated from route schemas and committed at `src/api/openapi.json`.

@@ -1,4 +1,5 @@
 import swagger from "@fastify/swagger";
+import type { JsonSchemaToTsProvider } from "@fastify/type-provider-json-schema-to-ts";
 import Fastify, {
   type FastifyInstance,
   type FastifyServerOptions,
@@ -9,7 +10,7 @@ export function buildApp(options: FastifyServerOptions = {}): FastifyInstance {
   const app = Fastify({
     logger: true,
     ...options,
-  });
+  }).withTypeProvider<JsonSchemaToTsProvider>();
 
   app.register(swagger, {
     openapi: {
