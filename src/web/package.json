@@ -14,7 +14,7 @@
     "build:api-types": "node scripts/build-api-types.mjs"
   },
   "dependencies": {
-    "@bmad-todo/shared": "0.0.0",
+    "@bmad-todo/shared": "*",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
