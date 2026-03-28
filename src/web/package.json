@@ -1,11 +1,11 @@
 {
-  "name": "web",
+  "name": "@bmad-todo/web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "rimraf ./dist && vite build",
     "start": "vite preview",
     "test": "vitest --watch",
     "test:ci": "npm run test -- --run",
@@ -14,6 +14,7 @@
     "build:api-types": "node scripts/build-api-types.mjs"
   },
   "dependencies": {
+    "@bmad-todo/shared": "0.0.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

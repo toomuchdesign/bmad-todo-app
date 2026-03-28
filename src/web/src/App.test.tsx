@@ -10,6 +10,9 @@ describe("App", () => {
       expect(
         screen.getByRole("heading", { name: /get started/i }),
       ).toBeInTheDocument();
+      expect(
+        screen.getByText(/todo max length: 200 characters\./i),
+      ).toBeInTheDocument();
     });
   });
 });

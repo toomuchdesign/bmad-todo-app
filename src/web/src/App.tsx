@@ -3,6 +3,7 @@ import heroImg from "./assets/hero.png";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "./assets/vite.svg";
 import "./App.css";
+import { MAX_TODO_TEXT_LENGTH } from "./contracts";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -20,6 +21,7 @@ function App() {
           <p>
             Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
           </p>
+          <p>Todo max length: {MAX_TODO_TEXT_LENGTH} characters.</p>
         </div>
         <button
           type="button"
