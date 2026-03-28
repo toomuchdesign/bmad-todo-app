@@ -19,6 +19,7 @@ Use this section for persistent test rules that should apply to every future tas
 - Every implementation task must include or update focused tests for changed behavior.
 - Before considering a task complete, run and pass:
   - `npm run type:check`
+  - `npm run biome:check`
   - `npm run test:ci`
 - API changes must keep API integration tests passing in `src/api/test`.
 - Web changes must keep component/unit tests passing in `src/web/src`.
