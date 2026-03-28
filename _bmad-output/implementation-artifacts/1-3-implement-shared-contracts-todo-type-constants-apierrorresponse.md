@@ -1,0 +1,147 @@
+# Story 1.3: Implement shared contracts (Todo type, constants, ApiErrorResponse)
+
+Status: ready-for-dev
+
+<!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
+
+## Story
+
+As a developer,
+I want shared types and constants used by both API and web,
+So that validation and contracts stay consistent.
+
+## Acceptance Criteria
+
+1. **Given** the `src/shared` workspace exists
+   **When** I add shared exports for `MAX_TODO_TEXT_LENGTH`, `Todo`, and `ApiErrorResponse`
+   **Then** both `src/api` and `src/web` can import these without Node/DOM coupling
+   **And** `MAX_TODO_TEXT_LENGTH` is set to 200 and used as the single source of truth
+
+## Tasks / Subtasks
+
+- [ ] Add dedicated shared contract modules in `src/shared/src` (AC: 1)
+  - [ ] Create `constants.ts` exporting `MAX_TODO_TEXT_LENGTH = 200`
+  - [ ] Create `types.ts` exporting `Todo` and `ApiErrorResponse`
+  - [ ] Ensure types model API JSON fields in `camelCase` (`createdAt`, `updatedAt`, `deletedAt`)
+  - [ ] Ensure `ApiErrorResponse` supports stable machine code + display message + optional `requestId` + optional structured `details`
+
+- [ ] Wire stable package exports from `src/shared/src/index.ts` (AC: 1)
+  - [ ] Re-export `MAX_TODO_TEXT_LENGTH`, `Todo`, `ApiErrorResponse` from `index.ts`
+  - [ ] Keep exports type-safe (`export type` for type-only exports)
+  - [ ] Avoid runtime side effects in shared package entrypoints
+
+- [ ] Consume shared contracts in API workspace (AC: 1)
+  - [ ] Add package dependency linkage from `src/api` to `@bmad-todo/shared`
+  - [ ] Replace local/inline contract definitions with imports from shared workspace
+  - [ ] Keep Fastify route schema/output behavior aligned with shared contracts (no `{ data: ... }` wrapper)
+
+- [ ] Consume shared contracts in web workspace (AC: 1)
+  - [ ] Add package dependency linkage from `src/web` to `@bmad-todo/shared`
+  - [ ] Ensure existing generated API types/helpers can interoperate with shared contract types
+  - [ ] Use `MAX_TODO_TEXT_LENGTH` from shared package (no duplicated constants)
+
+- [ ] Validate workspace/build/test integration (supports AC: 1)
+  - [ ] `npm -w src/shared run build` succeeds and emits expected artifacts
+  - [ ] `npm run type:check` succeeds across workspaces
+  - [ ] `npm test` / `npm run test:ci` remains green after shared contract adoption
+
+- [ ] Preserve contract automation expectations (supports downstream Stories 1.4/1.5)
+  - [ ] Keep `src/api/openapi.json` as generated/committed contract artifact
+  - [ ] Keep web generated API artifacts in sync when API schemas evolve
+
+## Dev Notes
+
+### Story Intent and Scope Boundary
+
+- This story defines and centralizes **shared contract primitives only** (`MAX_TODO_TEXT_LENGTH`, `Todo`, `ApiErrorResponse`).
+- Do **not** implement GET/POST route behavior here (that belongs to Stories 1.4 and 1.5).
+- Keep this as a low-risk contract foundation to reduce duplication and drift before API/web features expand.
+
+### Current Codebase Intelligence (Important)
+
+- `src/shared/src/index.ts` currently exports nothing (`export {}`), so shared contracts are not yet available.
+- API currently has placeholder `/todos` route returning `501` and not-yet-final response schema.
+- OpenAPI currently includes `/todos` with default `501` response only; later stories will harden this.
+- Drizzle `todos` schema already exists with `createdAt`, `updatedAt`, `deletedAt` model fields and snake_case DB mapping.
+
+### Contract Definitions to Standardize in Shared
+
+- **`MAX_TODO_TEXT_LENGTH`**
+  - Value: `200`
+  - Source-of-truth for both web and API validation semantics.
+
+- **`Todo`** (API JSON-facing)
+  - Required: `id`, `text`, `completed`, `createdAt`, `updatedAt`
+  - Optional/nullable: `deletedAt`
+  - Keep JSON fields `camelCase` to match API contract.
+
+- **`ApiErrorResponse`**
+  - Required: `code`, `message`
+  - Optional: `requestId`
+  - Optional: `details[]` object entries with keys such as `field`, `min`, `max`, `reason`
+  - Error shape must remain stable for UX/global error handling and validation rendering.
+
+### Architecture and Implementation Guardrails
+
+- TypeScript-only remains mandatory (`allowJs: false` already configured at base level).
+- Shared workspace must remain platform-agnostic (no Node-only APIs, no DOM-only types).
+- Keep API JSON contract style: direct resources and stable error bodies; no extra envelope.
+- DB remains snake_case but API/shared contracts remain camelCase.
+- Avoid introducing external state/data libraries or unrelated dependencies in this story.
+
+### Suggested File Targets
+
+- `src/shared/src/constants.ts`
+- `src/shared/src/types.ts`
+- `src/shared/src/index.ts`
+- `src/shared/package.json` (only if export map/types/build references need alignment)
+- `src/api/package.json` and `src/web/package.json` (workspace dependency on `@bmad-todo/shared`)
+- API/web source files that currently duplicate or locally define these contracts
+
+### Testing and Validation Requirements
+
+- Keep tests deterministic; do not introduce network dependence.
+- Follow project convention: Vitest tests should use nested `describe` → `it` blocks.
+- At minimum, verify type/build integrity after refactor:
+  - shared build
+  - workspace typecheck
+  - existing test suites still pass
+
+### Cross-Story Context (Why This Matters)
+
+- Story 1.4 depends on `Todo` + `ApiErrorResponse` for GET `/todos` response/error contract.
+- Story 1.5 depends on `MAX_TODO_TEXT_LENGTH` + `ApiErrorResponse` for POST validation/error details.
+- Getting these contracts right now prevents drift and regression across subsequent API/web implementation stories.
+
+### Risks to Avoid
+
+- Duplicating `MAX_TODO_TEXT_LENGTH` locally in API or web.
+- Defining `Todo` with DB naming (`created_at`) instead of API naming (`createdAt`).
+- Creating shared types that import Fastify/React/Node runtime-specific symbols.
+- Expanding scope into endpoint behavior or UI implementation in this story.
+
+### References
+
+- Epic story definition and AC: [Source: _bmad-output/planning-artifacts/epics.md#Story 1.3: Implement shared contracts (Todo type, constants, ApiErrorResponse)]
+- Downstream dependency context: [Source: _bmad-output/planning-artifacts/epics.md#Story 1.4: Implement GET /todos with ordering, soft-delete filtering, and error contract], [Source: _bmad-output/planning-artifacts/epics.md#Story 1.5: Implement POST /todos with validation and stable validation errors]
+- Shared constants and API contract guidance: [Source: _bmad-output/planning-artifacts/architecture.md#Data Architecture], [Source: _bmad-output/planning-artifacts/architecture.md#API & Communication Patterns]
+- Error contract and request ID propagation: [Source: _bmad-output/planning-artifacts/architecture.md#Error response contract (stable `code` + displayable `message`)], [Source: _bmad-output/planning-artifacts/architecture.md#requestId propagation:]
+- Existing implementation baseline and project conventions: [Source: _bmad-output/implementation-artifacts/1-2-provision-local-postgres-drizzle-baseline-and-todos-schema.md#Dev Notes], [Source: project-context.md#Testing Practices]
+
+## Dev Agent Record
+
+### Agent Model Used
+
+GPT-5.3-Codex
+
+### Debug Log References
+
+-
+
+### Completion Notes List
+
+- Ultimate context engine analysis completed - comprehensive developer guide created.
+
+### File List
+
+- \_bmad-output/implementation-artifacts/1-3-implement-shared-contracts-todo-type-constants-apierrorresponse.md
