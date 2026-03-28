@@ -157,32 +157,32 @@ Total FRs in epics: 24
 
 ### Coverage Matrix
 
-| FR Number | PRD Requirement (short)                 | Epic Coverage                                              | Status    |
-| --------- | --------------------------------------- | ---------------------------------------------------------- | --------- |
-| FR1       | List todos on load                      | Epic 1 Story 1.6 (+ 1.4 API)                               | ✓ Covered |
-| FR2       | Create todo                             | Epic 1 Story 1.7 (+ 1.5 API)                               | ✓ Covered |
-| FR3       | Edit todo text                          | Epic 2 Story 2.2 (+ 2.1 API)                               | ✓ Covered |
-| FR4       | Toggle complete/uncomplete              | Epic 2 Story 2.3 (+ 2.1 API)                               | ✓ Covered |
-| FR5       | Soft delete todo                        | Epic 2 Story 2.5 (+ 2.4 API)                               | ✓ Covered |
-| FR6       | Inline validation (empty)               | Epic 1 Story 1.7 (+ 1.5 API validation)                    | ✓ Covered |
-| FR7       | Inline validation (length)              | Epic 1 Story 1.7 (+ 1.5 API validation)                    | ✓ Covered |
-| FR8       | Preserve input on validation fail       | Epic 1 Story 1.7                                           | ✓ Covered |
-| FR9       | Persistence across refresh              | Epic 1 Story 1.2 + 1.4/1.5                                 | ✓ Covered |
-| FR10      | Consistent UI on failed mutations       | Epic 1 Story 1.7; Epic 2 Stories 2.2/2.3/2.5               | ✓ Covered |
-| FR11      | Newest-first ordering                   | Epic 1 Story 1.4 (GET ordering)                            | ✓ Covered |
-| FR12      | Exclude deleted from default list       | Epic 2 Story 2.4 (GET excludes)                            | ✓ Covered |
-| FR13      | Global error + retry on load failure    | Epic 1 Story 1.6                                           | ✓ Covered |
-| FR14      | Global error on mutation failures       | Epic 1 Story 1.7; Epic 2 Stories 2.2/2.3/2.5               | ✓ Covered |
-| FR15      | Retry failed operations                 | Epic 1 Story 1.6 (retry load); Epic 2 (re-attempt actions) | ✓ Covered |
-| FR16      | Expose CRUD API                         | Epic 1 Stories 1.4/1.5; Epic 2 Stories 2.1/2.4             | ✓ Covered |
-| FR17      | GET /todos                              | Epic 1 Story 1.4                                           | ✓ Covered |
-| FR18      | POST /todos                             | Epic 1 Story 1.5                                           | ✓ Covered |
-| FR19      | PATCH /todos/:id                        | Epic 2 Story 2.1                                           | ✓ Covered |
-| FR20      | DELETE /todos/:id                       | Epic 2 Story 2.4                                           | ✓ Covered |
-| FR21      | GET excludes soft-deleted               | Epic 1 Story 1.4 + Epic 2 Story 2.4                        | ✓ Covered |
-| FR22      | Stable error code + message             | Epic 1 Stories 1.4/1.5                                     | ✓ Covered |
-| FR23      | Optional validation details + requestId | Epic 1 Stories 1.4/1.5                                     | ✓ Covered |
-| FR24      | Automated tests for all flows           | Epic 3 Stories 3.1–3.3                                     | ✓ Covered |
+| FR Number | PRD Requirement (short)                  | Epic Coverage                                              | Status    |
+| --------- | ---------------------------------------- | ---------------------------------------------------------- | --------- |
+| FR1       | List todos on load                       | Epic 1 Story 1.6 (+ 1.4 API)                               | ✓ Covered |
+| FR2       | Create todo                              | Epic 1 Story 1.7 (+ 1.5 API)                               | ✓ Covered |
+| FR3       | Edit todo text                           | Epic 2 Story 2.2 (+ 2.1 API)                               | ✓ Covered |
+| FR4       | Toggle complete/uncomplete               | Epic 2 Story 2.3 (+ 2.1 API)                               | ✓ Covered |
+| FR5       | Soft delete todo                         | Epic 2 Story 2.5 (+ 2.4 API)                               | ✓ Covered |
+| FR6       | Inline validation (empty)                | Epic 1 Story 1.7 (+ 1.5 API validation)                    | ✓ Covered |
+| FR7       | Inline validation (length)               | Epic 1 Story 1.7 (+ 1.5 API validation)                    | ✓ Covered |
+| FR8       | Preserve input on validation fail        | Epic 1 Story 1.7                                           | ✓ Covered |
+| FR9       | Persistence across refresh               | Epic 1 Story 1.2 + 1.4/1.5                                 | ✓ Covered |
+| FR10      | Consistent UI on failed mutations        | Epic 1 Story 1.7; Epic 2 Stories 2.2/2.3/2.5               | ✓ Covered |
+| FR11      | Newest-first ordering                    | Epic 1 Story 1.4 (GET ordering)                            | ✓ Covered |
+| FR12      | Exclude deleted from default list        | Epic 2 Story 2.4 (GET excludes)                            | ✓ Covered |
+| FR13      | Global error + retry on load failure     | Epic 1 Story 1.6                                           | ✓ Covered |
+| FR14      | Global error on mutation failures        | Epic 1 Story 1.7; Epic 2 Stories 2.2/2.3/2.5               | ✓ Covered |
+| FR15      | Retry failed operations                  | Epic 1 Story 1.6 (retry load); Epic 2 (re-attempt actions) | ✓ Covered |
+| FR16      | Expose CRUD API                          | Epic 1 Stories 1.4/1.5; Epic 2 Stories 2.1/2.4             | ✓ Covered |
+| FR17      | GET /todos                               | Epic 1 Story 1.4                                           | ✓ Covered |
+| FR18      | POST /todos                              | Epic 1 Story 1.5                                           | ✓ Covered |
+| FR19      | PATCH /todos/:id                         | Epic 2 Story 2.1                                           | ✓ Covered |
+| FR20      | DELETE /todos/:id                        | Epic 2 Story 2.4                                           | ✓ Covered |
+| FR21      | GET excludes soft-deleted                | Epic 1 Story 1.4 + Epic 2 Story 2.4                        | ✓ Covered |
+| FR22      | Stable error code + message              | Epic 1 Stories 1.4/1.5                                     | ✓ Covered |
+| FR23      | requestId propagation on error responses | Epic 1 Stories 1.4/1.5                                     | ✓ Covered |
+| FR24      | Automated tests for all flows            | Epic 3 Stories 3.1–3.3                                     | ✓ Covered |
 
 ### Missing Requirements
 
@@ -210,7 +210,7 @@ Total FRs in epics: 24
 
 - UX allows optional behaviors (e.g., save-on-blur, dismissable banner). Keep MVP implementation minimal and consistent; avoid adding modals/bottom sheets unless inline edit becomes unworkable.
 - Ensure the global error banner is implemented as a consistent reusable component early, since many stories depend on it.
-- Todo text max length is now deterministic (`MAX_TODO_TEXT_LENGTH = 200` via architecture/shared constant); ensure UI copy and API validation details remain consistent.
+- Todo text max length is now deterministic (`MAX_TODO_TEXT_LENGTH = 200` via architecture/shared constant); ensure UI copy and API validation/error messages remain consistent.
 
 ## Epic Quality Review
 

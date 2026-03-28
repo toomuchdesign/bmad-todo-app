@@ -1,8 +1,21 @@
 import type { ApiErrorResponse } from "@bmad-todo/shared";
-import type { FastifyPluginAsync } from "fastify";
+import type { FastifyError, FastifyPluginAsync } from "fastify";
 
 const errorHandlerPlugin: FastifyPluginAsync = async (app) => {
-  app.setErrorHandler((error, request, reply) => {
+  app.setErrorHandler((error: FastifyError, request, reply) => {
+    /**
+     * Handle Fastify's route input schema validation errors
+     */
+    if (error.validation) {
+      const response: ApiErrorResponse = {
+        code: "VALIDATION_ERROR",
+        message: error.message,
+        requestId: request.requestId,
+      };
+
+      return reply.code(400).send(response);
+    }
+
     request.log.error(error);
 
     const response: ApiErrorResponse = {

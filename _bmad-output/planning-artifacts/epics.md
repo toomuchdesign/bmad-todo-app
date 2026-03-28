@@ -63,7 +63,7 @@ NFR9: No formal WCAG target is required for MVP, but regressions that block basi
 - Default list semantics: exclude deleted (`deleted_at is null`), order newest-first (`created_at desc`).
 - Shared constant: `MAX_TODO_TEXT_LENGTH = 200` used by both API and web.
 - API response rules: no `{ data: ... }` envelope; success shapes are direct resources; `DELETE` returns `204`.
-- API error contract: stable `code` + displayable `message`, optional `details`, optional `requestId`.
+- API error contract: stable `code` + displayable `message`, optional `requestId`.
 - `x-request-id` propagation: API always returns `x-request-id` header; error bodies include `requestId`.
 - Retry semantics: explicit UI retry for initial load; mutations are not auto-retried.
 - Web state management: React built-ins + custom hooks; no Redux/Zustand/React Query for MVP.
@@ -115,7 +115,7 @@ FR19: Epic 2 - PATCH /todos/:id.
 FR20: Epic 2 - DELETE /todos/:id.
 FR21: Epic 2 - Server excludes soft-deleted.
 FR22: Epic 1 - Stable error contract.
-FR23: Epic 1 - Validation details + requestId.
+FR23: Epic 1 - requestId propagation on error responses.
 FR24: Epic 3 - Automated test coverage (success/failure flows).
 
 ## Epic List
@@ -231,12 +231,12 @@ So that I can capture tasks quickly.
 **When** I call `POST /todos`
 **Then** it returns `400` with `code = VALIDATION_ERROR`
 **And** the `message` is suitable for user display
-**And** the error `details` can include the field and limits
+**And** `requestId` is present in the error body when available
 
 **Given** the request text exceeds `MAX_TODO_TEXT_LENGTH`
 **When** I call `POST /todos`
 **Then** it returns `400` with `code = VALIDATION_ERROR`
-**And** the error `details` include `max = 200` (or the configured max)
+**And** the `message` is suitable for user display
 
 ### Story 1.6: Build the Todo List screen with load states and retry
 
@@ -316,7 +316,7 @@ So that I can correct it and reflect completion status.
 
 **Given** the new text is empty/whitespace-only or too long
 **When** I call `PATCH /todos/:id`
-**Then** the API returns `400` with `code = VALIDATION_ERROR` and useful `details`
+**Then** the API returns `400` with `code = VALIDATION_ERROR` and a user-displayable `message`
 
 **Given** the `:id` does not exist
 **When** I call `PATCH /todos/:id`

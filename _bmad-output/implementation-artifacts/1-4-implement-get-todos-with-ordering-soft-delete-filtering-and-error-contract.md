@@ -101,7 +101,7 @@ so that I can immediately see what I need to do.
   - DB columns/tables are `snake_case`.
   - API JSON contracts are `camelCase`.
 - Error contract:
-  - Use shared `ApiErrorResponse` shape (`code`, `message`, optional `requestId`, optional `details`).
+  - Use shared `ApiErrorResponse` shape (`code`, `message`, optional `requestId`).
   - For unexpected failures, return `500` + stable machine code + displayable message.
 - Request-id rule:
   - `x-request-id` must be present in every response (success and error).

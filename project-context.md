@@ -48,6 +48,8 @@ Each section should be visually separated by a blank line.
 If the Arrange block grows large, extract it into a helper or factory. A test that cannot be cleanly split into these three sections is a signal the unit under test needs refactoring.
 
 - Assertion style: use explicit `expect(...)` checks that verify observable behavior.
+- Prefer a single assertion against the whole entity/object when manageable for clarity, even at the cost of some repetition.
+- If tests are repetitive and expected objects are large, it is acceptable to assert specific properties instead of the full object.
 - In case of structured input/output comparison: use the `actual` vs `expected` const definitions
 - API test style: prefer integration tests with `fastify.inject()` (no real HTTP network).
 - API test utilities must be imported from the shared barrel at `src/api/test/test-utils/index.ts` for consistency.

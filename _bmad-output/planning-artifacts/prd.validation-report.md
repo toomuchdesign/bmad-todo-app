@@ -81,11 +81,11 @@ overallStatus: Warning
 - **Todo text length constraints:** FR7 requires validation for length limits, but the PRD does not specify the actual max length (and whether there is a min length beyond non-empty). (Note: this has been made deterministic at the architecture level via `MAX_TODO_TEXT_LENGTH = 200`; consider backporting the constant into the PRD if you want the PRD to be fully self-contained.)
 - **Definition of “normal dev conditions” / “typical developer laptop” (NFR1–NFR3):** thresholds are good, but measurement conditions are underspecified (device/network baseline, local vs deployed API, cold vs warm cache).
 - **Expected scale / bounds:** the PRD does not state expected max todo count (previous drafts mentioned ~1,000). This affects performance expectations and test data sizing.
-- **Error code taxonomy:** FR22–FR23 require stable machine-readable error codes and optional validation details, but no minimal set of codes is listed (e.g., VALIDATION_ERROR, NOT_FOUND, CONFLICT, INTERNAL).
+- **Error code taxonomy:** FR22–FR23 require stable machine-readable error codes and requestId propagation, but no minimal set of codes is listed (e.g., VALIDATION_ERROR, NOT_FOUND, CONFLICT, INTERNAL).
 
 **Recommendations (low effort, improves testability):**
 
-- Add explicit constants (e.g., `MAX_TODO_TEXT_LENGTH`) and make them part of the API error details schema. (Addressed in architecture: `MAX_TODO_TEXT_LENGTH = 200`.)
+- Add explicit constants (e.g., `MAX_TODO_TEXT_LENGTH`) and keep API validation/error messages aligned with those constants. (Addressed in architecture: `MAX_TODO_TEXT_LENGTH = 200`.)
 - Define a minimal “measurement profile” for the performance targets (e.g., mobile device class + network type; local dev API; cold start).
 - State an expected upper bound for number of todos in the list and confirm sorting behavior when timestamps tie.
 - Enumerate the minimum error codes the API must emit for MVP.

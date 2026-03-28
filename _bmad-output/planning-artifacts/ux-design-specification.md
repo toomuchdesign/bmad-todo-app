@@ -353,7 +353,7 @@ flowchart TD
 
 ## Open Questions (PRD Clarifications)
 
-- **Todo text max length:** Resolved by architecture — `MAX_TODO_TEXT_LENGTH = 200` shared by web and API. API validation errors may include `details: [{ field: "text", max: 200 }]`.
+- **Todo text max length:** Resolved by architecture — `MAX_TODO_TEXT_LENGTH = 200` shared by web and API.
 
 ### Reusable Interaction Helpers
 

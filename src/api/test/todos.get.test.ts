@@ -1,8 +1,8 @@
-import type { ApiErrorResponse, Todo } from "@bmad-todo/shared";
 import type { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
-import { dropTodosTable, seedTodo } from "./test-utils/index.js";
+import type { GetTodosRouteResponses } from "../src/routes/schemas.js";
+import { runRequestIdHeaderTests, seedTodo } from "./test-utils/index.js";
 
 let app: FastifyInstance;
 
@@ -53,7 +53,7 @@ describe("GET /todos", () => {
     expect(response.headers["content-type"]).toContain("application/json");
     expect(response.headers["x-request-id"]).toBeTypeOf("string");
 
-    const body = response.json<{ todos: Todo[] }>();
+    const body = response.json<GetTodosRouteResponses[200]>();
 
     expect(body).toEqual({
       todos: [
@@ -77,74 +77,11 @@ describe("GET /todos", () => {
     });
   });
 
-  describe("x-request-id header", () => {
-    describe("provided inbound x-request-id on success", () => {
-      it("reuses the same request id in the response header", async () => {
-        // Act
-        const response = await app.inject({
-          method: "GET",
-          url: "/todos",
-          headers: {
-            "x-request-id": "request-id-from-client",
-          },
-        });
-
-        // Assert
-        expect(response.statusCode).toBe(200);
-        expect(response.headers["x-request-id"]).toBe("request-id-from-client");
-      });
-    });
-
-    describe("provided inbound x-request-id on unexpected failure", () => {
-      it("reuses the same request id in both response header and error body", async () => {
-        // Arrange
-        await dropTodosTable();
-
-        // Act
-        const response = await app.inject({
-          method: "GET",
-          url: "/todos",
-          headers: {
-            "x-request-id": "error-request-id",
-          },
-        });
-
-        // Assert
-        expect(response.statusCode).toBe(500);
-        expect(response.headers["content-type"]).toContain("application/json");
-        expect(response.headers["x-request-id"]).toBe("error-request-id");
-
-        const body = response.json<ApiErrorResponse>();
-
-        expect(body).toEqual({
-          code: "INTERNAL_ERROR",
-          message: "Internal server error",
-          requestId: "error-request-id",
-        });
-      });
-    });
-
-    describe("omitted inbound x-request-id on unexpected failure", () => {
-      it("generates and returns a request id in header and error body", async () => {
-        // Arrange
-        await dropTodosTable();
-
-        // Act
-        const response = await app.inject({
-          method: "GET",
-          url: "/todos",
-        });
-
-        // Assert
-        expect(response.statusCode).toBe(500);
-        expect(response.headers["x-request-id"]).toBeTypeOf("string");
-
-        const body = response.json<ApiErrorResponse>();
-
-        expect(body.code).toBe("INTERNAL_ERROR");
-        expect(body.message).toBe("Internal server error");
-        expect(body.requestId).toBe(response.headers["x-request-id"]);
-      });
-    });
+  runRequestIdHeaderTests({
+    app: () => app,
+    injectInput: {
+      method: "GET",
+      url: "/todos",
+    },
   });
 });

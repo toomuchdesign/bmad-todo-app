@@ -10,16 +10,8 @@ export type Todo = {
   deletedAt?: IsoRfc3339DateTimeString | null;
 };
 
-export type ApiErrorDetail = {
-  field?: string;
-  min?: number;
-  max?: number;
-  reason?: string;
-};
-
 export type ApiErrorResponse = {
   code: string;
   message: string;
   requestId?: string;
-  details?: ApiErrorDetail[];
 };

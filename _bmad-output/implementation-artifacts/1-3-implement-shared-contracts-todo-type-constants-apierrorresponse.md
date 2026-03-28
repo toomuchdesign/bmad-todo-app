@@ -23,7 +23,7 @@ So that validation and contracts stay consistent.
   - [x] Create `constants.ts` exporting `MAX_TODO_TEXT_LENGTH = 200`
   - [x] Create `types.ts` exporting `Todo` and `ApiErrorResponse`
   - [x] Ensure types model API JSON fields in `camelCase` (`createdAt`, `updatedAt`, `deletedAt`)
-  - [x] Ensure `ApiErrorResponse` supports stable machine code + display message + optional `requestId` + optional structured `details`
+  - [x] Ensure `ApiErrorResponse` supports stable machine code + display message + optional `requestId`
 
 - [x] Wire stable package exports from `src/shared/src/index.ts` (AC: 1)
   - [x] Re-export `MAX_TODO_TEXT_LENGTH`, `Todo`, `ApiErrorResponse` from `index.ts`
@@ -78,7 +78,6 @@ So that validation and contracts stay consistent.
 - **`ApiErrorResponse`**
   - Required: `code`, `message`
   - Optional: `requestId`
-  - Optional: `details[]` object entries with keys such as `field`, `min`, `max`, `reason`
   - Error shape must remain stable for UX/global error handling and validation rendering.
 
 ### Architecture and Implementation Guardrails
@@ -110,7 +109,7 @@ So that validation and contracts stay consistent.
 ### Cross-Story Context (Why This Matters)
 
 - Story 1.4 depends on `Todo` + `ApiErrorResponse` for GET `/todos` response/error contract.
-- Story 1.5 depends on `MAX_TODO_TEXT_LENGTH` + `ApiErrorResponse` for POST validation/error details.
+- Story 1.5 depends on `MAX_TODO_TEXT_LENGTH` + `ApiErrorResponse` for POST validation/error handling.
 - Getting these contracts right now prevents drift and regression across subsequent API/web implementation stories.
 
 ### Risks to Avoid
@@ -144,10 +143,10 @@ GPT-5.3-Codex
 
 ### Completion Notes List
 
-- Added shared contract modules with `MAX_TODO_TEXT_LENGTH = 200`, `Todo`, `ApiErrorDetail`, and `ApiErrorResponse`.
+- Added shared contract modules with `MAX_TODO_TEXT_LENGTH = 200`, `Todo`, and `ApiErrorResponse`.
 - Kept shared exports type-safe via `src/shared/src/index.ts` and aligned shared package export metadata for built artifacts.
 - Linked API and web workspaces to `@bmad-todo/shared` and consumed shared contracts in both workspaces.
-- Updated API `/todos` placeholder schema/response to use stable error body (`code`, `message`, optional `requestId`, optional `details`) and aligned API test expectations.
+- Updated API `/todos` placeholder schema/response to use stable error body (`code`, `message`, optional `requestId`) and aligned API test expectations.
 - Added web contract adapter module and used shared max length constant in UI, with updated web test assertion.
 - Regenerated contract artifacts (`src/api/openapi.json`, `src/web/src/api/generated/index.ts`) and validated build, lint, typecheck, and CI tests.
 

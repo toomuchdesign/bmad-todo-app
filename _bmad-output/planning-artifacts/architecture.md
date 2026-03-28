@@ -46,7 +46,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 - Single-user MVP; no auth, multi-tenancy, realtime, or offline-first required.
 - Modern browser support; mobile-first; single route/screen.
-- API must emit stable error codes + human messages; may include validation details + requestId.
+- API must emit stable error codes + human messages and include requestId when available.
 - Soft delete semantics must be consistent across API + UI.
 
 ### Cross-Cutting Concerns Identified
@@ -320,6 +320,7 @@ To keep quality high while moving quickly, every story/task is considered **done
 - **Route schema definitions:**
   - Routes should define strict input/output JSON schema definitions
   - Such schemas should be enforced and reused in the type handler using: `@fastify/type-provider-json-schema-to-ts`
+  - Every route must infer both request input and response output types from its route schema via `@fastify/type-provider-json-schema-to-ts`; avoid manual request/response typings that duplicate schema intent
   - Canonical entity building blocks should be centralized under `src/api/src/definitions` and export both JSON schemas and `FromSchema` inferred TS types for reuse across routes/tests.
 
 - **OpenAPI contract:**
@@ -343,12 +344,6 @@ To keep quality high while moving quickly, every story/task is considered **done
     code: string;
     message: string;
     requestId?: string;
-    details?: Array<{
-      field?: string;
-      min?: number;
-      max?: number;
-      reason?: string;
-    }>;
   };
   ```
 
@@ -617,7 +612,7 @@ bmad-todo/
 
 - Consider recording verified versions for the core runtime deps (Fastify, React, Vite, TypeScript, `pg`) in the decisions section if you want fully deterministic scaffolding.
 - Decide dev-time SPA↔API integration approach (CORS-only vs Vite dev proxy). Current decisions support either.
-- Choose and standardize the API request/response validation mechanism (Fastify JSON Schema vs a typed schema library) and ensure it always emits `VALIDATION_ERROR` with consistent `details`.
+- Choose and standardize the API request/response validation mechanism (Fastify JSON Schema vs a typed schema library) and ensure it always emits `VALIDATION_ERROR` consistently.
 
 **Nice-to-Have:**
 

@@ -1,3 +1,5 @@
+import { MAX_TODO_TEXT_LENGTH } from "@bmad-todo/shared";
+import type { FromSchema, JSONSchema } from "json-schema-to-ts";
 import { todoSchema } from "../definitions/todo.js";
 
 const responseHeadersSchema = {
@@ -15,21 +17,19 @@ export const apiErrorResponseSchema = {
     code: { type: "string" },
     message: { type: "string" },
     requestId: { type: "string" },
-    details: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          field: { type: "string" },
-          min: { type: "number" },
-          max: { type: "number" },
-          reason: { type: "string" },
-        },
-        additionalProperties: true,
-      },
-    },
   },
 } as const;
+
+type RouteResponseSchemas = Partial<Record<number | "default", JSONSchema>>;
+
+/**
+ * Infers a route response-type map from a Fastify `response` schema object.
+ */
+export type InferRouteResponses<TResponse extends RouteResponseSchemas> = {
+  [TStatus in keyof TResponse]: TResponse[TStatus] extends JSONSchema
+    ? FromSchema<TResponse[TStatus]>
+    : never;
+};
 
 export const getTodosRouteSchema = {
   tags: ["todos"],
@@ -46,9 +46,49 @@ export const getTodosRouteSchema = {
         },
       },
     },
-    500: {
+    default: {
       headers: responseHeadersSchema,
       ...apiErrorResponseSchema,
     },
   },
 } as const;
+
+export type GetTodosRouteResponses = InferRouteResponses<
+  typeof getTodosRouteSchema.response
+>;
+
+export const postTodosRouteSchema = {
+  tags: ["todos"],
+  summary: "Create todo",
+  body: {
+    type: "object",
+    required: ["text"],
+    additionalProperties: false,
+    properties: {
+      text: {
+        type: "string",
+        minLength: 1,
+        maxLength: MAX_TODO_TEXT_LENGTH,
+        pattern: ".*\\S.*",
+      },
+    },
+  },
+  response: {
+    201: {
+      headers: responseHeadersSchema,
+      ...todoSchema,
+    },
+    400: {
+      headers: responseHeadersSchema,
+      ...apiErrorResponseSchema,
+    },
+    default: {
+      headers: responseHeadersSchema,
+      ...apiErrorResponseSchema,
+    },
+  },
+} as const;
+
+export type PostTodosRouteResponses = InferRouteResponses<
+  typeof postTodosRouteSchema.response
+>;

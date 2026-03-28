@@ -1,0 +1,1171 @@
+diff --git a/_bmad-output/implementation-artifacts/1-3-implement-shared-contracts-todo-type-constants-apierrorresponse.md b/_bmad-output/implementation-artifacts/1-3-implement-shared-contracts-todo-type-constants-apierrorresponse.md
+index afbce45..27fd853 100644
+--- a/_bmad-output/implementation-artifacts/1-3-implement-shared-contracts-todo-type-constants-apierrorresponse.md
++++ b/_bmad-output/implementation-artifacts/1-3-implement-shared-contracts-todo-type-constants-apierrorresponse.md
+@@ -23,7 +23,7 @@ So that validation and contracts stay consistent.
+   - [x] Create `constants.ts` exporting `MAX_TODO_TEXT_LENGTH = 200`
+   - [x] Create `types.ts` exporting `Todo` and `ApiErrorResponse`
+   - [x] Ensure types model API JSON fields in `camelCase` (`createdAt`, `updatedAt`, `deletedAt`)
+-  - [x] Ensure `ApiErrorResponse` supports stable machine code + display message + optional `requestId` + optional structured `details`
++  - [x] Ensure `ApiErrorResponse` supports stable machine code + display message + optional `requestId`
+ 
+ - [x] Wire stable package exports from `src/shared/src/index.ts` (AC: 1)
+   - [x] Re-export `MAX_TODO_TEXT_LENGTH`, `Todo`, `ApiErrorResponse` from `index.ts`
+@@ -78,7 +78,6 @@ So that validation and contracts stay consistent.
+ - **`ApiErrorResponse`**
+   - Required: `code`, `message`
+   - Optional: `requestId`
+-  - Optional: `details[]` object entries with keys such as `field`, `min`, `max`, `reason`
+   - Error shape must remain stable for UX/global error handling and validation rendering.
+ 
+ ### Architecture and Implementation Guardrails
+@@ -110,7 +109,7 @@ So that validation and contracts stay consistent.
+ ### Cross-Story Context (Why This Matters)
+ 
+ - Story 1.4 depends on `Todo` + `ApiErrorResponse` for GET `/todos` response/error contract.
+-- Story 1.5 depends on `MAX_TODO_TEXT_LENGTH` + `ApiErrorResponse` for POST validation/error details.
++- Story 1.5 depends on `MAX_TODO_TEXT_LENGTH` + `ApiErrorResponse` for POST validation/error handling.
+ - Getting these contracts right now prevents drift and regression across subsequent API/web implementation stories.
+ 
+ ### Risks to Avoid
+@@ -144,10 +143,10 @@ GPT-5.3-Codex
+ 
+ ### Completion Notes List
+ 
+-- Added shared contract modules with `MAX_TODO_TEXT_LENGTH = 200`, `Todo`, `ApiErrorDetail`, and `ApiErrorResponse`.
++- Added shared contract modules with `MAX_TODO_TEXT_LENGTH = 200`, `Todo`, and `ApiErrorResponse`.
+ - Kept shared exports type-safe via `src/shared/src/index.ts` and aligned shared package export metadata for built artifacts.
+ - Linked API and web workspaces to `@bmad-todo/shared` and consumed shared contracts in both workspaces.
+-- Updated API `/todos` placeholder schema/response to use stable error body (`code`, `message`, optional `requestId`, optional `details`) and aligned API test expectations.
++- Updated API `/todos` placeholder schema/response to use stable error body (`code`, `message`, optional `requestId`) and aligned API test expectations.
+ - Added web contract adapter module and used shared max length constant in UI, with updated web test assertion.
+ - Regenerated contract artifacts (`src/api/openapi.json`, `src/web/src/api/generated/index.ts`) and validated build, lint, typecheck, and CI tests.
+ 
+diff --git a/_bmad-output/implementation-artifacts/1-4-implement-get-todos-with-ordering-soft-delete-filtering-and-error-contract.md b/_bmad-output/implementation-artifacts/1-4-implement-get-todos-with-ordering-soft-delete-filtering-and-error-contract.md
+index a08acbd..10c0160 100644
+--- a/_bmad-output/implementation-artifacts/1-4-implement-get-todos-with-ordering-soft-delete-filtering-and-error-contract.md
++++ b/_bmad-output/implementation-artifacts/1-4-implement-get-todos-with-ordering-soft-delete-filtering-and-error-contract.md
+@@ -101,7 +101,7 @@ so that I can immediately see what I need to do.
+   - DB columns/tables are `snake_case`.
+   - API JSON contracts are `camelCase`.
+ - Error contract:
+-  - Use shared `ApiErrorResponse` shape (`code`, `message`, optional `requestId`, optional `details`).
++  - Use shared `ApiErrorResponse` shape (`code`, `message`, optional `requestId`).
+   - For unexpected failures, return `500` + stable machine code + displayable message.
+ - Request-id rule:
+   - `x-request-id` must be present in every response (success and error).
+diff --git a/_bmad-output/implementation-artifacts/1-5-implement-post-todos-with-validation-and-stable-validation-errors.md b/_bmad-output/implementation-artifacts/1-5-implement-post-todos-with-validation-and-stable-validation-errors.md
+index c21260a..caf4f1f 100644
+--- a/_bmad-output/implementation-artifacts/1-5-implement-post-todos-with-validation-and-stable-validation-errors.md
++++ b/_bmad-output/implementation-artifacts/1-5-implement-post-todos-with-validation-and-stable-validation-errors.md
+@@ -1,6 +1,6 @@
+ # Story 1.5: Implement POST /todos with validation and stable validation errors
+ 
+-Status: ready-for-dev
++Status: done
+ 
+ <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
+ 
+@@ -18,57 +18,57 @@ so that I can capture tasks quickly.
+    **And** server-assigned timestamps are present
+ 
+ 2. **Given** the request text is empty or whitespace-only  
+-   **When** I call `POST /todos`  
+-   **Then** it returns `400` with `code = VALIDATION_ERROR`  
+-   **And** the `message` is suitable for user display  
+-   **And** the error `details` can include the field and limits
++    **When** I call `POST /todos`  
++    **Then** it returns `400` with `code = VALIDATION_ERROR`  
++    **And** the `message` is suitable for user display  
++   **And** `requestId` is present in the error body when available
+ 
+ 3. **Given** the request text exceeds `MAX_TODO_TEXT_LENGTH`  
+-   **When** I call `POST /todos`  
+-   **Then** it returns `400` with `code = VALIDATION_ERROR`  
+-   **And** the error `details` include `max = 200` (or the configured max)
++    **When** I call `POST /todos`  
++    **Then** it returns `400` with `code = VALIDATION_ERROR`  
++   **And** the `message` is suitable for user display
+ 
+ ## Tasks / Subtasks
+ 
+-- [ ] Implement `POST /todos` route contract in `src/api/src/routes/todos.ts` (AC: 1, 2, 3)
+-  - [ ] Add route registration and schema for `POST /todos` using the existing type-provider pattern
+-  - [ ] Accept JSON body with `text` field and return direct `Todo` resource (no `{ data: ... }` envelope)
+-  - [ ] Return success status (`201`) with server-assigned fields
+-
+-- [ ] Add validation and stable error mapping for create payloads (AC: 2, 3)
+-  - [ ] Validate via route json schema rules and use native fastify validation error handling and messages
+-  - [ ] Extend `errorHandlerPlugin` to handle validation errors, return `400` with `code: "VALIDATION_ERROR"`
+-  - [ ] Trim `text` before persistence
+-  - [ ] Include user-displayable `message` and structured `details` (at minimum `field: "text"`, and `max: 200` for length failures)
+-
+-- [ ] Add DB create helper with API-safe mapping in `src/api/src/db/todos.ts` (AC: 1)
+-  - [ ] Insert todo row with app-generated `id` and server-assigned timestamps (`created_at`, `updated_at`)
+-  - [ ] Keep DB naming (`snake_case`) internal and map outgoing JSON to shared `Todo` (`camelCase`)
+-  - [ ] Ensure `deletedAt` is returned as `null` for newly created rows
+-
+-- [ ] Extend route schemas in `src/api/src/routes/schemas.ts` for `POST /todos` (AC: 1, 2, 3)
+-  - [ ] Add request-body schema for create payload
+-  - [ ] Add success response schema (`Todo`) and validation error schema (`400` using stable `ApiErrorResponse` shape)
+-  - [ ] Keep `x-request-id` header in success and error response schemas
+-
+-- [ ] Add integration tests for create happy path and validation failures (AC: 1, 2, 3)
+-  - [ ] Create `src/api/test/todos.post.test.ts`
+-  - [ ] Verify valid create returns created `Todo` with server timestamps and expected shape
+-  - [ ] Verify empty/whitespace payload returns `400` + `VALIDATION_ERROR` + user-displayable message
+-  - [ ] Verify too-long payload returns `400` + `VALIDATION_ERROR` + `details.max = MAX_TODO_TEXT_LENGTH`
+-  - [ ] Verify `x-request-id` behavior remains correct (echo provided ID and generate when omitted)
+-  - [ ] Keep nested `describe` → `it` structure and clear AAA blocks
+-
+-- [ ] Synchronize and verify API contract artifacts (supports AC: 1, 2, 3)
+-  - [ ] Regenerate `src/api/openapi.json` from route schemas
+-  - [ ] Ensure generated contract matches new `POST /todos` success/error shapes
+-  - [ ] Confirm no unrelated contract drift is introduced
+-
+-- [ ] Run project validation gates before handoff
+-  - [ ] `npm run type:check`
+-  - [ ] `npm run biome:check`
+-  - [ ] `npm run test:ci`
+-  - [ ] `npm run build:openapi`
++- [x] Implement `POST /todos` route contract in `src/api/src/routes/todos.ts` (AC: 1, 2, 3)
++  - [x] Add route registration and schema for `POST /todos` using the existing type-provider pattern
++  - [x] Accept JSON body with `text` field and return direct `Todo` resource (no `{ data: ... }` envelope)
++  - [x] Return success status (`201`) with server-assigned fields
++
++- [x] Add validation and stable error mapping for create payloads (AC: 2, 3)
++  - [x] Validate via route json schema rules and use native fastify validation error handling and messages
++  - [x] Extend `errorHandlerPlugin` to handle validation errors, return `400` with `code: "VALIDATION_ERROR"`
++  - [x] Trim `text` before persistence
++  - [x] Include a user-displayable `message`
++
++- [x] Add DB create helper with API-safe mapping in `src/api/src/db/todos.ts` (AC: 1)
++  - [x] Insert todo row with app-generated `id` and server-assigned timestamps (`created_at`, `updated_at`)
++  - [x] Keep DB naming (`snake_case`) internal and map outgoing JSON to shared `Todo` (`camelCase`)
++  - [x] Ensure `deletedAt` is returned as `null` for newly created rows
++
++- [x] Extend route schemas in `src/api/src/routes/schemas.ts` for `POST /todos` (AC: 1, 2, 3)
++  - [x] Add request-body schema for create payload
++  - [x] Add success response schema (`Todo`) and validation error schema (`400` using stable `ApiErrorResponse` shape)
++  - [x] Keep `x-request-id` header in success and error response schemas
++
++- [x] Add integration tests for create happy path and validation failures (AC: 1, 2, 3)
++  - [x] Create `src/api/test/todos.post.test.ts`
++  - [x] Verify valid create returns created `Todo` with server timestamps and expected shape
++  - [x] Verify empty/whitespace payload returns `400` + `VALIDATION_ERROR` + user-displayable message
++  - [x] Verify too-long payload returns `400` + `VALIDATION_ERROR` + user-displayable message
++  - [x] Verify `x-request-id` behavior remains correct (echo provided ID and generate when omitted)
++  - [x] Keep nested `describe` → `it` structure and clear AAA blocks
++
++- [x] Synchronize and verify API contract artifacts (supports AC: 1, 2, 3)
++  - [x] Regenerate `src/api/openapi.json` from route schemas
++  - [x] Ensure generated contract matches new `POST /todos` success/error shapes
++  - [x] Confirm no unrelated contract drift is introduced
++
++- [x] Run project validation gates before handoff
++  - [x] `npm run type:check`
++  - [x] `npm run biome:check`
++  - [x] `npm run test:ci`
++  - [x] `npm run build:openapi`
+ 
+ ## Dev Notes
+ 
+@@ -89,7 +89,7 @@ so that I can capture tasks quickly.
+ 
+ - Keep API success response shape as direct resource (`Todo`) for `POST /todos`.
+ - Keep API JSON fields `camelCase`; do not leak DB `snake_case` fields.
+-- Keep validation contract stable: `400` + `code: "VALIDATION_ERROR"` + displayable `message` + optional `details`.
++- Keep validation contract stable: `400` + `code: "VALIDATION_ERROR"` + displayable `message`.
+ - Reuse shared constant `MAX_TODO_TEXT_LENGTH` from `src/shared`; do not duplicate `200` in multiple places except test assertions that intentionally verify behavior.
+ - Preserve `x-request-id` propagation by relying on existing plugin behavior, not per-route duplication.
+ 
+@@ -139,7 +139,7 @@ Potentially related support files (only if needed):
+ ### Cross-Story Dependencies
+ 
+ - Story 1.7 (add form behavior, pending state, and safe failure handling) depends on this endpoint’s stable success payload and validation error shape.
+-- Story 2.1 (`PATCH /todos/:id`) should reuse the same validation semantics and error details conventions established here.
++- Story 2.1 (`PATCH /todos/:id`) should reuse the same validation semantics and error response conventions established here.
+ 
+ ### Latest Technical Information
+ 
+@@ -166,19 +166,32 @@ GPT-5.3-Codex
+ 
+ ### Debug Log References
+ 
+-- `N/A (story context created; implementation not started)`
++- `npm -w src/api run type:check`
++- `npm -w src/api run test:ci`
++- `npm run type:check`
++- `npm run biome:check`
++- `npm run test:ci`
++- `npm run build:openapi`
+ 
+ ### Completion Notes List
+ 
+-- Story context created with exhaustive architecture + epic + prior-story analysis.
+-- Implementation guardrails for `POST /todos` validation and stable error contract captured.
+-- Recommended task plan, file targets, and quality gates defined.
+-- Ready for `dev-story` execution.
++- Implemented `POST /todos` with schema-first request validation, trimmed persistence text, and `201` direct `Todo` response shape.
++- Added DB create helper in `src/api/src/db/todos.ts` with app-generated UUIDs and API-safe camelCase mapping.
++- Extended centralized `errorHandlerPlugin` to translate Fastify validation failures into stable `400` `VALIDATION_ERROR` responses.
++- Added integration coverage in `src/api/test/todos.post.test.ts` for happy path, whitespace validation, max-length validation, and `x-request-id` echo/generation behavior.
++- Regenerated `src/api/openapi.json` and passed all required quality gates (`type:check`, `biome:check`, `test:ci`, `build:openapi`).
+ 
+ ### File List
+ 
+ - \_bmad-output/implementation-artifacts/1-5-implement-post-todos-with-validation-and-stable-validation-errors.md
++- src/api/openapi.json
++- src/api/src/db/todos.ts
++- src/api/src/plugins/error-handler.ts
++- src/api/src/routes/schemas.ts
++- src/api/src/routes/todos.ts
++- src/api/test/todos.post.test.ts
+ 
+ ## Change Log
+ 
+ - 2026-03-28: Created Story 1.5 comprehensive implementation context and marked as `ready-for-dev`.
++- 2026-03-28: Implemented Story 1.5 `POST /todos` create flow, validation error contract mapping, integration coverage, and updated OpenAPI artifacts.
+diff --git a/_bmad-output/implementation-artifacts/sprint-status.yaml b/_bmad-output/implementation-artifacts/sprint-status.yaml
+index 0b92cda..915c483 100644
+--- a/_bmad-output/implementation-artifacts/sprint-status.yaml
++++ b/_bmad-output/implementation-artifacts/sprint-status.yaml
+@@ -35,7 +35,7 @@
+ # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+ 
+ generated: 2026-03-26 19:38:27
+-last_updated: 2026-03-28 17:10:00
++last_updated: 2026-03-29 00:06:00
+ project: bmad-todo
+ project_key: NOKEY
+ tracking_system: file-system
+@@ -47,7 +47,7 @@ development_status:
+   1-2-provision-local-postgres-drizzle-baseline-and-todos-schema: done
+   1-3-implement-shared-contracts-todo-type-constants-apierrorresponse: review
+   1-4-implement-get-todos-with-ordering-soft-delete-filtering-and-error-contract: done
+-  1-5-implement-post-todos-with-validation-and-stable-validation-errors: ready-for-dev
++  1-5-implement-post-todos-with-validation-and-stable-validation-errors: done
+   1-6-build-the-todo-list-screen-with-load-states-and-retry: backlog
+   1-7-add-todo-form-with-inline-validation-optimistic-pending-behavior-and-safe-failure-handling: backlog
+   epic-1-retrospective: optional
+diff --git a/_bmad-output/planning-artifacts/architecture.md b/_bmad-output/planning-artifacts/architecture.md
+index 16835b8..3b1027e 100644
+--- a/_bmad-output/planning-artifacts/architecture.md
++++ b/_bmad-output/planning-artifacts/architecture.md
+@@ -46,7 +46,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
+ 
+ - Single-user MVP; no auth, multi-tenancy, realtime, or offline-first required.
+ - Modern browser support; mobile-first; single route/screen.
+-- API must emit stable error codes + human messages; may include validation details + requestId.
++- API must emit stable error codes + human messages and include requestId when available.
+ - Soft delete semantics must be consistent across API + UI.
+ 
+ ### Cross-Cutting Concerns Identified
+@@ -320,6 +320,7 @@ To keep quality high while moving quickly, every story/task is considered **done
+ - **Route schema definitions:**
+   - Routes should define strict input/output JSON schema definitions
+   - Such schemas should be enforced and reused in the type handler using: `@fastify/type-provider-json-schema-to-ts`
++  - Every route must infer both request input and response output types from its route schema via `@fastify/type-provider-json-schema-to-ts`; avoid manual request/response typings that duplicate schema intent
+   - Canonical entity building blocks should be centralized under `src/api/src/definitions` and export both JSON schemas and `FromSchema` inferred TS types for reuse across routes/tests.
+ 
+ - **OpenAPI contract:**
+@@ -343,12 +344,6 @@ To keep quality high while moving quickly, every story/task is considered **done
+     code: string;
+     message: string;
+     requestId?: string;
+-    details?: Array<{
+-      field?: string;
+-      min?: number;
+-      max?: number;
+-      reason?: string;
+-    }>;
+   };
+   ```
+ 
+@@ -617,7 +612,7 @@ bmad-todo/
+ 
+ - Consider recording verified versions for the core runtime deps (Fastify, React, Vite, TypeScript, `pg`) in the decisions section if you want fully deterministic scaffolding.
+ - Decide dev-time SPA↔API integration approach (CORS-only vs Vite dev proxy). Current decisions support either.
+-- Choose and standardize the API request/response validation mechanism (Fastify JSON Schema vs a typed schema library) and ensure it always emits `VALIDATION_ERROR` with consistent `details`.
++- Choose and standardize the API request/response validation mechanism (Fastify JSON Schema vs a typed schema library) and ensure it always emits `VALIDATION_ERROR` consistently.
+ 
+ **Nice-to-Have:**
+ 
+diff --git a/_bmad-output/planning-artifacts/epics.md b/_bmad-output/planning-artifacts/epics.md
+index 49fe17c..dee4f85 100644
+--- a/_bmad-output/planning-artifacts/epics.md
++++ b/_bmad-output/planning-artifacts/epics.md
+@@ -63,7 +63,7 @@ NFR9: No formal WCAG target is required for MVP, but regressions that block basi
+ - Default list semantics: exclude deleted (`deleted_at is null`), order newest-first (`created_at desc`).
+ - Shared constant: `MAX_TODO_TEXT_LENGTH = 200` used by both API and web.
+ - API response rules: no `{ data: ... }` envelope; success shapes are direct resources; `DELETE` returns `204`.
+-- API error contract: stable `code` + displayable `message`, optional `details`, optional `requestId`.
++- API error contract: stable `code` + displayable `message`, optional `requestId`.
+ - `x-request-id` propagation: API always returns `x-request-id` header; error bodies include `requestId`.
+ - Retry semantics: explicit UI retry for initial load; mutations are not auto-retried.
+ - Web state management: React built-ins + custom hooks; no Redux/Zustand/React Query for MVP.
+@@ -115,7 +115,7 @@ FR19: Epic 2 - PATCH /todos/:id.
+ FR20: Epic 2 - DELETE /todos/:id.
+ FR21: Epic 2 - Server excludes soft-deleted.
+ FR22: Epic 1 - Stable error contract.
+-FR23: Epic 1 - Validation details + requestId.
++FR23: Epic 1 - requestId propagation on error responses.
+ FR24: Epic 3 - Automated test coverage (success/failure flows).
+ 
+ ## Epic List
+@@ -231,12 +231,12 @@ So that I can capture tasks quickly.
+ **When** I call `POST /todos`
+ **Then** it returns `400` with `code = VALIDATION_ERROR`
+ **And** the `message` is suitable for user display
+-**And** the error `details` can include the field and limits
++**And** `requestId` is present in the error body when available
+ 
+ **Given** the request text exceeds `MAX_TODO_TEXT_LENGTH`
+ **When** I call `POST /todos`
+ **Then** it returns `400` with `code = VALIDATION_ERROR`
+-**And** the error `details` include `max = 200` (or the configured max)
++**And** the `message` is suitable for user display
+ 
+ ### Story 1.6: Build the Todo List screen with load states and retry
+ 
+@@ -316,7 +316,7 @@ So that I can correct it and reflect completion status.
+ 
+ **Given** the new text is empty/whitespace-only or too long
+ **When** I call `PATCH /todos/:id`
+-**Then** the API returns `400` with `code = VALIDATION_ERROR` and useful `details`
++**Then** the API returns `400` with `code = VALIDATION_ERROR` and a user-displayable `message`
+ 
+ **Given** the `:id` does not exist
+ **When** I call `PATCH /todos/:id`
+diff --git a/_bmad-output/planning-artifacts/implementation-readiness-report-2026-03-26.md b/_bmad-output/planning-artifacts/implementation-readiness-report-2026-03-26.md
+index c0c9bc3..48d8e55 100644
+--- a/_bmad-output/planning-artifacts/implementation-readiness-report-2026-03-26.md
++++ b/_bmad-output/planning-artifacts/implementation-readiness-report-2026-03-26.md
+@@ -157,32 +157,32 @@ Total FRs in epics: 24
+ 
+ ### Coverage Matrix
+ 
+-| FR Number | PRD Requirement (short)                 | Epic Coverage                                              | Status    |
+-| --------- | --------------------------------------- | ---------------------------------------------------------- | --------- |
+-| FR1       | List todos on load                      | Epic 1 Story 1.6 (+ 1.4 API)                               | ✓ Covered |
+-| FR2       | Create todo                             | Epic 1 Story 1.7 (+ 1.5 API)                               | ✓ Covered |
+-| FR3       | Edit todo text                          | Epic 2 Story 2.2 (+ 2.1 API)                               | ✓ Covered |
+-| FR4       | Toggle complete/uncomplete              | Epic 2 Story 2.3 (+ 2.1 API)                               | ✓ Covered |
+-| FR5       | Soft delete todo                        | Epic 2 Story 2.5 (+ 2.4 API)                               | ✓ Covered |
+-| FR6       | Inline validation (empty)               | Epic 1 Story 1.7 (+ 1.5 API validation)                    | ✓ Covered |
+-| FR7       | Inline validation (length)              | Epic 1 Story 1.7 (+ 1.5 API validation)                    | ✓ Covered |
+-| FR8       | Preserve input on validation fail       | Epic 1 Story 1.7                                           | ✓ Covered |
+-| FR9       | Persistence across refresh              | Epic 1 Story 1.2 + 1.4/1.5                                 | ✓ Covered |
+-| FR10      | Consistent UI on failed mutations       | Epic 1 Story 1.7; Epic 2 Stories 2.2/2.3/2.5               | ✓ Covered |
+-| FR11      | Newest-first ordering                   | Epic 1 Story 1.4 (GET ordering)                            | ✓ Covered |
+-| FR12      | Exclude deleted from default list       | Epic 2 Story 2.4 (GET excludes)                            | ✓ Covered |
+-| FR13      | Global error + retry on load failure    | Epic 1 Story 1.6                                           | ✓ Covered |
+-| FR14      | Global error on mutation failures       | Epic 1 Story 1.7; Epic 2 Stories 2.2/2.3/2.5               | ✓ Covered |
+-| FR15      | Retry failed operations                 | Epic 1 Story 1.6 (retry load); Epic 2 (re-attempt actions) | ✓ Covered |
+-| FR16      | Expose CRUD API                         | Epic 1 Stories 1.4/1.5; Epic 2 Stories 2.1/2.4             | ✓ Covered |
+-| FR17      | GET /todos                              | Epic 1 Story 1.4                                           | ✓ Covered |
+-| FR18      | POST /todos                             | Epic 1 Story 1.5                                           | ✓ Covered |
+-| FR19      | PATCH /todos/:id                        | Epic 2 Story 2.1                                           | ✓ Covered |
+-| FR20      | DELETE /todos/:id                       | Epic 2 Story 2.4                                           | ✓ Covered |
+-| FR21      | GET excludes soft-deleted               | Epic 1 Story 1.4 + Epic 2 Story 2.4                        | ✓ Covered |
+-| FR22      | Stable error code + message             | Epic 1 Stories 1.4/1.5                                     | ✓ Covered |
+-| FR23      | Optional validation details + requestId | Epic 1 Stories 1.4/1.5                                     | ✓ Covered |
+-| FR24      | Automated tests for all flows           | Epic 3 Stories 3.1–3.3                                     | ✓ Covered |
++| FR Number | PRD Requirement (short)                  | Epic Coverage                                              | Status    |
++| --------- | ---------------------------------------- | ---------------------------------------------------------- | --------- |
++| FR1       | List todos on load                       | Epic 1 Story 1.6 (+ 1.4 API)                               | ✓ Covered |
++| FR2       | Create todo                              | Epic 1 Story 1.7 (+ 1.5 API)                               | ✓ Covered |
++| FR3       | Edit todo text                           | Epic 2 Story 2.2 (+ 2.1 API)                               | ✓ Covered |
++| FR4       | Toggle complete/uncomplete               | Epic 2 Story 2.3 (+ 2.1 API)                               | ✓ Covered |
++| FR5       | Soft delete todo                         | Epic 2 Story 2.5 (+ 2.4 API)                               | ✓ Covered |
++| FR6       | Inline validation (empty)                | Epic 1 Story 1.7 (+ 1.5 API validation)                    | ✓ Covered |
++| FR7       | Inline validation (length)               | Epic 1 Story 1.7 (+ 1.5 API validation)                    | ✓ Covered |
++| FR8       | Preserve input on validation fail        | Epic 1 Story 1.7                                           | ✓ Covered |
++| FR9       | Persistence across refresh               | Epic 1 Story 1.2 + 1.4/1.5                                 | ✓ Covered |
++| FR10      | Consistent UI on failed mutations        | Epic 1 Story 1.7; Epic 2 Stories 2.2/2.3/2.5               | ✓ Covered |
++| FR11      | Newest-first ordering                    | Epic 1 Story 1.4 (GET ordering)                            | ✓ Covered |
++| FR12      | Exclude deleted from default list        | Epic 2 Story 2.4 (GET excludes)                            | ✓ Covered |
++| FR13      | Global error + retry on load failure     | Epic 1 Story 1.6                                           | ✓ Covered |
++| FR14      | Global error on mutation failures        | Epic 1 Story 1.7; Epic 2 Stories 2.2/2.3/2.5               | ✓ Covered |
++| FR15      | Retry failed operations                  | Epic 1 Story 1.6 (retry load); Epic 2 (re-attempt actions) | ✓ Covered |
++| FR16      | Expose CRUD API                          | Epic 1 Stories 1.4/1.5; Epic 2 Stories 2.1/2.4             | ✓ Covered |
++| FR17      | GET /todos                               | Epic 1 Story 1.4                                           | ✓ Covered |
++| FR18      | POST /todos                              | Epic 1 Story 1.5                                           | ✓ Covered |
++| FR19      | PATCH /todos/:id                         | Epic 2 Story 2.1                                           | ✓ Covered |
++| FR20      | DELETE /todos/:id                        | Epic 2 Story 2.4                                           | ✓ Covered |
++| FR21      | GET excludes soft-deleted                | Epic 1 Story 1.4 + Epic 2 Story 2.4                        | ✓ Covered |
++| FR22      | Stable error code + message              | Epic 1 Stories 1.4/1.5                                     | ✓ Covered |
++| FR23      | requestId propagation on error responses | Epic 1 Stories 1.4/1.5                                     | ✓ Covered |
++| FR24      | Automated tests for all flows            | Epic 3 Stories 3.1–3.3                                     | ✓ Covered |
+ 
+ ### Missing Requirements
+ 
+@@ -210,7 +210,7 @@ Total FRs in epics: 24
+ 
+ - UX allows optional behaviors (e.g., save-on-blur, dismissable banner). Keep MVP implementation minimal and consistent; avoid adding modals/bottom sheets unless inline edit becomes unworkable.
+ - Ensure the global error banner is implemented as a consistent reusable component early, since many stories depend on it.
+-- Todo text max length is now deterministic (`MAX_TODO_TEXT_LENGTH = 200` via architecture/shared constant); ensure UI copy and API validation details remain consistent.
++- Todo text max length is now deterministic (`MAX_TODO_TEXT_LENGTH = 200` via architecture/shared constant); ensure UI copy and API validation/error messages remain consistent.
+ 
+ ## Epic Quality Review
+ 
+diff --git a/_bmad-output/planning-artifacts/prd.validation-report.md b/_bmad-output/planning-artifacts/prd.validation-report.md
+index 66b5ce7..bc50431 100644
+--- a/_bmad-output/planning-artifacts/prd.validation-report.md
++++ b/_bmad-output/planning-artifacts/prd.validation-report.md
+@@ -81,11 +81,11 @@ overallStatus: Warning
+ - **Todo text length constraints:** FR7 requires validation for length limits, but the PRD does not specify the actual max length (and whether there is a min length beyond non-empty). (Note: this has been made deterministic at the architecture level via `MAX_TODO_TEXT_LENGTH = 200`; consider backporting the constant into the PRD if you want the PRD to be fully self-contained.)
+ - **Definition of “normal dev conditions” / “typical developer laptop” (NFR1–NFR3):** thresholds are good, but measurement conditions are underspecified (device/network baseline, local vs deployed API, cold vs warm cache).
+ - **Expected scale / bounds:** the PRD does not state expected max todo count (previous drafts mentioned ~1,000). This affects performance expectations and test data sizing.
+-- **Error code taxonomy:** FR22–FR23 require stable machine-readable error codes and optional validation details, but no minimal set of codes is listed (e.g., VALIDATION_ERROR, NOT_FOUND, CONFLICT, INTERNAL).
++- **Error code taxonomy:** FR22–FR23 require stable machine-readable error codes and requestId propagation, but no minimal set of codes is listed (e.g., VALIDATION_ERROR, NOT_FOUND, CONFLICT, INTERNAL).
+ 
+ **Recommendations (low effort, improves testability):**
+ 
+-- Add explicit constants (e.g., `MAX_TODO_TEXT_LENGTH`) and make them part of the API error details schema. (Addressed in architecture: `MAX_TODO_TEXT_LENGTH = 200`.)
++- Add explicit constants (e.g., `MAX_TODO_TEXT_LENGTH`) and keep API validation/error messages aligned with those constants. (Addressed in architecture: `MAX_TODO_TEXT_LENGTH = 200`.)
+ - Define a minimal “measurement profile” for the performance targets (e.g., mobile device class + network type; local dev API; cold start).
+ - State an expected upper bound for number of todos in the list and confirm sorting behavior when timestamps tie.
+ - Enumerate the minimum error codes the API must emit for MVP.
+diff --git a/_bmad-output/planning-artifacts/ux-design-specification.md b/_bmad-output/planning-artifacts/ux-design-specification.md
+index f658589..63cc081 100644
+--- a/_bmad-output/planning-artifacts/ux-design-specification.md
++++ b/_bmad-output/planning-artifacts/ux-design-specification.md
+@@ -353,7 +353,7 @@ flowchart TD
+ 
+ ## Open Questions (PRD Clarifications)
+ 
+-- **Todo text max length:** Resolved by architecture — `MAX_TODO_TEXT_LENGTH = 200` shared by web and API. API validation errors may include `details: [{ field: "text", max: 200 }]`.
++- **Todo text max length:** Resolved by architecture — `MAX_TODO_TEXT_LENGTH = 200` shared by web and API.
+ 
+ ### Reusable Interaction Helpers
+ 
+diff --git a/project-context.md b/project-context.md
+index e727f09..e319a64 100644
+--- a/project-context.md
++++ b/project-context.md
+@@ -48,6 +48,8 @@ Each section should be visually separated by a blank line.
+ If the Arrange block grows large, extract it into a helper or factory. A test that cannot be cleanly split into these three sections is a signal the unit under test needs refactoring.
+ 
+ - Assertion style: use explicit `expect(...)` checks that verify observable behavior.
++- Prefer a single assertion against the whole entity/object when manageable for clarity, even at the cost of some repetition.
++- If tests are repetitive and expected objects are large, it is acceptable to assert specific properties instead of the full object.
+ - In case of structured input/output comparison: use the `actual` vs `expected` const definitions
+ - API test style: prefer integration tests with `fastify.inject()` (no real HTTP network).
+ - API test utilities must be imported from the shared barrel at `src/api/test/test-utils/index.ts` for consistency.
+diff --git a/src/api/openapi.json b/src/api/openapi.json
+index d79cde9..060a207 100644
+--- a/src/api/openapi.json
++++ b/src/api/openapi.json
+@@ -82,7 +82,7 @@
+               }
+             }
+           },
+-          "500": {
++          "default": {
+             "description": "Default Response",
+             "headers": {
+               "x-request-id": {
+@@ -110,27 +110,126 @@
+                     },
+                     "requestId": {
+                       "type": "string"
++                    }
++                  }
++                }
++              }
++            }
++          }
++        }
++      },
++      "post": {
++        "summary": "Create todo",
++        "tags": [
++          "todos"
++        ],
++        "requestBody": {
++          "required": true,
++          "content": {
++            "application/json": {
++              "schema": {
++                "type": "object",
++                "required": [
++                  "text"
++                ],
++                "additionalProperties": false,
++                "properties": {
++                  "text": {
++                    "type": "string",
++                    "minLength": 1,
++                    "maxLength": 200,
++                    "pattern": ".*\\S.*"
++                  }
++                }
++              }
++            }
++          }
++        },
++        "responses": {
++          "201": {
++            "description": "Default Response",
++            "headers": {
++              "x-request-id": {
++                "schema": {
++                  "required": true,
++                  "type": "string"
++                },
++                "description": "Request correlation identifier"
++              }
++            },
++            "content": {
++              "application/json": {
++                "schema": {
++                  "type": "object",
++                  "required": [
++                    "id",
++                    "text",
++                    "completed",
++                    "createdAt",
++                    "updatedAt"
++                  ],
++                  "properties": {
++                    "id": {
++                      "type": "string"
+                     },
+-                    "details": {
+-                      "type": "array",
+-                      "items": {
+-                        "type": "object",
+-                        "properties": {
+-                          "field": {
+-                            "type": "string"
+-                          },
+-                          "min": {
+-                            "type": "number"
+-                          },
+-                          "max": {
+-                            "type": "number"
+-                          },
+-                          "reason": {
+-                            "type": "string"
+-                          }
++                    "text": {
++                      "type": "string"
++                    },
++                    "completed": {
++                      "type": "boolean"
++                    },
++                    "createdAt": {
++                      "type": "string",
++                      "format": "date-time"
++                    },
++                    "updatedAt": {
++                      "type": "string",
++                      "format": "date-time"
++                    },
++                    "deletedAt": {
++                      "anyOf": [
++                        {
++                          "type": "string",
++                          "format": "date-time"
+                         },
+-                        "additionalProperties": true
+-                      }
++                        {
++                          "type": "null"
++                        }
++                      ]
++                    }
++                  }
++                }
++              }
++            }
++          },
++          "default": {
++            "description": "Default Response",
++            "headers": {
++              "x-request-id": {
++                "schema": {
++                  "required": true,
++                  "type": "string"
++                },
++                "description": "Request correlation identifier"
++              }
++            },
++            "content": {
++              "application/json": {
++                "schema": {
++                  "type": "object",
++                  "required": [
++                    "code",
++                    "message"
++                  ],
++                  "properties": {
++                    "code": {
++                      "type": "string"
++                    },
++                    "message": {
++                      "type": "string"
++                    },
++                    "requestId": {
++                      "type": "string"
+                     }
+                   }
+                 }
+diff --git a/src/api/src/db/todos.ts b/src/api/src/db/todos.ts
+index 32b6870..c97771f 100644
+--- a/src/api/src/db/todos.ts
++++ b/src/api/src/db/todos.ts
+@@ -1,12 +1,26 @@
++import { randomUUID } from "node:crypto";
+ import { desc, isNull } from "drizzle-orm";
+ import type { Todo } from "../definitions/todo.js";
+ import { getDb } from "./client.js";
+ import { todos } from "./schema.js";
+ 
++type TodoRow = typeof todos.$inferSelect;
++
+ function toIsoDateTimeString(value: Date): Todo["createdAt"] {
+   return value.toISOString() as Todo["createdAt"];
+ }
+ 
++function mapTodoRowToApiTodo(row: TodoRow): Todo {
++  return {
++    id: row.id,
++    text: row.text,
++    completed: row.completed,
++    createdAt: toIsoDateTimeString(row.createdAt),
++    updatedAt: toIsoDateTimeString(row.updatedAt),
++    deletedAt: row.deletedAt ? toIsoDateTimeString(row.deletedAt) : null,
++  };
++}
++
+ export async function listTodosFromDatabase(): Promise<Todo[]> {
+   const db = getDb();
+ 
+@@ -16,12 +30,35 @@ export async function listTodosFromDatabase(): Promise<Todo[]> {
+     .where(isNull(todos.deletedAt))
+     .orderBy(desc(todos.createdAt));
+ 
+-  return rows.map((row) => ({
+-    id: row.id,
+-    text: row.text,
+-    completed: row.completed,
+-    createdAt: toIsoDateTimeString(row.createdAt),
+-    updatedAt: toIsoDateTimeString(row.updatedAt),
+-    deletedAt: row.deletedAt ? toIsoDateTimeString(row.deletedAt) : null,
+-  }));
++  return rows.map(mapTodoRowToApiTodo);
++}
++
++/**
++ * Creates a new todo row and maps it to the API contract shape.
++ */
++export async function createTodoInDatabase({
++  text,
++}: {
++  text: string;
++}): Promise<Todo> {
++  const db = getDb();
++  const now = new Date();
++
++  const [row] = await db
++    .insert(todos)
++    .values({
++      id: randomUUID(),
++      text,
++      completed: false,
++      createdAt: now,
++      updatedAt: now,
++      deletedAt: null,
++    })
++    .returning();
++
++  if (!row) {
++    throw new Error("Todo insert did not return a row");
++  }
++
++  return mapTodoRowToApiTodo(row);
+ }
+diff --git a/src/api/src/plugins/error-handler.ts b/src/api/src/plugins/error-handler.ts
+index 4e5ee77..ab764c8 100644
+--- a/src/api/src/plugins/error-handler.ts
++++ b/src/api/src/plugins/error-handler.ts
+@@ -1,8 +1,21 @@
+ import type { ApiErrorResponse } from "@bmad-todo/shared";
+-import type { FastifyPluginAsync } from "fastify";
++import type { FastifyError, FastifyPluginAsync } from "fastify";
+ 
+ const errorHandlerPlugin: FastifyPluginAsync = async (app) => {
+-  app.setErrorHandler((error, request, reply) => {
++  app.setErrorHandler((error: FastifyError, request, reply) => {
++    /**
++     * Handle Fastify's route input schema validation errors
++     */
++    if (error.validation) {
++      const response: ApiErrorResponse = {
++        code: "VALIDATION_ERROR",
++        message: error.message,
++        requestId: request.requestId,
++      };
++
++      return reply.code(400).send(response);
++    }
++
+     request.log.error(error);
+ 
+     const response: ApiErrorResponse = {
+diff --git a/src/api/src/routes/schemas.ts b/src/api/src/routes/schemas.ts
+index 85ea169..5e61bb7 100644
+--- a/src/api/src/routes/schemas.ts
++++ b/src/api/src/routes/schemas.ts
+@@ -1,3 +1,5 @@
++import { MAX_TODO_TEXT_LENGTH } from "@bmad-todo/shared";
++import type { FromSchema, JSONSchema } from "json-schema-to-ts";
+ import { todoSchema } from "../definitions/todo.js";
+ 
+ const responseHeadersSchema = {
+@@ -15,22 +17,20 @@ export const apiErrorResponseSchema = {
+     code: { type: "string" },
+     message: { type: "string" },
+     requestId: { type: "string" },
+-    details: {
+-      type: "array",
+-      items: {
+-        type: "object",
+-        properties: {
+-          field: { type: "string" },
+-          min: { type: "number" },
+-          max: { type: "number" },
+-          reason: { type: "string" },
+-        },
+-        additionalProperties: true,
+-      },
+-    },
+   },
+ } as const;
+ 
++type RouteResponseSchemas = Partial<Record<number | "default", JSONSchema>>;
++
++/**
++ * Infers a route response-type map from a Fastify `response` schema object.
++ */
++export type InferRouteResponses<TResponse extends RouteResponseSchemas> = {
++  [TStatus in keyof TResponse]: TResponse[TStatus] extends JSONSchema
++    ? FromSchema<TResponse[TStatus]>
++    : never;
++};
++
+ export const getTodosRouteSchema = {
+   tags: ["todos"],
+   summary: "List todos",
+@@ -46,9 +46,45 @@ export const getTodosRouteSchema = {
+         },
+       },
+     },
+-    500: {
++    default: {
++      headers: responseHeadersSchema,
++      ...apiErrorResponseSchema,
++    },
++  },
++} as const;
++
++export type GetTodosRouteResponses = InferRouteResponses<
++  typeof getTodosRouteSchema.response
++>;
++
++export const postTodosRouteSchema = {
++  tags: ["todos"],
++  summary: "Create todo",
++  body: {
++    type: "object",
++    required: ["text"],
++    additionalProperties: false,
++    properties: {
++      text: {
++        type: "string",
++        minLength: 1,
++        maxLength: MAX_TODO_TEXT_LENGTH,
++        pattern: ".*\\S.*",
++      },
++    },
++  },
++  response: {
++    201: {
++      headers: responseHeadersSchema,
++      ...todoSchema,
++    },
++    default: {
+       headers: responseHeadersSchema,
+       ...apiErrorResponseSchema,
+     },
+   },
+ } as const;
++
++export type PostTodosRouteResponses = InferRouteResponses<
++  typeof postTodosRouteSchema.response
++>;
+diff --git a/src/api/src/routes/todos.ts b/src/api/src/routes/todos.ts
+index 41f3ca6..4f9e531 100644
+--- a/src/api/src/routes/todos.ts
++++ b/src/api/src/routes/todos.ts
+@@ -1,8 +1,8 @@
+-import type { FastifyPluginAsync } from "fastify";
+-import { listTodosFromDatabase } from "../db/todos.js";
+-import { getTodosRouteSchema } from "./schemas.js";
++import type { FastifyPluginAsyncJsonSchemaToTs } from "@fastify/type-provider-json-schema-to-ts";
++import { createTodoInDatabase, listTodosFromDatabase } from "../db/todos.js";
++import { getTodosRouteSchema, postTodosRouteSchema } from "./schemas.js";
+ 
+-const todosRoutes: FastifyPluginAsync = async (app) => {
++const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
+   app.get(
+     "/todos",
+     {
+@@ -14,6 +14,20 @@ const todosRoutes: FastifyPluginAsync = async (app) => {
+       return reply.code(200).send({ todos });
+     },
+   );
++
++  app.post(
++    "/todos",
++    {
++      schema: postTodosRouteSchema,
++    },
++    async (request, reply) => {
++      const todo = await createTodoInDatabase({
++        text: request.body.text.trim(),
++      });
++
++      return reply.code(201).send(todo);
++    },
++  );
+ };
+ 
+ export default todosRoutes;
+diff --git a/src/api/test/test-utils/index.ts b/src/api/test/test-utils/index.ts
+index ad9fcfd..3150215 100644
+--- a/src/api/test/test-utils/index.ts
++++ b/src/api/test/test-utils/index.ts
+@@ -4,5 +4,6 @@ export {
+   ensureTestTables,
+   runQuery,
+ } from "./db.js";
++export { runRequestIdHeaderTests } from "./request-id-tests.js";
+ export type { SeedTodoInput } from "./todos.js";
+ export { dropTodosTable, seedTodo } from "./todos.js";
+diff --git a/src/api/test/todos.get.test.ts b/src/api/test/todos.get.test.ts
+index e0d9c3d..98abb45 100644
+--- a/src/api/test/todos.get.test.ts
++++ b/src/api/test/todos.get.test.ts
+@@ -1,8 +1,8 @@
+-import type { ApiErrorResponse, Todo } from "@bmad-todo/shared";
+ import type { FastifyInstance } from "fastify";
+ import { afterEach, beforeEach, describe, expect, it } from "vitest";
+ import { buildApp } from "../src/app.js";
+-import { dropTodosTable, seedTodo } from "./test-utils/index.js";
++import type { GetTodosRouteResponses } from "../src/routes/schemas.js";
++import { runRequestIdHeaderTests, seedTodo } from "./test-utils/index.js";
+ 
+ let app: FastifyInstance;
+ 
+@@ -53,7 +53,7 @@ describe("GET /todos", () => {
+     expect(response.headers["content-type"]).toContain("application/json");
+     expect(response.headers["x-request-id"]).toBeTypeOf("string");
+ 
+-    const body = response.json<{ todos: Todo[] }>();
++    const body = response.json<GetTodosRouteResponses[200]>();
+ 
+     expect(body).toEqual({
+       todos: [
+@@ -77,74 +77,11 @@ describe("GET /todos", () => {
+     });
+   });
+ 
+-  describe("x-request-id header", () => {
+-    describe("provided inbound x-request-id on success", () => {
+-      it("reuses the same request id in the response header", async () => {
+-        // Act
+-        const response = await app.inject({
+-          method: "GET",
+-          url: "/todos",
+-          headers: {
+-            "x-request-id": "request-id-from-client",
+-          },
+-        });
+-
+-        // Assert
+-        expect(response.statusCode).toBe(200);
+-        expect(response.headers["x-request-id"]).toBe("request-id-from-client");
+-      });
+-    });
+-
+-    describe("provided inbound x-request-id on unexpected failure", () => {
+-      it("reuses the same request id in both response header and error body", async () => {
+-        // Arrange
+-        await dropTodosTable();
+-
+-        // Act
+-        const response = await app.inject({
+-          method: "GET",
+-          url: "/todos",
+-          headers: {
+-            "x-request-id": "error-request-id",
+-          },
+-        });
+-
+-        // Assert
+-        expect(response.statusCode).toBe(500);
+-        expect(response.headers["content-type"]).toContain("application/json");
+-        expect(response.headers["x-request-id"]).toBe("error-request-id");
+-
+-        const body = response.json<ApiErrorResponse>();
+-
+-        expect(body).toEqual({
+-          code: "INTERNAL_ERROR",
+-          message: "Internal server error",
+-          requestId: "error-request-id",
+-        });
+-      });
+-    });
+-
+-    describe("omitted inbound x-request-id on unexpected failure", () => {
+-      it("generates and returns a request id in header and error body", async () => {
+-        // Arrange
+-        await dropTodosTable();
+-
+-        // Act
+-        const response = await app.inject({
+-          method: "GET",
+-          url: "/todos",
+-        });
+-
+-        // Assert
+-        expect(response.statusCode).toBe(500);
+-        expect(response.headers["x-request-id"]).toBeTypeOf("string");
+-
+-        const body = response.json<ApiErrorResponse>();
+-
+-        expect(body.code).toBe("INTERNAL_ERROR");
+-        expect(body.message).toBe("Internal server error");
+-        expect(body.requestId).toBe(response.headers["x-request-id"]);
+-      });
+-    });
++  runRequestIdHeaderTests({
++    app: () => app,
++    injectInput: {
++      method: "GET",
++      url: "/todos",
++    },
+   });
+ });
+diff --git a/src/shared/src/index.ts b/src/shared/src/index.ts
+index 43255c5..4f38358 100644
+--- a/src/shared/src/index.ts
++++ b/src/shared/src/index.ts
+@@ -1,6 +1,5 @@
+ export { MAX_TODO_TEXT_LENGTH } from "./constants.js";
+ export type {
+-  ApiErrorDetail,
+   ApiErrorResponse,
+   IsoRfc3339DateTimeString,
+   Todo,
+diff --git a/src/shared/src/types.ts b/src/shared/src/types.ts
+index 91db88d..e11c47e 100644
+--- a/src/shared/src/types.ts
++++ b/src/shared/src/types.ts
+@@ -10,16 +10,8 @@ export type Todo = {
+   deletedAt?: IsoRfc3339DateTimeString | null;
+ };
+ 
+-export type ApiErrorDetail = {
+-  field?: string;
+-  min?: number;
+-  max?: number;
+-  reason?: string;
+-};
+-
+ export type ApiErrorResponse = {
+   code: string;
+   message: string;
+   requestId?: string;
+-  details?: ApiErrorDetail[];
+ };
+diff --git a/src/api/test/test-utils/request-id-tests.ts b/src/api/test/test-utils/request-id-tests.ts
+new file mode 100644
+index 0000000..d8804ae
+--- /dev/null
++++ b/src/api/test/test-utils/request-id-tests.ts
+@@ -0,0 +1,47 @@
++import type { FastifyInstance, InjectOptions } from "fastify";
++import { describe, expect, it } from "vitest";
++
++type RequestIdHeaderTestsInput = {
++  app: () => FastifyInstance;
++  injectInput: InjectOptions;
++};
++
++/**
++ * Defines the standard `x-request-id header` tests for a route.
++ */
++export function runRequestIdHeaderTests({
++  app,
++  injectInput,
++}: RequestIdHeaderTestsInput): void {
++  describe("x-request-id header", () => {
++    describe("provided inbound x-request-id", () => {
++      it("returns provided request", async () => {
++        // Arrange
++        const requestId = "request-id-from-client";
++
++        // Act
++        const response = await app().inject({
++          ...injectInput,
++          headers: {
++            ...injectInput.headers,
++            "x-request-id": requestId,
++          },
++        });
++
++        // Assert
++        expect(response.headers["x-request-id"]).toBe(requestId);
++      });
++    });
++
++    describe("omitted inbound x-request-id", () => {
++      it("generates and returns a request id in header", async () => {
++        // Act
++        const response = await app().inject(injectInput);
++
++        // Assert
++        expect(response.headers["x-request-id"]).toBeTypeOf("string");
++        expect(response.headers["x-request-id"]).not.toBe("");
++      });
++    });
++  });
++}
+diff --git a/src/api/test/todos.post.test.ts b/src/api/test/todos.post.test.ts
+new file mode 100644
+index 0000000..d69bdcf
+--- /dev/null
++++ b/src/api/test/todos.post.test.ts
+@@ -0,0 +1,118 @@
++import { MAX_TODO_TEXT_LENGTH } from "@bmad-todo/shared";
++import type { FastifyInstance } from "fastify";
++import { afterEach, beforeEach, describe, expect, it } from "vitest";
++import { buildApp } from "../src/app.js";
++import type { PostTodosRouteResponses } from "../src/routes/schemas.js";
++import { runRequestIdHeaderTests } from "./test-utils/index.js";
++
++let app: FastifyInstance;
++
++beforeEach(async () => {
++  app = await buildApp({ logger: false });
++});
++
++afterEach(async () => {
++  await app.close();
++});
++
++describe("POST /todos", () => {
++  describe("valid payload", () => {
++    it("returns 201 with the created todo and server-assigned timestamps", async () => {
++      // Arrange
++      const payload = {
++        text: "  buy milk  ",
++      };
++
++      // Act
++      const response = await app.inject({
++        method: "POST",
++        url: "/todos",
++        payload,
++      });
++
++      // Assert
++      expect(response.statusCode).toBe(201);
++      expect(response.headers["content-type"]).toContain("application/json");
++      expect(response.headers["x-request-id"]).toBeTypeOf("string");
++
++      const body = response.json<PostTodosRouteResponses[201]>();
++
++      expect(body).toEqual({
++        id: expect.any(String),
++        text: "buy milk",
++        completed: false,
++        createdAt: expect.any(String),
++        updatedAt: expect.any(String),
++        deletedAt: null,
++      });
++    });
++  });
++
++  describe("invalid payload", () => {
++    describe("empty or whitespace text", () => {
++      it("returns 400 with VALIDATION_ERROR and displayable message", async () => {
++        // Arrange
++        const payload = {
++          text: "   ",
++        };
++
++        // Act
++        const response = await app.inject({
++          method: "POST",
++          url: "/todos",
++          payload,
++        });
++
++        // Assert
++        expect(response.statusCode).toBe(400);
++        expect(response.headers["x-request-id"]).toBeTypeOf("string");
++
++        const body = response.json<PostTodosRouteResponses["default"]>();
++
++        expect(body).toEqual({
++          code: "VALIDATION_ERROR",
++          message: expect.any(String),
++          requestId: response.headers["x-request-id"],
++        });
++      });
++    });
++
++    describe("text exceeding MAX_TODO_TEXT_LENGTH", () => {
++      it("returns 400 with max detail for text", async () => {
++        // Arrange
++        const payload = {
++          text: "a".repeat(MAX_TODO_TEXT_LENGTH + 1),
++        };
++
++        // Act
++        const response = await app.inject({
++          method: "POST",
++          url: "/todos",
++          payload,
++        });
++
++        // Assert
++        expect(response.statusCode).toBe(400);
++
++        const body = response.json<PostTodosRouteResponses["default"]>();
++
++        expect(body).toEqual({
++          code: "VALIDATION_ERROR",
++          message: expect.any(String),
++          requestId: response.headers["x-request-id"],
++        });
++      });
++    });
++  });
++
++  runRequestIdHeaderTests({
++    app: () => app,
++    injectInput: {
++      method: "POST",
++      url: "/todos",
++      payload: {
++        text: "task",
++      },
++    },
++  });
++});
