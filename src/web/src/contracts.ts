@@ -1,13 +1,8 @@
-import {
-  type ApiErrorResponse,
-  MAX_TODO_TEXT_LENGTH,
-  type Todo,
-} from "@bmad-todo/shared";
-import type { ApiPath } from "./api/generated";
+import { MAX_TODO_TEXT_LENGTH } from "@bmad-todo/shared";
+import type { paths } from "./api/generated";
+import type { ApiResponses } from "./api/helpers";
 
-export const TODOS_API_PATH: ApiPath = "/todos";
+export const TODOS_API_PATH: keyof paths = "/todos";
 
-export type TodosResponse = Todo[];
-export type TodosErrorResponse = ApiErrorResponse;
-
+export type { ApiResponses };
 export { MAX_TODO_TEXT_LENGTH };

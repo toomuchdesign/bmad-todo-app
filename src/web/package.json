@@ -11,7 +11,7 @@
     "test:ci": "npm run test -- --run",
     "test:e2e": "echo \"TODO: add Playwright e2e tests\"",
     "type:check": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
-    "build:api-types": "node scripts/build-api-types.mjs"
+    "build:api-types": "openapi-typescript ../api/openapi.json -o src/api/generated/index.ts"
   },
   "dependencies": {
     "@bmad-todo/shared": "*",
@@ -19,13 +19,14 @@
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@testing-library/jest-dom": "6.9.1",
-    "@testing-library/react": "16.3.2",
     "@vitejs/plugin-react": "^6.0.1",
     "jsdom": "^26.0.0",
+    "openapi-typescript": "^7.13.0",
     "typescript": "6.0.2",
     "vite": "8.0.3",
     "vitest": "4.1.2"

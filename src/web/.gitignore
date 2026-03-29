@@ -1,24 +1,21 @@
-# Logs
-logs
+# OS generated files
+.*
+*.db
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
 node_modules
 dist
-dist-ssr
-*.local
+coverage
+*-temp.json
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Trailing dotted files
+!.claude
+!.editorconfig
+!.gitignore
+!.npmignore
+!.npmrc
+!.github
+!.nvmrc
+!.changeset
+!.gitattributes
+!.env.example
+!.env.test

@@ -1,22 +1,15 @@
-import { MAX_TODO_TEXT_LENGTH } from "@bmad-todo/shared";
+import {
+  apiErrorResponseSchema,
+  MAX_TODO_TEXT_LENGTH,
+  todoSchema,
+} from "@bmad-todo/shared";
 import type { FromSchema, JSONSchema } from "json-schema-to-ts";
-import { todoSchema } from "../definitions/todo.js";
 
 const responseHeadersSchema = {
   "x-request-id": {
     required: true,
     type: "string",
     description: "Request correlation identifier",
-  },
-} as const;
-
-export const apiErrorResponseSchema = {
-  type: "object",
-  required: ["code", "message"],
-  properties: {
-    code: { type: "string" },
-    message: { type: "string" },
-    requestId: { type: "string" },
   },
 } as const;
 

@@ -159,7 +159,7 @@ Goal: if the backend changes its public API (request/response shapes), the front
 
 - **OpenAPI file path (committed):** `src/api/openapi.json`
 - **Generation is mandatory:** when API route schemas change, `src/api/openapi.json` must be updated in the same PR.
-- **Frontend types are derived from OpenAPI:** `npm run build:api-types` regenerates FE types/client from `src/api/openapi.json`.
+- **Frontend types are derived from OpenAPI:** `npm run build:api-types` uses `openapi-typescript` to generate typed interfaces from `src/api/openapi.json` into `src/web/src/api/generated/index.ts`.
 - **Automation:** a git `pre-commit` hook runs `npm run build:openapi` to keep the committed OpenAPI in sync.
 - **Hook tool:** use `simple-git-hooks.
 
@@ -217,7 +217,7 @@ Notes:
 - `test:ci`: Vitest unit/component tests (non-watch, CI-friendly).
 - `test:e2e`: Playwright tests.
 - `type:check`: `tsc --noEmit` (workspace-local typecheck).
-- `build:api-types`: regenerate the FE types/client from the committed OpenAPI spec.
+- `build:api-types`: regenerate the FE types via `openapi-typescript` from the committed OpenAPI spec (`openapi-typescript ../api/openapi.json -o src/api/generated/index.ts`).
 
 **API workspace (`src/api/package.json`)**
 
@@ -321,7 +321,7 @@ To keep quality high while moving quickly, every story/task is considered **done
   - Routes should define strict input/output JSON schema definitions
   - Such schemas should be enforced and reused in the type handler using: `@fastify/type-provider-json-schema-to-ts`
   - Every route must infer both request input and response output types from its route schema via `@fastify/type-provider-json-schema-to-ts`; avoid manual request/response typings that duplicate schema intent
-  - Canonical entity building blocks should be centralized under `src/api/src/definitions` and export both JSON schemas and `FromSchema` inferred TS types for reuse across routes/tests.
+  - Canonical entity and contract JSON schemas live in `src/shared/src/definitions/` as the single source of truth. Each definition file exports both the `as const` JSON schema object and a `FromSchema`-inferred TypeScript type. Both the API and web workspaces import schemas and types from `@bmad-todo/shared`.
 
 - **OpenAPI contract:**
   - OpenAPI generated/exposed with `@fastify/swagger` and `@fastify/swagger-ui`
@@ -412,7 +412,7 @@ This section is the enforcement layer to prevent AI-agent divergence. The canoni
 - **DB naming:** tables/columns are `snake_case` (`todos`, `created_at`, etc.)
 - **JSON naming:** `camelCase` in API requests/responses
 - **Code naming:** TS/React standard (`PascalCase` types/components, `camelCase` functions/vars, `useXxx` hooks)
-- **Boundaries:** `src/web` (SPA) never accesses DB; `src/api` owns DB access; `src/shared` is the single source for shared constants/types.
+- **Boundaries:** `src/web` (SPA) never accesses DB; `src/api` owns DB access; `src/shared` is the single source of truth for entity JSON schemas, derived TypeScript types, and shared constants.
 
 ### API Format Invariants (must follow)
 
@@ -456,7 +456,10 @@ bmad-todo/
 │   │   ├── tsconfig.json
 │   │   └── src/
 │   │       ├── constants.ts                # exports MAX_TODO_TEXT_LENGTH = 200
-│   │       ├── types.ts                    # Todo + ApiErrorResponse shared contracts
+│   │       ├── definitions/
+│   │       │   ├── todo.ts                 # canonical Todo JSON schema + inferred type
+│   │       │   ├── api-error-response.ts   # canonical ApiErrorResponse JSON schema + inferred type
+│   │       │   └── index.ts               # definitions barrel
 │   │       └── index.ts                    # shared exports
 │   │
 │   ├── api/
@@ -476,8 +479,6 @@ bmad-todo/
 │   │   │   │   ├── client.ts               # pg pool + drizzle instance
 │   │   │   │   ├── todos.ts                # db query mapping for todos
 │   │   │   │   └── schema.ts               # drizzle schema (todos table)
-│   │   │   ├── definitions/
-│   │   │   │   └── todo.ts                 # canonical Todo JSON schema + inferred type
 │   │   │   ├── routes/
 │   │   │   │   ├── README.md
 │   │   │   │   ├── schemas.ts              # route response schemas
@@ -499,24 +500,28 @@ bmad-todo/
 │   └── web/
 │       ├── package.json
 │       ├── tsconfig.json
-│       ├── vite.config.ts
+│       ├── vitest.config.ts
+│       ├── vite.config.ts                  # includes dev proxy for /todos → API
 │       ├── index.html
 │       ├── public/
 │       ├── src/
 │       │   ├── main.tsx
 │       │   ├── App.tsx
+│       │   ├── App.css
 │       │   ├── App.test.tsx
+│       │   ├── index.css                   # global styles + CSS custom properties
+│       │   ├── contracts.ts                # re-exports from @bmad-todo/shared
+│       │   ├── setupTests.ts               # jest-dom vitest setup
 │       │   ├── api/
 │       │   │   └── generated/              # OpenAPI-generated types/client
 │       │   ├── hooks/
 │       │   │   └── useTodos.ts             # React state + load/retry + mutations
 │       │   ├── components/
-│       │   │   ├── AddTodoForm.tsx
+│       │   │   ├── GlobalErrorBanner.tsx
+│       │   │   ├── GlobalErrorBanner.module.css
 │       │   │   ├── TodoList.tsx
-│       │   │   ├── TodoItem.tsx
-│       │   │   └── GlobalErrorBanner.tsx
-│       │   └── styles/
-│       │       └── app.css
+│       │   │   └── TodoList.module.css
+│       │   └── styles/                     # (reserved for future shared styles)
 │       └── e2e/
 │           ├── todo-flows.spec.ts          # playwright flows required by PRD
 │           └── playwright.config.ts

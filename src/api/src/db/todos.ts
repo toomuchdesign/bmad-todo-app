@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
+import type { Todo } from "@bmad-todo/shared";
 import { desc, isNull } from "drizzle-orm";
-import type { Todo } from "../definitions/todo.js";
 import { getDb } from "./client.js";
 import { todos } from "./schema.js";
 

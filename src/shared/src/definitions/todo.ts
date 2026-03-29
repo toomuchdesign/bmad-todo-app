@@ -1,7 +1,8 @@
 import type { FromSchema } from "json-schema-to-ts";
 
 /**
- * Canonical Todo JSON schema used as the API building-block definition.
+ * Canonical Todo JSON schema used as the single source of truth
+ * for both API validation and TypeScript type inference.
  */
 export const todoSchema = {
   type: "object",
@@ -18,7 +19,5 @@ export const todoSchema = {
   },
 } as const;
 
-/**
- * TypeScript type inferred from `todoSchema`.
- */
+/** TypeScript type inferred from `todoSchema`. */
 export type Todo = FromSchema<typeof todoSchema>;

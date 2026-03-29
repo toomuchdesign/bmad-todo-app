@@ -1,4 +1,4 @@
-import type { Todo } from "../../src/definitions/todo.js";
+import type { Todo } from "@bmad-todo/shared";
 import { runQuery } from "./db.js";
 
 export type SeedTodoInput = Omit<Todo, "deletedAt"> & {

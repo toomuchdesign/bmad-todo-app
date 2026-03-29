@@ -74,12 +74,31 @@ If the Arrange block grows large, extract it into a helper or factory. A test th
 - Any other function with a name should use function declaration (`function myFunctionName(){}`)
 - Complex functions and exported functions (even non public ones) should come with a brief jsdoc comment
 - Always prefer named arguments when function accepts 2+ arguments
+- Only exports from modules when there is an importer
 
 ### Typescript
 
 - Do not use `any` type. Use `unknown` is an entity is actually not known
 - Never force type inference. Type must always flow naturally
 - If something cannot be properly typed use `// @ts-expect-error error description/motivation`
+
+## Local Dev & Visual Inspection
+
+When asked to visually check the app or take a screenshot:
+
+1. **Start dev servers:** `npm run dev` (runs web + API concurrently in background)
+2. **Web:** Vite at `http://localhost:5173` (proxies `/todos` to API at `:3001`)
+3. **API:** Fastify at `http://localhost:3001`
+4. **Wait ~5s**, then verify readiness: `curl -s -o /dev/null -w "%{http_code}" http://localhost:5173`
+5. **Navigate** browser to `http://localhost:5173`
+6. **Take screenshot** (full page) and save to `.debug/` folder
+
+This is a frequent workflow — proceed promptly without extra confirmation.
+
+## Debugging Artifacts
+
+- All debugging artifacts (screenshots, downloaded files, generated reports) must be saved into the `.debug/` folder at the project root.
+- This folder is git-ignored. Do not commit its contents.
 
 ## Documentation practices
 

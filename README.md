@@ -93,14 +93,14 @@ npm run source:check
 
 The committed contract artifacts are:
 
-- `src/api/openapi.json`
-- `src/web/src/api/generated/`
+- `src/api/openapi.json` — OpenAPI spec generated from Fastify route schemas
+- `src/web/src/api/generated/index.ts` — TypeScript interfaces generated from the OpenAPI spec via `openapi-typescript`
 
 Regenerate them with:
 
 ```bash
-npm run build:openapi
-npm run build:api-types
+npm run build:openapi        # updates src/api/openapi.json from route schemas
+npm run build:api-types      # updates src/web/src/api/generated/index.ts from openapi.json
 ```
 
 A `pre-commit` hook (via `simple-git-hooks`) runs both and stages updates.
