@@ -16,7 +16,9 @@
       "!!**/dist",
       "!!_bmad*",
       "!!src/api/drizzle",
-      "!!src/api/openapi.json"
+      "!!src/api/openapi.json",
+      "!!src/web/src/api/generated",
+      "!!**/test-results"
     ]
   },
   "formatter": {

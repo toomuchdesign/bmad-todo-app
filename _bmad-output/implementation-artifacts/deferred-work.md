@@ -6,3 +6,7 @@
 - Stale todos remain visible alongside error banner if a retry fails after a prior successful load. Latent until mutations/refetch are added.
 - Retry button not disabled during in-flight fetch — rapid clicks cause concurrent requests that race. Low impact for single-screen MVP.
 - Dark mode error banner colors (`#fca5a5` on semi-transparent `rgba(153,27,27,0.15)`) may not meet WCAG contrast. Verify in accessibility story (3-4).
+
+## Deferred from: code review of 1-8-set-up-playwright-e2e-infrastructure-and-cover-epic-1-flows (2026-03-30)
+
+- Pre-commit hook missing `npm run` prefix for first command (`build:openapi:api-types:stage`) — pre-existing issue in `package.json` simple-git-hooks config.

@@ -13,6 +13,7 @@
     "test:ci": "npm run docker-compose:start && npm run test -- --run",
     "type:check": "tsc -p tsconfig.json --noEmit",
     "build:openapi": "tsx scripts/build-openapi.ts",
+    "build:openapi:stage": "npm run build:openapi && git add openapi.json",
     "db:generate": "npm run docker-compose:start && drizzle-kit generate",
     "db:migrate": "npm run docker-compose:start && drizzle-kit migrate",
     "db:reset": "npm run docker-compose:start && tsx scripts/reset-todos.ts"
@@ -26,7 +27,7 @@
     "@fastify/swagger-ui": "^5.2.5",
     "@fastify/type-provider-json-schema-to-ts": "^5.0.0",
     "drizzle-orm": "0.45.1",
-    "env-schema": "^6.1.0",
+    "env-schema": "^7.0.0",
     "fastify": "5.8.4",
     "json-schema-to-ts": "^3.1.1",
     "pg": "8.20.0"

@@ -16,7 +16,9 @@
     "build": "npm -w src/shared run build && npm -w src/api run build && npm -w src/web run build",
     "build:openapi": "npm -w src/api run build:openapi",
     "build:api-types": "npm -w src/web run build:api-types",
-    "type:check": "npm -w src/shared run type:check && npm -w src/api run type:check && npm -w src/web run type:check",
+    "build:openapi:api-types": "npm run build:openapi && npm run build:api-types",
+    "build:openapi:api-types:stage": "npm -w src/api run build:openapi:stage && npm -w src/web run build:api-types:stage",
+    "type:check": "concurrently --kill-others-on-fail -s first -n shared,api,web \"npm -w src/shared run type:check\" \"npm -w src/api run type:check\" \"npm -w src/web run type:check\"",
     "biome:check": "biome check .",
     "biome:fix": "biome check --write .",
     "source:check": "npm run biome:check && npm run type:check",
@@ -28,7 +30,7 @@
     "test:e2e": "npm -w src/web run test:e2e"
   },
   "simple-git-hooks": {
-    "pre-commit": "npm run test:ci && npm run build:openapi && npm run build:api-types && git add src/api/openapi.json src/web/src/api/generated"
+    "pre-commit": "npm run build:openapi:api-types:stage && npm run source:check && npm run test:ci && npm run test:e2e"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",

@@ -9,9 +9,10 @@
     "start": "vite preview",
     "test": "vitest --watch",
     "test:ci": "npm run test -- --run",
-    "test:e2e": "echo \"TODO: add Playwright e2e tests\"",
-    "type:check": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
-    "build:api-types": "openapi-typescript ../api/openapi.json -o src/api/generated/index.ts"
+    "test:e2e": "playwright test --config e2e/playwright.config.ts",
+    "type:check": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit && tsc -p e2e/tsconfig.json --noEmit",
+    "build:api-types": "openapi-typescript ../api/openapi.json -o src/api/generated/index.ts",
+    "build:api-types:stage": "npm run build:api-types && git add src/api/generated/index.ts"
   },
   "dependencies": {
     "@bmad-todo/shared": "*",
@@ -19,6 +20,8 @@
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.2",
     "@types/node": "^24.12.0",
