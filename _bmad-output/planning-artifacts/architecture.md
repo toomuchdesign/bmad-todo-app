@@ -507,16 +507,22 @@ bmad-todo/
 │       ├── src/
 │       │   ├── main.tsx
 │       │   ├── App.tsx
-│       │   ├── App.css
-│       │   ├── App.test.tsx
+│       │   ├── App.module.css
+│       │   ├── App.test.tsx                # integration tests: load/structure
+│       │   ├── App.create-todo.test.tsx    # integration tests: create flow
 │       │   ├── index.css                   # global styles + CSS custom properties
 │       │   ├── contracts.ts                # re-exports from @bmad-todo/shared
-│       │   ├── setupTests.ts               # jest-dom vitest setup
 │       │   ├── api/
+│       │   │   ├── helpers.ts              # TypeScript response-type helpers
 │       │   │   └── generated/              # OpenAPI-generated types/client
 │       │   ├── hooks/
 │       │   │   └── useTodos.ts             # React state + load/retry + mutations
+│       │   ├── test-utils/
+│       │   │   └── index.ts                # shared fixtures + fetch mock helpers
 │       │   ├── components/
+│       │   │   ├── AddTodoForm.tsx
+│       │   │   ├── AddTodoForm.module.css
+│       │   │   ├── AddTodoForm.test.tsx
 │       │   │   ├── GlobalErrorBanner.tsx
 │       │   │   ├── GlobalErrorBanner.module.css
 │       │   │   ├── TodoList.tsx

@@ -1,58 +1,27 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
-import type { Todo } from "@bmad-todo/shared";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import App from "./App";
-
-const TODO_FIXTURES: Todo[] = [
-  {
-    id: "1",
-    text: "Buy milk",
-    completed: false,
-    createdAt: "2026-03-01T10:00:00.000Z",
-    updatedAt: "2026-03-01T10:00:00.000Z",
-  },
-  {
-    id: "2",
-    text: "Walk the dog",
-    completed: true,
-    createdAt: "2026-03-02T12:00:00.000Z",
-    updatedAt: "2026-03-02T14:00:00.000Z",
-  },
-];
-
-function mockFetchSuccess(todos: Todo[]): void {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ todos }),
-    }),
-  );
-}
-
-function mockFetchError(body?: { code: string; message: string }): void {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockResolvedValue({
-      ok: false,
-      status: 500,
-      json: body
-        ? () => Promise.resolve(body)
-        : () => Promise.reject(new Error("no body")),
-    }),
-  );
-}
-
-function mockFetchNetworkError(): void {
-  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network error")));
-}
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
+import {
+  mockFetchError,
+  mockFetchNetworkError,
+  mockFetchSuccess,
+  TODO_FIXTURES,
+} from "./test-utils";
 
 describe("App", () => {
+  describe("page structure", () => {
+    it("renders the Todos heading", () => {
+      vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise(() => {})));
+
+      render(<App />);
+
+      expect(
+        screen.getByRole("heading", { name: "Todos" }),
+      ).toBeInTheDocument();
+    });
+  });
+
   describe("loading state", () => {
     it("shows a loading indicator while fetching todos", () => {
       vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise(() => {})));
@@ -168,18 +137,6 @@ describe("App", () => {
         expect(screen.getByText("Buy milk")).toBeInTheDocument();
       });
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    });
-  });
-
-  describe("page structure", () => {
-    it("renders the Todos heading", () => {
-      vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise(() => {})));
-
-      render(<App />);
-
-      expect(
-        screen.getByRole("heading", { name: "Todos" }),
-      ).toBeInTheDocument();
     });
   });
 });

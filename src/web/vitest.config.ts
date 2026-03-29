@@ -5,6 +5,7 @@ export default defineConfig({
     dir: "src",
     restoreMocks: true,
     mockReset: true,
+    unstubGlobals: true,
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
   },
