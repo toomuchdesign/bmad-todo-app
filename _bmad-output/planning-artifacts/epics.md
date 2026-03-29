@@ -293,9 +293,40 @@ So that capturing tasks feels frictionless.
 **And** the UI does not leave a ghost todo in the list
 **And** the user-entered text is preserved for retry
 
+### Story 1.8: Set up Playwright E2E infrastructure and cover Epic 1 flows
+
+As a maintainer,
+I want E2E tests covering the current load and create flows,
+So that regressions are caught early as new features are added.
+
+**Acceptance Criteria:**
+
+**Given** no Playwright infrastructure exists yet
+**When** I set up E2E testing
+**Then** Playwright is configured with a `test:e2e` root script
+**And** dev servers (web + API) are orchestrated for E2E runs
+**And** DB is reset via the existing `db:reset` script before each test or suite
+
+**Given** the E2E suite runs
+**When** it exercises Epic 1 flows
+**Then** it covers: app loads and shows the todo list, empty state is displayed when no todos exist, creating a todo with valid text adds it to the list (newest-first), inline validation prevents empty/whitespace and too-long submissions, load failure shows error banner with working retry
+
+**Given** E2E tests exist for current features
+**When** Epic 2 stories are implemented
+**Then** each story adds E2E cases for its feature alongside unit tests (E2E coverage grows incrementally with the codebase)
+
+**Context:** Added during Epic 1 retrospective. Establishes the E2E regression safety net before Epic 2 mutations land. Story 3.3 in Epic 3 becomes a consolidation and gap-filling pass rather than building E2E from scratch.
+
 ## Epic 2: Manage Existing Todos (Edit + Complete + Delete)
 
 Deliver the remaining CRUD actions with correct API behavior and UX patterns: inline editing, completion toggles, and soft delete, all with predictable rollback and error handling.
+
+### Epic 1 Retrospective Learnings (apply throughout Epic 2)
+
+- **Extend `useTodos` incrementally** — add one mutation per story (`updateTodo`, `toggleTodo`, `deleteTodo`), following the same pattern established in Epic 1: clear error → fire request → update state on success → set error on failure. Extract private internal functions into separate modules only if the hook grows too large.
+- **Optimistic vs server-confirms-first coexist** — Story 2.3 (toggle) uses optimistic UI with rollback; Story 2.5 (delete) waits for server confirmation. Both patterns live in the same `useTodos` hook.
+- **Focus management requires state-based coordination** — React 18 batches state updates, so direct `ref.focus()` calls after state changes are unreliable. Use `useEffect` + state flag pattern established in Story 1.7.
+- **Keep vitest `globals: false`** — explicit `cleanup()` in test files is intentional; do not change this convention.
 
 ### Story 2.1: Implement PATCH /todos/:id for text and completion updates
 
@@ -322,6 +353,11 @@ So that I can correct it and reflect completion status.
 **When** I call `PATCH /todos/:id`
 **Then** the API returns `404` with `code = NOT_FOUND`
 
+**Retro-driven additions (Epic 1 retro):**
+
+- Fix retry debounce: pass `loading` state to `GlobalErrorBanner` and disable the Retry button while a request is in-flight. Update the existing retry test to assert the button is disabled during fetch.
+- Update pre-commit hook: run `source:fix` then `source:check` before `test:ci` to eliminate recurring Biome formatting friction.
+
 ### Story 2.2: Inline edit todo text in the UI with Enter/Escape behavior
 
 As a user,
@@ -346,6 +382,12 @@ So that I can adjust wording without leaving the list.
 **When** the response returns
 **Then** the UI shows a global error banner
 **And** the UI remains consistent (no silent loss of edits)
+
+**Retro-driven additions (Epic 1 retro):**
+
+- Install `@testing-library/user-event` as a dev dependency in `src/web`. Use it for keyboard interaction tests (Enter/Escape) in this story. Existing `fireEvent`-based tests in Stories 1.6/1.7 do not need migration.
+- Apply the state-based focus coordination pattern from Story 1.7 for focus transitions: into edit input, out on Enter/save, out on Escape/discard.
+- Click-outside behavior: save (same as Enter) — most forgiving UX.
 
 ### Story 2.3: Toggle completion with optimistic UI and rollback on failure
 
@@ -410,6 +452,32 @@ So that I don’t lose items due to transient failures.
 **When** the response returns
 **Then** the todo remains visible
 **And** the UI shows a global error banner
+
+### Story 2.6 (Optional): Per-item AbortController map for mutation concurrency
+
+As a user,
+I want concurrent mutations on different todos to work independently,
+So that rapid interactions don't cause race conditions or corrupt state.
+
+**Acceptance Criteria:**
+
+**Given** the `useTodos` hook manages mutations
+**When** I refactor to use a per-item AbortController map
+**Then** a `Map<string, AbortController>` ref tracks in-flight mutations keyed by todo ID
+**And** a new mutation for the same todo ID aborts the previous in-flight request
+**And** mutations on different todo IDs run concurrently without interference
+
+**Given** the initial `GET /todos` fetch
+**When** it is in-flight
+**Then** it uses a separate AbortController ref (not the per-item map)
+**And** component unmount aborts the fetch
+
+**Given** a mutation is aborted due to a superseding request
+**When** the abort occurs
+**Then** the aborted request does not update state or trigger error banners
+**And** only the latest request's result is applied
+
+**Context:** This story addresses deferred tech debt from Epic 1 (Story 1.6). It is optional because the mutation patterns in Stories 2.1–2.5 work correctly without it under normal usage. It becomes valuable when users interact rapidly (e.g., toggling the same checkbox multiple times quickly). By placing it after all mutation stories, the refactoring has full context of all patterns.
 
 ## Epic 3: Shippable Quality Bar (Tests + Accessibility)
 
