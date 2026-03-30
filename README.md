@@ -2,9 +2,9 @@
 
 Monorepo scaffold for a Todo app:
 
-- `src/web`: React SPA (Vite + TypeScript)
-- `src/api`: Fastify API (TypeScript)
-- `src/shared`: shared TypeScript-only exports used by both web and api
+- `packages/web`: React SPA (Vite + TypeScript)
+- `packages/api`: Fastify API (TypeScript)
+- `packages/shared`: shared TypeScript-only exports used by both web and api
 
 ## Prerequisites
 
@@ -67,9 +67,9 @@ Defaults:
 
 Environment variables:
 
-- The API expects config via environment variables (see `src/api/.env.example` for the required keys).
-- DB scripts in `src/api` auto-load `src/api/.env` (copy from `src/api/.env.example`) so you don't need to `export DATABASE_URL=...` before running `npm -w src/api run db:*`.
-- API tests (Vitest) auto-load `src/api/.env.test`.
+- The API expects config via environment variables (see `packages/api/.env.example` for the required keys).
+- DB scripts in `packages/api` auto-load `packages/api/.env` (copy from `packages/api/.env.example`) so you don't need to `export DATABASE_URL=...` before running `npm -w api run db:*`.
+- API tests (Vitest) auto-load `packages/api/.env.test`.
 - Note: the current API dev server command does not auto-load a `.env` file.
 
 ## Tests (recommended)
@@ -93,14 +93,14 @@ npm run source:check
 
 The committed contract artifacts are:
 
-- `src/api/openapi.json` — OpenAPI spec generated from Fastify route schemas
-- `src/web/src/api/generated/index.ts` — TypeScript interfaces generated from the OpenAPI spec via `openapi-typescript`
+- `packages/api/openapi.json` — OpenAPI spec generated from Fastify route schemas
+- `packages/web/packages/api/generated/index.ts` — TypeScript interfaces generated from the OpenAPI spec via `openapi-typescript`
 
 Regenerate them with:
 
 ```bash
-npm run build:openapi        # updates src/api/openapi.json from route schemas
-npm run build:api-types      # updates src/web/src/api/generated/index.ts from openapi.json
+npm run build:openapi        # updates packages/api/openapi.json from route schemas
+npm run build:api-types      # updates packages/web/packages/api/generated/index.ts from openapi.json
 ```
 
 A `pre-commit` hook (via `simple-git-hooks`) runs both and stages updates.
@@ -110,7 +110,7 @@ A `pre-commit` hook (via `simple-git-hooks`) runs both and stages updates.
 Run a script in a specific workspace:
 
 ```bash
-npm -w src/web run <script>
-npm -w src/api run <script>
-npm -w src/shared run <script>
+npm -w web run <script>
+npm -w api run <script>
+npm -w shared run <script>
 ```

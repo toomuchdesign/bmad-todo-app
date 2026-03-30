@@ -95,7 +95,7 @@ Full-stack web app (SPA + separate HTTP API), based on PRD/UX:
 - Minimal framework “magic” while still giving modern DX.
 - Workspaces keep FE/BE in one repo but cleanly separated.
 
-**Initialization Commands (monorepo layout: `src/web`, `src/api`)**
+**Initialization Commands (monorepo layout: `packages/web`, `packages/api`)**
 
 ```bash
 # SPA (React + TypeScript)
@@ -108,7 +108,7 @@ npm exec --package fastify-cli -- fastify generate src/api --lang=ts
 **Monorepo root setup (conceptual):**
 
 - Root `package.json` will declare workspaces like:
-  - `src/*`
+  - `packages/*`
   - (optional later) `packages/*` for shared types/contracts between API and SPA
 
 **Architectural Decisions Provided by Starters:**
@@ -125,8 +125,8 @@ npm exec --package fastify-cli -- fastify generate src/api --lang=ts
 
 **Code Organization:**
 
-- `src/web`: UI and client state
-- `src/api`: HTTP API + DB integration (Postgres)
+- `packages/web`: UI and client state
+- `packages/api`: HTTP API + DB integration (Postgres)
 
 **Note:** Project initialization using these commands should be the first implementation story.
 
@@ -153,13 +153,13 @@ npm exec --package fastify-cli -- fastify generate src/api --lang=ts
 
 Goal: if the backend changes its public API (request/response shapes), the frontend should fail fast during typechecking and/or code generation.
 
-**Contract source of truth:** API route schemas in `src/api`.
+**Contract source of truth:** API route schemas in `packages/api`.
 
 **Published artifact (version controlled):** OpenAPI spec generated from those schemas.
 
-- **OpenAPI file path (committed):** `src/api/openapi.json`
-- **Generation is mandatory:** when API route schemas change, `src/api/openapi.json` must be updated in the same PR.
-- **Frontend types are derived from OpenAPI:** `npm run build:api-types` uses `openapi-typescript` to generate typed interfaces from `src/api/openapi.json` into `src/web/src/api/generated/index.ts`.
+- **OpenAPI file path (committed):** `packages/api/openapi.json`
+- **Generation is mandatory:** when API route schemas change, `packages/api/openapi.json` must be updated in the same PR.
+- **Frontend types are derived from OpenAPI:** `npm run build:api-types` uses `openapi-typescript` to generate typed interfaces from `packages/api/openapi.json` into `packages/web/packages/api/generated/index.ts`.
 - **Automation:** a git `pre-commit` hook runs `npm run build:openapi` to keep the committed OpenAPI in sync.
 - **Hook tool:** use `simple-git-hooks.
 
@@ -174,11 +174,11 @@ Example hook configuration shape (to be applied in root `package.json` when scaf
 {
   "scripts": {
     "prepare": "simple-git-hooks",
-    "build:openapi": "npm -w src/api run build:openapi",
-    "build:api-types": "npm -w src/web run build:api-types"
+    "build:openapi": "npm -w api run build:openapi",
+    "build:api-types": "npm -w web run build:api-types"
   },
   "simple-git-hooks": {
-    "pre-commit": "npm run test:ci && npm run build:openapi && npm run build:api-types && git add src/api/openapi.json src/web/src/api/generated"
+    "pre-commit": "npm run test:ci && npm run build:openapi && npm run build:api-types && git add packages/api/openapi.json packages/web/packages/api/generated"
   }
 }
 ```
@@ -190,7 +190,7 @@ Define script names and responsibilities _now_ to prevent divergence. Exact unde
 **Root (`/package.json`)**
 
 - `biome:check` / `biome:fix`: run Biome over the whole repo.
-- `build:openapi`: generate/update the committed OpenAPI spec (`src/api/openapi.json`).
+- `build:openapi`: generate/update the committed OpenAPI spec (`packages/api/openapi.json`).
 - `build:api-types`: regenerate frontend API types/client from the committed OpenAPI.
 - `type:check`: run TypeScript typechecking across all workspaces.
 - `source:check`: biome:check + type:check + any other static source check
@@ -208,7 +208,7 @@ Notes:
 - A root `dev` script is allowed for convenience and may use `concurrently`; `dev:web` and `dev:api` remain the canonical entrypoints.
 - `test` is intended as a handy dev command (may be watch/interactive); `test:ci` is the non-watch single-shot entrypoint used by hooks/CI.
 
-**Web workspace (`src/web/package.json`)**
+**Web workspace (`packages/web/package.json`)**
 
 - `dev`: Vite dev server in watch mode.
 - `build`: Vite production build.
@@ -217,9 +217,9 @@ Notes:
 - `test:ci`: Vitest unit/component tests (non-watch, CI-friendly).
 - `test:e2e`: Playwright tests.
 - `type:check`: `tsc --noEmit` (workspace-local typecheck).
-- `build:api-types`: regenerate the FE types via `openapi-typescript` from the committed OpenAPI spec (`openapi-typescript ../api/openapi.json -o src/api/generated/index.ts`).
+- `build:api-types`: regenerate the FE types via `openapi-typescript` from the committed OpenAPI spec (`openapi-typescript ../api/openapi.json -o packages/api/generated/index.ts`).
 
-**API workspace (`src/api/package.json`)**
+**API workspace (`packages/api/package.json`)**
 
 - `dev`: run Fastify in watch mode.
 - `build`: compile TypeScript to `dist/`.
@@ -232,7 +232,7 @@ Notes:
 - `db:migrate`: apply migrations to the configured database.
 - `db:reset`: truncate `todos` in the configured database (wraps `scripts/reset-todos.ts`; for tests use the test DB URL).
 
-**Shared workspace (`src/shared/package.json`)**
+**Shared workspace (`packages/shared/package.json`)**
 
 - `build`: emit types/build outputs as needed by downstream packages (if any).
 - `type:check`: `tsc --noEmit`.
@@ -250,11 +250,11 @@ Notes:
 - **Do not expose a public reset API endpoint** (avoids accidentally shipping a destructive capability).
 - **Tests:** reset state at the database level.
   - Use a dedicated test database via `DATABASE_URL_TEST` (or separate `.env.test`) to prevent wiping dev data.
-  - API Vitest loads `src/api/.env.test` by default; keep the test DB connection string there.
-  - Before each test: run centralized cleanup from `src/api/vitest.setup.ts` (`cleanupTestDatabase` from `src/api/test/test-utils/db.ts`).
-  - Add new tables to the cleanup list in `src/api/test/test-utils/db.ts` as the schema grows.
+  - API Vitest loads `packages/api/.env.test` by default; keep the test DB connection string there.
+  - Before each test: run centralized cleanup from `packages/api/vitest.setup.ts` (`cleanupTestDatabase` from `packages/api/test/test-utils/db.ts`).
+  - Add new tables to the cleanup list in `packages/api/test/test-utils/db.ts` as the schema grows.
 - **Local usage:** provide a local script to clear todos in the dev database.
-  - Implement as a Node/TS script in `src/api/scripts/reset-todos.ts` that connects via `DATABASE_URL` and truncates `todos`.
+  - Implement as a Node/TS script in `packages/api/scripts/reset-todos.ts` that connects via `DATABASE_URL` and truncates `todos`.
   - Expose it via an npm script in the API workspace and (optionally) a root convenience script that runs the workspace script.
 - **E2E:** run the reset script before Playwright suites (and optionally per spec) to keep runs deterministic.
 
@@ -296,7 +296,7 @@ To keep quality high while moving quickly, every story/task is considered **done
 - **Text constraints:**
   - `MAX_TODO_TEXT_LENGTH = 200`
   - Validation trims input and rejects empty/whitespace-only values
-- **Shared constants location (monorepo):** create a small shared workspace at `src/shared/` and export `MAX_TODO_TEXT_LENGTH` from `src/shared/src/constants.ts` so both `src/web` and `src/api` consume the same value.
+- **Shared constants location (monorepo):** create a small shared workspace at `packages/shared/` and export `MAX_TODO_TEXT_LENGTH` from `packages/shared/src/constants.ts` so both `packages/web` and `packages/api` consume the same value.
 
 ### Authentication & Security
 
@@ -321,11 +321,11 @@ To keep quality high while moving quickly, every story/task is considered **done
   - Routes should define strict input/output JSON schema definitions
   - Such schemas should be enforced and reused in the type handler using: `@fastify/type-provider-json-schema-to-ts`
   - Every route must infer both request input and response output types from its route schema via `@fastify/type-provider-json-schema-to-ts`; avoid manual request/response typings that duplicate schema intent
-  - Canonical entity and contract JSON schemas live in `src/shared/src/definitions/` as the single source of truth. Each definition file exports both the `as const` JSON schema object and a `FromSchema`-inferred TypeScript type. Both the API and web workspaces import schemas and types from `@bmad-todo/shared`.
+  - Canonical entity and contract JSON schemas live in `packages/shared/src/definitions/` as the single source of truth. Each definition file exports both the `as const` JSON schema object and a `FromSchema`-inferred TypeScript type. Both the API and web workspaces import schemas and types from `shared`.
 
 - **OpenAPI contract:**
   - OpenAPI generated/exposed with `@fastify/swagger` and `@fastify/swagger-ui`
-  - generated from route schemas and committed at `src/api/openapi.json`.
+  - generated from route schemas and committed at `packages/api/openapi.json`.
 
 - **JSON field naming:** `camelCase` in API JSON requests/responses
   - DB columns remain `snake_case` (Drizzle maps between DB and TS types)
@@ -382,7 +382,7 @@ To keep quality high while moving quickly, every story/task is considered **done
 ### Infrastructure & Deployment
 
 - **Node.js baseline:** Node ≥ 22.12 (compatible with Vite requirements)
-- **Package manager / monorepo:** npm workspaces (root `package.json` workspaces: `src/*`), single root `package-lock.json`
+- **Package manager / monorepo:** npm workspaces (root `package.json` workspaces: `packages/*`), single root `package-lock.json`
 - **Local development dependencies:**
   - Git (used for hooks and normal workflow)
   - Docker-compatible runtime (macOS: Colima; Docker Desktop also works)
@@ -391,7 +391,7 @@ To keep quality high while moving quickly, every story/task is considered **done
   - API and migration tooling connect via `DATABASE_URL`
 - **Environment variables:**
   - Commit `.env.example` and `.env.test`, never commit real `.env`
-  - API env access is centralized in `src/api/src/config.ts` and validated via `env-schema`
+  - API env access is centralized in `packages/api/src/config.ts` and validated via `env-schema`
   - The rest of the API codebase must not read `process.env` directly; it consumes the exported config object instead
 - **Migrations:** Drizzle Kit runs against `DATABASE_URL` (same URL used by API runtime)
 - **Deploy shape (MVP):**
@@ -412,7 +412,7 @@ This section is the enforcement layer to prevent AI-agent divergence. The canoni
 - **DB naming:** tables/columns are `snake_case` (`todos`, `created_at`, etc.)
 - **JSON naming:** `camelCase` in API requests/responses
 - **Code naming:** TS/React standard (`PascalCase` types/components, `camelCase` functions/vars, `useXxx` hooks)
-- **Boundaries:** `src/web` (SPA) never accesses DB; `src/api` owns DB access; `src/shared` is the single source of truth for entity JSON schemas, derived TypeScript types, and shared constants.
+- **Boundaries:** `packages/web` (SPA) never accesses DB; `packages/api` owns DB access; `packages/shared` is the single source of truth for entity JSON schemas, derived TypeScript types, and shared constants.
 
 ### API Format Invariants (must follow)
 
@@ -450,7 +450,7 @@ bmad-todo/
 ├── .env.example
 ├── .env.test
 ├── README.md
-├── src/
+├── packages/
 │   ├── shared/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
@@ -511,7 +511,7 @@ bmad-todo/
 │       │   ├── App.test.tsx                # integration tests: load/structure
 │       │   ├── App.create-todo.test.tsx    # integration tests: create flow
 │       │   ├── index.css                   # global styles + CSS custom properties
-│       │   ├── contracts.ts                # re-exports from @bmad-todo/shared
+│       │   ├── contracts.ts                # re-exports from shared
 │       │   ├── api/
 │       │   │   ├── helpers.ts              # TypeScript response-type helpers
 │       │   │   └── generated/              # OpenAPI-generated types/client
@@ -543,15 +543,15 @@ bmad-todo/
 **API boundaries**
 
 - Public API surface is only `/todos` endpoints.
-- DB is reachable only from `src/api/src/db/*`.
-- Error contract is enforced centrally by `src/api/src/plugins/error-handler.ts`.
-- `x-request-id` is generated/echoed centrally by `src/api/src/plugins/request-id.ts`.
+- DB is reachable only from `packages/api/src/db/*`.
+- Error contract is enforced centrally by `packages/api/src/plugins/error-handler.ts`.
+- `x-request-id` is generated/echoed centrally by `packages/api/src/plugins/request-id.ts`.
 
 **Component boundaries**
 
-- `src/web` never imports DB logic.
-- `src/web` talks to API only through `src/web/src/api/*`.
-- `src/shared` contains only pure TS exports (no Node-only or DOM-only code).
+- `packages/web` never imports DB logic.
+- `packages/web` talks to API only through `packages/web/packages/api/*`.
+- `packages/shared` contains only pure TS exports (no Node-only or DOM-only code).
 
 **Data boundaries**
 
@@ -560,12 +560,12 @@ bmad-todo/
 
 ### Requirements → Structure Mapping
 
-- **FR1 list on load / retry on failure:** `src/web/src/hooks/useTodos.ts` + `GlobalErrorBanner.tsx`; API `GET /todos` in `src/api/src/routes/todos.ts`.
+- **FR1 list on load / retry on failure:** `packages/web/src/hooks/useTodos.ts` + `GlobalErrorBanner.tsx`; API `GET /todos` in `packages/api/src/routes/todos.ts`.
 - **FR2 create + validation:** `AddTodoForm.tsx` + shared `MAX_TODO_TEXT_LENGTH`; API `POST /todos`.
 - **FR3 edit:** `TodoItem.tsx` inline edit + API `PATCH /todos/:id`.
 - **FR4 toggle:** `TodoItem.tsx` + API `PATCH /todos/:id`.
 - **FR5 soft delete:** `TodoItem.tsx` delete action + API `DELETE /todos/:id` + DB `deleted_at`.
-- **FR22–FR23 error contract:** `src/shared/src/types.ts` + `src/api/src/plugins/error-handler.ts`.
+- **FR22–FR23 error contract:** `packages/shared/src/types.ts` + `packages/api/src/plugins/error-handler.ts`.
 
 ## Architecture Validation Results
 
@@ -584,7 +584,7 @@ bmad-todo/
 
 **Structure Alignment:**
 
-- The monorepo boundaries (`src/web`, `src/api`, `src/shared`) match the decisions around shared constants/types, testing placement, and API contract ownership.
+- The monorepo boundaries (`packages/web`, `packages/api`, `packages/shared`) match the decisions around shared constants/types, testing placement, and API contract ownership.
 
 ### Requirements Coverage Validation ✅
 
@@ -690,7 +690,7 @@ bmad-todo/
 
 - Initialize the monorepo using the recorded starter commands, then wire:
   - root `docker-compose.yml` (Postgres)
-  - `src/shared` exports (`MAX_TODO_TEXT_LENGTH`, `Todo`, `ApiErrorResponse`)
+  - `packages/shared` exports (`MAX_TODO_TEXT_LENGTH`, `Todo`, `ApiErrorResponse`)
   - API `x-request-id` plugin + error handler plugin
 
 ## Architecture Completion & Handoff

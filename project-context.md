@@ -26,8 +26,8 @@ Use this section for persistent test rules that should apply to every future tas
   - `npm run type:check`
   - `npm run biome:check`
   - `npm run test:ci`
-- API changes must keep API integration tests passing in `src/api/test`.
-- Web changes must keep component/unit tests passing in `src/web/src`.
+- API changes must keep API integration tests passing in `packages/api/test`.
+- Web changes must keep component/unit tests passing in `packages/web/src`.
 
 #### Error Recovery Instructions (Persistent)
 
@@ -52,12 +52,12 @@ If the Arrange block grows large, extract it into a helper or factory. A test th
 - If tests are repetitive and expected objects are large, it is acceptable to assert specific properties instead of the full object.
 - In case of structured input/output comparison: use the `actual` vs `expected` const definitions
 - API test style: prefer integration tests with `fastify.inject()` (no real HTTP network).
-- API test utilities must be imported from the shared barrel at `src/api/test/test-utils/index.ts` for consistency.
+- API test utilities must be imported from the shared barrel at `packages/api/test/test-utils/index.ts` for consistency.
 - File-wide setup/teardown hooks should be top-level (outside root `describe`) to keep structure consistent.
-- API DB cleanup is centralized in `src/api/vitest.setup.ts` via a global `beforeEach` (`cleanupTestDatabase`); avoid duplicating per-file DB reset hooks unless a test needs custom setup.
+- API DB cleanup is centralized in `packages/api/vitest.setup.ts` via a global `beforeEach` (`cleanupTestDatabase`); avoid duplicating per-file DB reset hooks unless a test needs custom setup.
 - Web test style: use React Testing Library with `@testing-library/jest-dom` matchers.
 - Web integration tests for `App` are split by feature: `App.test.tsx` (load/structure), `App.create-todo.test.tsx` (create flow), etc. Each new feature gets its own `App.<feature>.test.tsx` file.
-- Web test utilities (fixtures, fetch mock helpers) must be imported from the shared barrel at `src/web/src/test-utils/index.ts` for consistency.
+- Web test utilities (fixtures, fetch mock helpers) must be imported from the shared barrel at `packages/web/src/test-utils/index.ts` for consistency.
 - Keep tests deterministic and isolated from external services.
 - Use CI/non-watch execution for validation gates (`test:ci`) and watch mode only during local iteration.
 

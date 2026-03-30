@@ -15,9 +15,9 @@
       "!!.*",
       "!!**/dist",
       "!!_bmad*",
-      "!!src/api/drizzle",
-      "!!src/api/openapi.json",
-      "!!src/web/src/api/generated",
+      "!!packages/api/drizzle",
+      "!!packages/api/openapi.json",
+      "!!packages/web/src/api/generated",
       "!!**/test-results"
     ]
   },
