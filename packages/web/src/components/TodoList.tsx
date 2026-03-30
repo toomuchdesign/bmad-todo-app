@@ -1,13 +1,21 @@
 import type { Todo } from "shared";
+import { TodoItem } from "./TodoItem";
 import styles from "./TodoList.module.css";
 
 type TodoListProps = {
   todos: Todo[];
   loading: boolean;
+  onUpdateText: (id: string, text: string) => Promise<boolean>;
+  pendingActions: Record<string, string>;
 };
 
 /** Renders loading, empty, or populated todo list states. */
-function TodoList({ todos, loading }: TodoListProps) {
+function TodoList({
+  todos,
+  loading,
+  onUpdateText,
+  pendingActions,
+}: TodoListProps) {
   if (loading) {
     return (
       <div className={styles.stateContainer} aria-busy="true">
@@ -28,26 +36,12 @@ function TodoList({ todos, loading }: TodoListProps) {
   return (
     <ul className={styles.list}>
       {todos.map((todo) => (
-        <li key={todo.id} className={styles.item}>
-          <input
-            type="checkbox"
-            checked={todo.completed}
-            disabled
-            aria-label={`${todo.text} – ${todo.completed ? "completed" : "not completed"}`}
-          />
-          <span
-            className={
-              todo.completed
-                ? `${styles.text} ${styles.completed}`
-                : styles.text
-            }
-          >
-            {todo.text}
-          </span>
-          <time className={styles.timestamp} dateTime={todo.createdAt}>
-            {new Date(todo.createdAt).toLocaleDateString()}
-          </time>
-        </li>
+        <TodoItem
+          key={todo.id}
+          todo={todo}
+          onUpdateText={onUpdateText}
+          pendingAction={pendingActions[todo.id] ?? null}
+        />
       ))}
     </ul>
   );

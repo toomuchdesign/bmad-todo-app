@@ -88,6 +88,99 @@ test.describe("Todo flows", () => {
     });
   });
 
+  test.describe("inline edit flow", () => {
+    test("edits a todo with Enter and saves updated text", async ({ page }) => {
+      await page.goto("/");
+
+      // Create a todo to edit
+      const input = page.getByLabel("New todo text");
+      const addButton = page.getByRole("button", { name: "Add" });
+      await input.fill("Todo to edit");
+      await addButton.click();
+      await expect(
+        page.getByRole("button", { name: "Todo to edit" }),
+      ).toBeVisible();
+
+      // Click to enter edit mode
+      await page.getByRole("button", { name: "Todo to edit" }).click();
+      const editInput = page.getByLabel("Edit todo text");
+      await expect(editInput).toBeVisible();
+      await expect(editInput).toBeFocused();
+
+      // Clear and type new text, then press Enter
+      await editInput.clear();
+      await editInput.fill("Edited todo");
+      await editInput.press("Enter");
+
+      // Verify updated text is shown and edit mode exited
+      await expect(
+        page.getByRole("button", { name: "Edited todo" }),
+      ).toBeVisible();
+      await expect(page.getByLabel("Edit todo text")).not.toBeVisible();
+    });
+
+    test("cancels edit with Escape and restores original text", async ({
+      page,
+    }) => {
+      await page.goto("/");
+
+      // Create a todo to edit
+      const input = page.getByLabel("New todo text");
+      const addButton = page.getByRole("button", { name: "Add" });
+      await input.fill("Cancel test todo");
+      await addButton.click();
+      await expect(
+        page.getByRole("button", { name: "Cancel test todo" }),
+      ).toBeVisible();
+
+      // Click to enter edit mode
+      await page.getByRole("button", { name: "Cancel test todo" }).click();
+      const editInput = page.getByLabel("Edit todo text");
+      await expect(editInput).toBeVisible();
+
+      // Type different text and press Escape
+      await editInput.clear();
+      await editInput.fill("Should not save");
+      await editInput.press("Escape");
+
+      // Verify original text is restored
+      await expect(
+        page.getByRole("button", { name: "Cancel test todo" }),
+      ).toBeVisible();
+      await expect(page.getByLabel("Edit todo text")).not.toBeVisible();
+    });
+
+    test("shows validation error for empty text in edit mode", async ({
+      page,
+    }) => {
+      await page.goto("/");
+
+      // Create a todo to edit
+      const input = page.getByLabel("New todo text");
+      const addButton = page.getByRole("button", { name: "Add" });
+      await input.fill("Validation test todo");
+      await addButton.click();
+      await expect(
+        page.getByRole("button", { name: "Validation test todo" }),
+      ).toBeVisible();
+
+      // Click to enter edit mode
+      await page.getByRole("button", { name: "Validation test todo" }).click();
+      const editInput = page.getByLabel("Edit todo text");
+      await expect(editInput).toBeVisible();
+
+      // Clear input and press Enter
+      await editInput.clear();
+      await editInput.press("Enter");
+
+      // Verify validation error and edit mode stays open
+      await expect(
+        page.getByText("Todo text must not be empty."),
+      ).toBeVisible();
+      await expect(editInput).toBeVisible();
+    });
+  });
+
   test.describe("error state", () => {
     test("shows error banner with retry button on load failure", async ({
       page,

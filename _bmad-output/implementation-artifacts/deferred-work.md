@@ -14,3 +14,9 @@
 ## Deferred from: code review of 2-1-implement-patch-todos-id-for-text-and-completion-updates (2026-03-30)
 
 - Pre-commit `source:fix` may silently modify already-staged files, leaving unstaged changes after commit. Introduced by retro-driven hook update. Consider using `lint-staged` to scope fixes to staged files only.
+
+## Deferred from: code review of story 2.2 (2026-03-30)
+
+- CSS hardcoded spacing/sizing values in TodoItem.module.css — pre-existing pattern moved from TodoList.module.css. Consider introducing spacing tokens when the design system matures.
+- Concurrent PATCH calls for same todo ID not guarded at hook level in `useTodos.ts` — currently protected by `savingRef` in TodoItem. Planned for Story 2.6 AbortController refactor.
+- Concurrent multi-item edit mode — multiple todos can enter edit mode simultaneously; clicking a second triggers blur-save on the first. Architectural choice, not a bug.

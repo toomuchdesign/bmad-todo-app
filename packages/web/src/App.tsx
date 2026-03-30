@@ -5,7 +5,15 @@ import { TodoList } from "./components/TodoList";
 import { useTodos } from "./hooks/useTodos";
 
 function App() {
-  const { todos, loading, error, retry, createTodo } = useTodos();
+  const {
+    todos,
+    loading,
+    error,
+    retry,
+    createTodo,
+    updateTodoText,
+    pendingActions,
+  } = useTodos();
 
   return (
     <div className={styles.app}>
@@ -14,7 +22,12 @@ function App() {
         <GlobalErrorBanner message={error} onRetry={retry} loading={loading} />
       )}
       <AddTodoForm onSubmit={createTodo} />
-      <TodoList todos={todos} loading={loading} />
+      <TodoList
+        todos={todos}
+        loading={loading}
+        onUpdateText={updateTodoText}
+        pendingActions={pendingActions}
+      />
     </div>
   );
 }
