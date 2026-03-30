@@ -4,15 +4,15 @@
   justify-content: center;
   gap: 12px;
   padding: 12px 16px;
-  background: var(--error-bg, #fef2f2);
-  border: 1px solid var(--error-border, #fecaca);
+  background: var(--s-bg-error);
+  border: 1px solid var(--s-border-error);
   border-radius: 8px;
   margin: 0 16px;
 }
 
 .message {
   margin: 0;
-  color: var(--error-text, #991b1b);
+  color: var(--s-text-error);
   font-size: 14px;
 }
 
@@ -20,31 +20,15 @@
   padding: 6px 16px;
   font-size: 14px;
   font-weight: 500;
-  border: 1px solid var(--error-border, #fecaca);
+  border: 1px solid var(--s-border-error);
   border-radius: 6px;
-  background: var(--bg, #fff);
-  color: var(--error-text, #991b1b);
+  background: var(--s-bg);
+  color: var(--s-text-error);
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.2s;
 }
 
 .retryButton:hover {
-  background: var(--error-bg, #fef2f2);
-}
-
-@media (prefers-color-scheme: dark) {
-  .banner {
-    --error-bg: rgba(153, 27, 27, 0.15);
-    --error-border: rgba(239, 68, 68, 0.3);
-    --error-text: #fca5a5;
-  }
-
-  .retryButton {
-    background: var(--bg, #16171d);
-  }
-
-  .retryButton:hover {
-    background: var(--error-bg);
-  }
+  background: var(--s-bg-error);
 }

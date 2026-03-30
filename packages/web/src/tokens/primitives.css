@@ -1,0 +1,28 @@
+:root {
+  /* Gray */
+  --p-gray-100: #f3f4f6;
+  --p-gray-400: #9ca3af;
+  --p-gray-500: #6b6375;
+  --p-gray-900: #08060d;
+
+  /* Purple */
+  --p-purple-400: #c084fc;
+  --p-purple-600: #aa3bff;
+
+  /* Red */
+  --p-red-600: #dc2626;
+
+  /* Indigo */
+  --p-indigo-400: #818cf8;
+  --p-indigo-500: #6366f1;
+  --p-indigo-600: #4f46e5;
+
+  /* Neutral */
+  --p-white: #fff;
+  --p-dark-bg: #16171d;
+  --p-dark-surface: #1f2028;
+  --p-dark-border: #2e303a;
+
+  /* Fonts */
+  --p-font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+}

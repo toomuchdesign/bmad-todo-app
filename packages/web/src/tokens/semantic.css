@@ -1,0 +1,53 @@
+:root {
+  /* Text */
+  --s-text: var(--p-gray-500);
+  --s-text-heading: var(--p-gray-900);
+  --s-text-error: var(--p-red-600);
+
+  /* Backgrounds */
+  --s-bg: var(--p-white);
+  --s-bg-code: #f4f3ec;
+  --s-bg-accent: rgba(170, 59, 255, 0.1);
+  --s-bg-error: #fef2f2;
+
+  /* Borders */
+  --s-border: #e5e4e7;
+  --s-border-accent: rgba(170, 59, 255, 0.5);
+  --s-border-focus: var(--p-indigo-500);
+  --s-border-error: #fecaca;
+
+  /* Interactive */
+  --s-accent: var(--p-purple-600);
+  --s-accent-hover: var(--p-indigo-600);
+  --s-focus-ring: rgba(99, 102, 241, 0.15);
+
+  /* Fonts */
+  --s-font-body: var(--p-font-sans);
+  --s-font-heading: var(--p-font-sans);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Text */
+    --s-text: var(--p-gray-400);
+    --s-text-heading: var(--p-gray-100);
+    --s-text-error: #fca5a5;
+
+    /* Backgrounds */
+    --s-bg: var(--p-dark-bg);
+    --s-bg-code: var(--p-dark-surface);
+    --s-bg-accent: rgba(192, 132, 252, 0.15);
+    --s-bg-error: rgba(153, 27, 27, 0.15);
+
+    /* Borders */
+    --s-border: var(--p-dark-border);
+    --s-border-accent: rgba(192, 132, 252, 0.5);
+    --s-border-focus: var(--p-indigo-400);
+    --s-border-error: rgba(239, 68, 68, 0.3);
+
+    /* Interactive */
+    --s-accent: var(--p-purple-400);
+    --s-accent-hover: var(--p-indigo-500);
+    --s-focus-ring: rgba(129, 140, 248, 0.2);
+  }
+}

@@ -370,9 +370,12 @@ To keep quality high while moving quickly, every story/task is considered **done
 
 - **State management:** React built-ins only (`useState` / `useReducer`) + custom hooks (no external global state library for MVP)
 - **Data fetching:** plain `fetch` wrapped by a typed client (e.g., `apiClient.ts`) with consistent mapping to `ApiErrorResponse`
-- **Styling:** plain CSS + CSS Modules (no UI kit; no Tailwind for MVP)
-  - Component styles: `*.module.css` next to components
-  - Global base styles: a small `app.css` for layout/reset
+- **Styling:** plain CSS + CSS Modules (no UI kit; no Tailwind for MVP), organized as a 2-tier design token system:
+  - **Tier 1 — Primitives** (`tokens/primitives.css`): raw palette values (colors, spacing, typography, radii) with `--p-` prefix. Names describe the value, not its usage.
+  - **Tier 2 — Semantic** (`tokens/semantic.css`): purpose-driven aliases of primitives with `--s-` prefix. Dark mode overrides live here exclusively.
+  - Component styles (`*.module.css`) consume only semantic tokens (`--s-*`); never reference primitives or hard-coded values.
+  - Global base styles and token imports: `index.css`
+  - Rules: no `var()` fallbacks; no `prefers-color-scheme` in component modules; new primitives must extend an existing scale; new semantic tokens must have at least one consumer.
 - **Error surface:** single global error banner for network/server failures (per UX), inline validation for user input errors
 - **Optimistic / pending UI rules (per UX):**
   - Create: may optimistically add a temporary row with pending indicator; on failure remove temp row and preserve input
@@ -430,6 +433,17 @@ This section is the enforcement layer to prevent AI-agent divergence. The canoni
 - Vitest tests use nested `describe(...)` / `it(...)` blocks (no top-level `it`)
 - Each file starts with a high-level `describe` for the unit under test (e.g. route `GET /todos`, module `config`, etc.)
 - Prefer integration tests that mirror product surfaces (API: `fastify.inject()`, Web: RTL + MSW) and keep assertions scoped to observable behavior
+
+### CSS Token System (must follow)
+
+- All visual values (colors, spacing, typography, radii) are defined as CSS custom properties in `packages/web/src/tokens/`.
+- **Primitives** (`primitives.css`): raw palette with `--p-` prefix. Names describe the value itself (e.g., `--p-gray-400`, `--p-space-4`).
+- **Semantic** (`semantic.css`): purpose-driven aliases with `--s-` prefix (e.g., `--s-text`, `--s-border-focus`). Dark mode (`prefers-color-scheme: dark`) overrides live here exclusively.
+- Component `.module.css` files must only reference semantic tokens (`--s-*`). Never primitives, never hard-coded color/spacing values.
+- No `var()` fallback values — a missing token is a bug.
+- Component modules must not contain `prefers-color-scheme` media queries.
+- New primitives must extend an existing scale; no one-off values.
+- New semantic tokens must have at least one consumer; no speculative tokens.
 
 ### Anti-patterns (explicitly forbidden)
 
@@ -510,8 +524,11 @@ bmad-todo/
 │       │   ├── App.module.css
 │       │   ├── App.test.tsx                # integration tests: load/structure
 │       │   ├── App.create-todo.test.tsx    # integration tests: create flow
-│       │   ├── index.css                   # global styles + CSS custom properties
+│       │   ├── index.css                   # imports tokens, global resets, base typography
 │       │   ├── contracts.ts                # re-exports from shared
+│       │   ├── tokens/
+│       │   │   ├── primitives.css          # Tier 1: raw palette (--p-* prefix)
+│       │   │   └── semantic.css            # Tier 2: purpose-driven aliases (--s-* prefix) + dark mode
 │       │   ├── api/
 │       │   │   ├── helpers.ts              # TypeScript response-type helpers
 │       │   │   └── generated/              # OpenAPI-generated types/client
@@ -527,7 +544,6 @@ bmad-todo/
 │       │   │   ├── GlobalErrorBanner.module.css
 │       │   │   ├── TodoList.tsx
 │       │   │   └── TodoList.module.css
-│       │   └── styles/                     # (reserved for future shared styles)
 │       └── e2e/
 │           ├── todo-flows.spec.ts          # playwright flows required by PRD
 │           └── playwright.config.ts

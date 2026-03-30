@@ -14,36 +14,36 @@
 .input {
   padding: 10px 12px;
   font-size: 14px;
-  border: 1px solid var(--border, #d1d5db);
+  border: 1px solid var(--s-border);
   border-radius: 6px;
-  background: var(--bg, #fff);
-  color: var(--text, #111827);
+  background: var(--s-bg);
+  color: var(--s-text);
   outline: none;
   transition: border-color 0.2s;
 }
 
 .input:focus {
-  border-color: var(--focus-border, #6366f1);
-  box-shadow: 0 0 0 2px var(--focus-ring, rgba(99, 102, 241, 0.15));
+  border-color: var(--s-border-focus);
+  box-shadow: 0 0 0 2px var(--s-focus-ring);
 }
 
 .input.invalid {
-  border-color: var(--error-border, #f87171);
+  border-color: var(--s-border-error);
 }
 
 .validationError {
   margin: 4px 0 0;
   font-size: 13px;
-  color: var(--error-text, #dc2626);
+  color: var(--s-text-error);
 }
 
 .submitButton {
   padding: 10px 20px;
   font-size: 14px;
   font-weight: 500;
-  border: 1px solid var(--border, #d1d5db);
+  border: 1px solid var(--s-border);
   border-radius: 6px;
-  background: var(--accent-bg, #6366f1);
+  background: var(--s-accent);
   color: #fff;
   cursor: pointer;
   white-space: nowrap;
@@ -53,31 +53,10 @@
 }
 
 .submitButton:hover:not(:disabled) {
-  background: var(--accent-hover, #4f46e5);
+  background: var(--s-accent-hover);
 }
 
 .submitButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-@media (prefers-color-scheme: dark) {
-  .input {
-    --bg: #16171d;
-    --text: #e5e7eb;
-    --border: #374151;
-    --focus-border: #818cf8;
-    --focus-ring: rgba(129, 140, 248, 0.2);
-    --error-border: #ef4444;
-  }
-
-  .validationError {
-    --error-text: #fca5a5;
-  }
-
-  .submitButton {
-    --accent-bg: #4f46e5;
-    --accent-hover: #6366f1;
-    --border: #374151;
-  }
 }
