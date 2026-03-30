@@ -2,7 +2,11 @@ import type { FastifyInstance } from "fastify";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import type { GetTodosRouteResponses } from "../src/routes/schemas.js";
-import { runRequestIdHeaderTests, seedTodo } from "./test-utils/index.js";
+import {
+  makeSeedTodo,
+  runRequestIdHeaderTests,
+  seedTodo,
+} from "./test-utils/index.js";
 
 let app: FastifyInstance;
 
@@ -17,30 +21,29 @@ afterEach(async () => {
 describe("GET /todos", () => {
   it("returns 200 with active todos ordered newest-first and includes x-request-id", async () => {
     // Arrange
-    await seedTodo({
+    const olderActive = makeSeedTodo({
       id: "11111111-1111-1111-1111-111111111111",
       text: "older active",
-      completed: false,
       createdAt: "2026-03-01T10:00:00.000Z",
       updatedAt: "2026-03-01T10:00:00.000Z",
-      deletedAt: null,
     });
-    await seedTodo({
+    const deletedTodo = makeSeedTodo({
       id: "22222222-2222-2222-2222-222222222222",
       text: "deleted should be excluded",
-      completed: false,
       createdAt: "2026-03-02T10:00:00.000Z",
       updatedAt: "2026-03-02T10:00:00.000Z",
       deletedAt: "2026-03-03T10:00:00.000Z",
     });
-    await seedTodo({
+    const newerActive = makeSeedTodo({
       id: "33333333-3333-3333-3333-333333333333",
       text: "newer active",
       completed: true,
       createdAt: "2026-03-04T10:00:00.000Z",
       updatedAt: "2026-03-04T10:00:00.000Z",
-      deletedAt: null,
     });
+    await seedTodo(olderActive);
+    await seedTodo(deletedTodo);
+    await seedTodo(newerActive);
 
     // Act
     const response = await app.inject({

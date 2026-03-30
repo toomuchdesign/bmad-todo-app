@@ -8,7 +8,7 @@ export const todoSchema = {
   type: "object",
   required: ["id", "text", "completed", "createdAt", "updatedAt"],
   properties: {
-    id: { type: "string" },
+    id: { type: "string", format: "uuid" },
     text: { type: "string" },
     completed: { type: "boolean" },
     createdAt: { type: "string", format: "date-time" },

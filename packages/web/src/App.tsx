@@ -10,7 +10,9 @@ function App() {
   return (
     <div className={styles.app}>
       <h1 className={styles.title}>Todos</h1>
-      {error && <GlobalErrorBanner message={error} onRetry={retry} />}
+      {error && (
+        <GlobalErrorBanner message={error} onRetry={retry} loading={loading} />
+      )}
       <AddTodoForm onSubmit={createTodo} />
       <TodoList todos={todos} loading={loading} />
     </div>

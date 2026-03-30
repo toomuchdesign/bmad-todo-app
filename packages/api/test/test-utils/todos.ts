@@ -1,9 +1,27 @@
+import { randomUUID } from "node:crypto";
 import type { Todo } from "shared";
 import { runQuery } from "./db.js";
 
 export type SeedTodoInput = Omit<Todo, "deletedAt"> & {
   deletedAt: Exclude<Todo["deletedAt"], undefined>;
 };
+
+/**
+ * Builds a SeedTodoInput with sensible defaults, overridable per-field.
+ */
+export function makeSeedTodo(
+  overrides?: Partial<SeedTodoInput>,
+): SeedTodoInput {
+  return {
+    id: randomUUID(),
+    text: "seed todo",
+    completed: false,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+    deletedAt: null,
+    ...overrides,
+  };
+}
 
 /**
  * Drops the todos table to simulate unexpected DB failures.

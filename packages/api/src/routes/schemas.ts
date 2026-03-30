@@ -13,6 +13,12 @@ const responseHeadersSchema = {
   },
 } as const;
 
+/** Standard error response with request-id headers, reused across all routes. */
+const errorResponseSchema = {
+  headers: responseHeadersSchema,
+  ...apiErrorResponseSchema,
+} as const;
+
 type RouteResponseSchemas = Partial<Record<number | "default", JSONSchema>>;
 
 /**
@@ -39,10 +45,7 @@ export const getTodosRouteSchema = {
         },
       },
     },
-    default: {
-      headers: responseHeadersSchema,
-      ...apiErrorResponseSchema,
-    },
+    default: errorResponseSchema,
   },
 } as const;
 
@@ -71,17 +74,51 @@ export const postTodosRouteSchema = {
       headers: responseHeadersSchema,
       ...todoSchema,
     },
-    400: {
-      headers: responseHeadersSchema,
-      ...apiErrorResponseSchema,
-    },
-    default: {
-      headers: responseHeadersSchema,
-      ...apiErrorResponseSchema,
-    },
+    400: errorResponseSchema,
+    default: errorResponseSchema,
   },
 } as const;
 
 export type PostTodosRouteResponses = InferRouteResponses<
   typeof postTodosRouteSchema.response
+>;
+
+export const patchTodosRouteSchema = {
+  tags: ["todos"],
+  summary: "Update todo",
+  params: {
+    type: "object",
+    required: ["id"],
+    properties: {
+      id: { type: "string", format: "uuid" },
+    },
+  },
+  body: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      text: {
+        type: "string",
+        minLength: 1,
+        maxLength: MAX_TODO_TEXT_LENGTH,
+        pattern: ".*\\S.*",
+      },
+      completed: {
+        type: "boolean",
+      },
+    },
+  },
+  response: {
+    200: {
+      headers: responseHeadersSchema,
+      ...todoSchema,
+    },
+    400: errorResponseSchema,
+    404: errorResponseSchema,
+    default: errorResponseSchema,
+  },
+} as const;
+
+export type PatchTodosRouteResponses = InferRouteResponses<
+  typeof patchTodosRouteSchema.response
 >;

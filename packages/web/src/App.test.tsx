@@ -118,7 +118,7 @@ describe("App", () => {
       });
     });
 
-    it("shows a Retry button that triggers a new fetch", async () => {
+    it("shows a Retry button that is disabled during fetch and resolves on success", async () => {
       mockFetchNetworkError();
 
       render(<App />);
@@ -129,9 +129,26 @@ describe("App", () => {
         ).toBeInTheDocument();
       });
 
-      mockFetchSuccess(TODO_FIXTURES);
+      let resolveFetch!: (value: unknown) => void;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockReturnValue(
+          new Promise((resolve) => {
+            resolveFetch = resolve;
+          }),
+        ),
+      );
 
       fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "Retry" })).toBeDisabled();
+      });
+
+      resolveFetch({
+        ok: true,
+        json: () => Promise.resolve({ todos: TODO_FIXTURES }),
+      });
 
       await waitFor(() => {
         expect(screen.getByText("Buy milk")).toBeInTheDocument();

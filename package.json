@@ -30,7 +30,7 @@
     "test:e2e": "npm -w web run test:e2e"
   },
   "simple-git-hooks": {
-    "pre-commit": "npm run build:openapi:api-types:stage && npm run source:check && npm run test:ci && npm run test:e2e"
+    "pre-commit": "npm run build:openapi:api-types:stage && npm run source:fix && npm run source:check && npm run test:ci && npm run test:e2e"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",

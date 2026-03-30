@@ -10,3 +10,7 @@
 ## Deferred from: code review of 1-8-set-up-playwright-e2e-infrastructure-and-cover-epic-1-flows (2026-03-30)
 
 - Pre-commit hook missing `npm run` prefix for first command (`build:openapi:api-types:stage`) — pre-existing issue in `package.json` simple-git-hooks config.
+
+## Deferred from: code review of 2-1-implement-patch-todos-id-for-text-and-completion-updates (2026-03-30)
+
+- Pre-commit `source:fix` may silently modify already-staged files, leaving unstaged changes after commit. Introduced by retro-driven hook update. Consider using `lint-staged` to scope fixes to staged files only.

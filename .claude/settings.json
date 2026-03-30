@@ -3,6 +3,7 @@
     "allow": [
       "Bash(npm -w shared run build)",
       "mcp__playwright__browser_take_screenshot"
-    ]
+    ],
+    "defaultMode": "acceptEdits"
   }
 }

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { desc, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import type { Todo } from "shared";
 import { getDb } from "./client.js";
 import { todos } from "./schema.js";
@@ -61,4 +61,38 @@ export async function createTodoInDatabase({
   }
 
   return mapTodoRowToApiTodo(row);
+}
+
+/**
+ * Updates an existing non-deleted todo and returns the mapped result, or null if not found.
+ */
+export async function updateTodoInDatabase({
+  id,
+  text,
+  completed,
+}: {
+  id: string;
+  text?: string;
+  completed?: boolean;
+}): Promise<Todo | null> {
+  const db = getDb();
+
+  const setClause: Partial<TodoRow> = {
+    updatedAt: new Date(),
+  };
+
+  if (text !== undefined) {
+    setClause.text = text;
+  }
+  if (completed !== undefined) {
+    setClause.completed = completed;
+  }
+
+  const [row] = await db
+    .update(todos)
+    .set(setClause)
+    .where(and(eq(todos.id, id), isNull(todos.deletedAt)))
+    .returning();
+
+  return row ? mapTodoRowToApiTodo(row) : null;
 }

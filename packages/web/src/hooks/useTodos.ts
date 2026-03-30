@@ -25,7 +25,6 @@ function useTodos(): UseTodosResult {
 
   const fetchTodos = useCallback(async () => {
     setLoading(true);
-    setError(null);
 
     try {
       const response = await fetch(TODOS_API_PATH);
@@ -53,6 +52,7 @@ function useTodos(): UseTodosResult {
         "get"
       >["200"];
       setTodos(data.todos);
+      setError(null);
       setLoading(false);
     } catch {
       setError(GENERIC_ERROR_MESSAGE);

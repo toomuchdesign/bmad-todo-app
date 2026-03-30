@@ -1,6 +1,14 @@
 import type { FastifyPluginAsyncJsonSchemaToTs } from "@fastify/type-provider-json-schema-to-ts";
-import { createTodoInDatabase, listTodosFromDatabase } from "../db/todos.js";
-import { getTodosRouteSchema, postTodosRouteSchema } from "./schemas.js";
+import {
+  createTodoInDatabase,
+  listTodosFromDatabase,
+  updateTodoInDatabase,
+} from "../db/todos.js";
+import {
+  getTodosRouteSchema,
+  patchTodosRouteSchema,
+  postTodosRouteSchema,
+} from "./schemas.js";
 
 const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
   app.get(
@@ -26,6 +34,33 @@ const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
       });
 
       return reply.code(201).send(todo);
+    },
+  );
+
+  app.patch(
+    "/todos/:id",
+    {
+      schema: patchTodosRouteSchema,
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      const { text, completed } = request.body;
+
+      const todo = await updateTodoInDatabase({
+        id,
+        ...(text !== undefined && { text: text.trim() }),
+        ...(completed !== undefined && { completed }),
+      });
+
+      if (!todo) {
+        return reply.code(404).send({
+          code: "NOT_FOUND",
+          message: "Todo not found",
+          requestId: reply.getHeader("x-request-id") as string,
+        });
+      }
+
+      return reply.code(200).send(todo);
     },
   );
 };
