@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { createDeferred } from "./test-utils";
 
 test.describe("Todo flows", () => {
   test.describe("page load", () => {
@@ -178,6 +179,99 @@ test.describe("Todo flows", () => {
         page.getByText("Todo text must not be empty."),
       ).toBeVisible();
       await expect(editInput).toBeVisible();
+    });
+  });
+
+  test.describe("toggle completion flow", () => {
+    test("marks an incomplete todo as completed via checkbox", async ({
+      page,
+    }) => {
+      await page.goto("/");
+
+      // Create a todo to toggle
+      const input = page.getByLabel("New todo text");
+      const addButton = page.getByRole("button", { name: "Add" });
+      await input.fill("Toggle me");
+      await addButton.click();
+      await expect(
+        page.getByRole("button", { name: "Toggle me" }),
+      ).toBeVisible();
+
+      // Toggle completion
+      const checkbox = page.getByRole("checkbox", { name: /Toggle me/ });
+      await expect(checkbox).not.toBeChecked();
+      await checkbox.click();
+
+      // Verify checkbox is now checked and text shows completed style
+      await expect(checkbox).toBeChecked();
+    });
+
+    test("unchecks a completed todo via checkbox", async ({ page }) => {
+      await page.goto("/");
+
+      // Create and complete a todo
+      const input = page.getByLabel("New todo text");
+      const addButton = page.getByRole("button", { name: "Add" });
+      await input.fill("Uncomplete me");
+      await addButton.click();
+      await expect(
+        page.getByRole("button", { name: "Uncomplete me" }),
+      ).toBeVisible();
+
+      const checkbox = page.getByRole("checkbox", { name: /Uncomplete me/ });
+      await checkbox.click();
+      await expect(checkbox).toBeChecked();
+
+      // Toggle back to incomplete
+      await checkbox.click();
+      await expect(checkbox).not.toBeChecked();
+    });
+
+    test("reverts checkbox and shows error banner when toggle fails", async ({
+      page,
+    }) => {
+      await page.goto("/");
+
+      // Create a todo
+      const input = page.getByLabel("New todo text");
+      const addButton = page.getByRole("button", { name: "Add" });
+      await input.fill("Fail toggle");
+      await addButton.click();
+      await expect(
+        page.getByRole("button", { name: "Fail toggle" }),
+      ).toBeVisible();
+
+      // Intercept the PATCH request — hold it until deferred resolves
+      const deferred = createDeferred<void>();
+      await page.route("**/todos/*", (route) => {
+        if (route.request().method() === "PATCH") {
+          deferred.promise.then(() => {
+            route.fulfill({
+              status: 500,
+              contentType: "application/json",
+              body: JSON.stringify({
+                code: "INTERNAL_ERROR",
+                message: "Server error",
+              }),
+            });
+          });
+        } else {
+          route.continue();
+        }
+      });
+
+      const checkbox = page.getByRole("checkbox", { name: /Fail toggle/ });
+      await checkbox.click();
+
+      // Optimistic: checkbox is immediately checked before API responds
+      await expect(checkbox).toBeChecked();
+
+      // Let the PATCH failure resolve
+      deferred.resolve();
+
+      // After failure: checkbox reverts to unchecked and error banner shows
+      await expect(checkbox).not.toBeChecked();
+      await expect(page.getByRole("alert")).toBeVisible();
     });
   });
 

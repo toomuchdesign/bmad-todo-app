@@ -27,12 +27,15 @@ function renderTodoItem(
   overrides: {
     todo?: typeof incompleteTodo;
     onUpdateText?: (id: string, text: string) => Promise<boolean>;
+    onToggleCompletion?: (id: string) => Promise<boolean>;
     pendingAction?: string | null;
   } = {},
 ) {
   const props = {
     todo: overrides.todo ?? incompleteTodo,
     onUpdateText: overrides.onUpdateText ?? vi.fn().mockResolvedValue(true),
+    onToggleCompletion:
+      overrides.onToggleCompletion ?? vi.fn().mockResolvedValue(true),
     pendingAction: overrides.pendingAction ?? null,
   };
 
@@ -54,7 +57,7 @@ describe("TodoItem", () => {
 
       const checkbox = screen.getByRole("checkbox");
       expect(checkbox).not.toBeChecked();
-      expect(checkbox).toBeDisabled();
+      expect(checkbox).toBeEnabled();
     });
 
     it("renders the creation date", () => {
@@ -249,6 +252,31 @@ describe("TodoItem", () => {
         screen.queryByRole("button", { name: completedTodo.text }),
       ).not.toBeInTheDocument();
       expect(screen.getByText(completedTodo.text)).toBeInTheDocument();
+    });
+
+    it("renders with checked checkbox", () => {
+      renderTodoItem({ todo: completedTodo });
+
+      const checkbox = screen.getByRole("checkbox");
+      expect(checkbox).toBeChecked();
+    });
+  });
+
+  describe("toggle completion", () => {
+    it("calls onToggleCompletion with todo ID on checkbox change", async () => {
+      const user = userEvent.setup();
+      const onToggleCompletion = vi.fn().mockResolvedValue(true);
+      renderTodoItem({ onToggleCompletion });
+
+      await user.click(screen.getByRole("checkbox"));
+
+      expect(onToggleCompletion).toHaveBeenCalledWith(incompleteTodo.id);
+    });
+
+    it("disables checkbox when pendingAction is set", () => {
+      renderTodoItem({ pendingAction: "toggle" });
+
+      expect(screen.getByRole("checkbox")).toBeDisabled();
     });
   });
 });

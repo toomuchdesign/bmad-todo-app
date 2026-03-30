@@ -10,6 +10,7 @@ type UseTodosResult = {
   retry: () => void;
   createTodo: (text: string) => Promise<boolean>;
   updateTodoText: (id: string, text: string) => Promise<boolean>;
+  toggleTodoCompletion: (id: string) => Promise<boolean>;
   pendingActions: Record<string, string>;
 };
 
@@ -113,10 +114,31 @@ function useTodos(): UseTodosResult {
     }
   }
 
-  /** Updates a todo's text via PATCH. Returns true on success, false on failure. */
-  async function updateTodoText(id: string, text: string): Promise<boolean> {
+  /**
+   * Patches a todo with optimistic update and rollback on failure.
+   * Applies `optimisticFields` to state immediately, sends them to the API,
+   * and reverts to the previous state if the request fails.
+   */
+  async function patchTodo({
+    id,
+    updateFn,
+    pendingAction,
+  }: {
+    id: string;
+    updateFn: (currentTodo: Todo) => Partial<Pick<Todo, "text" | "completed">>;
+    pendingAction: string;
+  }): Promise<boolean> {
+    const currentTodo = todos.find((t) => t.id === id);
+    if (!currentTodo) return false;
+
+    const snapshot = { ...currentTodo };
+    const fields = updateFn(currentTodo);
+
     setError(null);
-    setPendingActions((prev) => ({ ...prev, [id]: "edit" }));
+    setTodos((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, ...fields } : t)),
+    );
+    setPendingActions((prev) => ({ ...prev, [id]: pendingAction }));
 
     function clearPending(): void {
       setPendingActions((prev) => {
@@ -126,11 +148,16 @@ function useTodos(): UseTodosResult {
       });
     }
 
+    function rollback(message = GENERIC_MUTATION_ERROR_MESSAGE): void {
+      setTodos((prev) => prev.map((t) => (t.id === id ? snapshot : t)));
+      setError(message);
+    }
+
     try {
       const response = await fetch(`/todos/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify(fields),
       });
 
       if (!response.ok) {
@@ -146,7 +173,7 @@ function useTodos(): UseTodosResult {
         } catch {
           // fall back to generic message
         }
-        setError(message);
+        rollback(message);
         clearPending();
         return false;
       }
@@ -156,14 +183,28 @@ function useTodos(): UseTodosResult {
         "patch"
       >["200"];
 
-      setTodos((prev) => prev.map((todo) => (todo.id === id ? updated : todo)));
+      setTodos((prev) => prev.map((t) => (t.id === id ? updated : t)));
       clearPending();
       return true;
     } catch {
-      setError(GENERIC_MUTATION_ERROR_MESSAGE);
+      rollback();
       clearPending();
       return false;
     }
+  }
+
+  /** Updates a todo's text via PATCH with optimistic update and rollback. */
+  async function updateTodoText(id: string, text: string): Promise<boolean> {
+    return patchTodo({ id, updateFn: () => ({ text }), pendingAction: "edit" });
+  }
+
+  /** Toggles a todo's completion via PATCH with optimistic update and rollback. */
+  async function toggleTodoCompletion(id: string): Promise<boolean> {
+    return patchTodo({
+      id,
+      updateFn: (currentTodo) => ({ completed: !currentTodo.completed }),
+      pendingAction: "toggle",
+    });
   }
 
   return {
@@ -173,6 +214,7 @@ function useTodos(): UseTodosResult {
     retry,
     createTodo,
     updateTodoText,
+    toggleTodoCompletion,
     pendingActions,
   };
 }

@@ -6,11 +6,17 @@ import styles from "./TodoItem.module.css";
 type TodoItemProps = {
   todo: Todo;
   onUpdateText: (id: string, text: string) => Promise<boolean>;
+  onToggleCompletion: (id: string) => Promise<boolean>;
   pendingAction: string | null;
 };
 
 /** Renders a single todo item with inline edit support. */
-function TodoItem({ todo, onUpdateText, pendingAction }: TodoItemProps) {
+function TodoItem({
+  todo,
+  onUpdateText,
+  onToggleCompletion,
+  pendingAction,
+}: TodoItemProps) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -117,8 +123,10 @@ function TodoItem({ todo, onUpdateText, pendingAction }: TodoItemProps) {
     <li className={itemClassName}>
       <input
         type="checkbox"
+        className={styles.checkbox}
         checked={todo.completed}
-        disabled
+        disabled={isPending}
+        onChange={() => onToggleCompletion(todo.id)}
         aria-label={`${todo.text} – ${todo.completed ? "completed" : "not completed"}`}
       />
       {editing ? (

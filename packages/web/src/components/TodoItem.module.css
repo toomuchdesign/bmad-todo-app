@@ -10,6 +10,17 @@
   border-bottom: none;
 }
 
+.checkbox {
+  padding: 8px;
+  margin: -8px 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.checkbox:disabled {
+  cursor: default;
+}
+
 .text {
   flex: 1;
   text-align: left;

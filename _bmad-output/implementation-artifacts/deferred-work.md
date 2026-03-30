@@ -20,3 +20,8 @@
 - CSS hardcoded spacing/sizing values in TodoItem.module.css — pre-existing pattern moved from TodoList.module.css. Consider introducing spacing tokens when the design system matures.
 - Concurrent PATCH calls for same todo ID not guarded at hook level in `useTodos.ts` — currently protected by `savingRef` in TodoItem. Planned for Story 2.6 AbortController refactor.
 - Concurrent multi-item edit mode — multiple todos can enter edit mode simultaneously; clicking a second triggers blur-save on the first. Architectural choice, not a bug.
+
+## Deferred from: code review of story 2.3 (2026-03-30)
+
+- Concurrent mutation race conditions on same todo — if toggle and edit fire concurrently, snapshots can conflict and rollback may restore stale state. Mitigated by UI guards (`disabled={isPending}`, `pointer-events: none`). Story 2.6 addresses this at hook level with per-item AbortController.
+- Replace `pendingActions` string-keyed record in `useTodos` with a more robust solution — current `Record<string, string>` approach is loosely typed and doesn't scale well for composing or querying multiple concurrent states per item. Consider a per-item state machine or enum-based status model.

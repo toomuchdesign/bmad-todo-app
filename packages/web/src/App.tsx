@@ -12,6 +12,7 @@ function App() {
     retry,
     createTodo,
     updateTodoText,
+    toggleTodoCompletion,
     pendingActions,
   } = useTodos();
 
@@ -26,6 +27,7 @@ function App() {
         todos={todos}
         loading={loading}
         onUpdateText={updateTodoText}
+        onToggleCompletion={toggleTodoCompletion}
         pendingActions={pendingActions}
       />
     </div>

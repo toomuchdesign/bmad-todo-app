@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26 19:38:27
-last_updated: 2026-03-30T16:42:00
+last_updated: 2026-03-31T11:04:00
 project: bmad-todo
 project_key: NOKEY
 tracking_system: file-system
@@ -56,7 +56,7 @@ development_status:
   epic-2: in-progress
   2-1-implement-patch-todos-id-for-text-and-completion-updates: done
   2-2-inline-edit-todo-text-in-the-ui-with-enter-escape-behavior: done
-  2-3-toggle-completion-with-optimistic-ui-and-rollback-on-failure: backlog
+  2-3-toggle-completion-with-optimistic-ui-and-rollback-on-failure: done
   2-4-implement-delete-todos-id-as-soft-delete-and-confirm-its-excluded-from-list: backlog
   2-5-delete-from-the-ui-without-optimistic-removal-remove-only-on-success: backlog
   2-6-per-item-abortcontroller-map-for-mutation-concurrency: backlog
