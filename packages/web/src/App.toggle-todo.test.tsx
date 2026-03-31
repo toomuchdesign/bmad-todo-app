@@ -5,12 +5,7 @@ import userEvent from "@testing-library/user-event";
 import type { Todo } from "shared";
 import { describe, expect, it } from "vitest";
 import App from "./App";
-import {
-  createDeferred,
-  fetchMock,
-  mockGetTodos,
-  TODO_FIXTURES,
-} from "./test-utils";
+import { createDeferred, fetchMock, TODO_FIXTURES } from "./test-utils";
 
 describe("App", () => {
   describe("toggle todo flow", () => {
@@ -23,7 +18,10 @@ describe("App", () => {
         createdAt: "2026-03-01T10:00:00.000Z",
         updatedAt: "2026-03-30T10:00:00.000Z",
       };
-      mockGetTodos(TODO_FIXTURES).patch("express:/todos/:id", toggledTodo);
+      fetchMock
+        .mockGlobal()
+        .get("/todos", { todos: TODO_FIXTURES })
+        .patch("express:/todos/:id", toggledTodo);
 
       render(<App />);
 
@@ -55,12 +53,15 @@ describe("App", () => {
       const user = userEvent.setup();
       const deferred = createDeferred<void>();
 
-      mockGetTodos(TODO_FIXTURES).patch("express:/todos/:id", () =>
-        deferred.promise.then(() => ({
-          status: 500,
-          body: { code: "INTERNAL_ERROR", message: "Database error" },
-        })),
-      );
+      fetchMock
+        .mockGlobal()
+        .get("/todos", { todos: TODO_FIXTURES })
+        .patch("express:/todos/:id", () =>
+          deferred.promise.then(() => ({
+            status: 500,
+            body: { code: "INTERNAL_ERROR", message: "Database error" },
+          })),
+        );
 
       render(<App />);
 

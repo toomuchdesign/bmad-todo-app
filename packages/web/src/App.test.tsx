@@ -2,14 +2,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import App from "./App";
-import {
-  createDeferred,
-  fetchMock,
-  mockGetTodos,
-  mockGetTodosError,
-  mockGetTodosNetworkError,
-  TODO_FIXTURES,
-} from "./test-utils";
+import { createDeferred, fetchMock, TODO_FIXTURES } from "./test-utils";
 
 describe("App", () => {
   describe("page structure", () => {
@@ -37,7 +30,7 @@ describe("App", () => {
 
   describe("empty state", () => {
     it("shows empty state message when no todos exist", async () => {
-      mockGetTodos([]);
+      fetchMock.mockGlobal().get("/todos", { todos: [] });
 
       render(<App />);
 
@@ -50,7 +43,7 @@ describe("App", () => {
 
   describe("list state", () => {
     it("renders todo items when todos are loaded", async () => {
-      mockGetTodos(TODO_FIXTURES);
+      fetchMock.mockGlobal().get("/todos", { todos: TODO_FIXTURES });
 
       render(<App />);
 
@@ -61,7 +54,7 @@ describe("App", () => {
     });
 
     it("shows completion status for each todo", async () => {
-      mockGetTodos(TODO_FIXTURES);
+      fetchMock.mockGlobal().get("/todos", { todos: TODO_FIXTURES });
 
       render(<App />);
 
@@ -77,9 +70,9 @@ describe("App", () => {
 
   describe("error state", () => {
     it("shows error banner with API error message on server error", async () => {
-      mockGetTodosError({
-        code: "INTERNAL_ERROR",
-        message: "Database connection failed",
+      fetchMock.mockGlobal().get("/todos", {
+        status: 500,
+        body: { code: "INTERNAL_ERROR", message: "Database connection failed" },
       });
 
       render(<App />);
@@ -93,7 +86,9 @@ describe("App", () => {
     });
 
     it("shows generic error message on network failure", async () => {
-      mockGetTodosNetworkError();
+      fetchMock
+        .mockGlobal()
+        .get("/todos", { throws: new Error("Network error") });
 
       render(<App />);
 
@@ -107,7 +102,7 @@ describe("App", () => {
     });
 
     it("shows generic error message when error body cannot be parsed", async () => {
-      mockGetTodosError();
+      fetchMock.mockGlobal().get("/todos", { throws: new Error("no body") });
 
       render(<App />);
 
@@ -121,7 +116,9 @@ describe("App", () => {
     });
 
     it("shows a Retry button that is disabled during fetch and resolves on success", async () => {
-      mockGetTodosNetworkError();
+      fetchMock
+        .mockGlobal()
+        .get("/todos", { throws: new Error("Network error") });
 
       render(<App />);
 

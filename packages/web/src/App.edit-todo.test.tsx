@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import type { Todo } from "shared";
 import { describe, expect, it } from "vitest";
 import App from "./App";
-import { fetchMock, mockGetTodos, TODO_FIXTURES } from "./test-utils";
+import { fetchMock, TODO_FIXTURES } from "./test-utils";
 
 describe("App", () => {
   describe("edit todo flow", () => {
@@ -18,7 +18,10 @@ describe("App", () => {
         createdAt: "2026-03-01T10:00:00.000Z",
         updatedAt: "2026-03-30T10:00:00.000Z",
       };
-      mockGetTodos(TODO_FIXTURES).patch("express:/todos/:id", updatedTodo);
+      fetchMock
+        .mockGlobal()
+        .get("/todos", { todos: TODO_FIXTURES })
+        .patch("express:/todos/:id", updatedTodo);
 
       render(<App />);
 
@@ -42,7 +45,7 @@ describe("App", () => {
 
     it("restores original text when pressing Escape", async () => {
       const user = userEvent.setup();
-      mockGetTodos(TODO_FIXTURES);
+      fetchMock.mockGlobal().get("/todos", { todos: TODO_FIXTURES });
 
       render(<App />);
 
@@ -67,10 +70,13 @@ describe("App", () => {
 
     it("shows global error banner on save failure and preserves edit mode", async () => {
       const user = userEvent.setup();
-      mockGetTodos(TODO_FIXTURES).patch("express:/todos/:id", {
-        status: 500,
-        body: { code: "INTERNAL_ERROR", message: "Database error" },
-      });
+      fetchMock
+        .mockGlobal()
+        .get("/todos", { todos: TODO_FIXTURES })
+        .patch("express:/todos/:id", {
+          status: 500,
+          body: { code: "INTERNAL_ERROR", message: "Database error" },
+        });
 
       render(<App />);
 

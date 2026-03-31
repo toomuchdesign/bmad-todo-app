@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { Todo } from "shared";
 import { describe, expect, it } from "vitest";
 import App from "./App";
-import { fetchMock, mockGetTodos, TODO_FIXTURES } from "./test-utils";
+import { fetchMock, TODO_FIXTURES } from "./test-utils";
 
 describe("App", () => {
   describe("create todo flow", () => {
@@ -17,7 +17,10 @@ describe("App", () => {
         updatedAt: "2026-03-03T10:00:00.000Z",
       };
 
-      mockGetTodos(TODO_FIXTURES).post("/todos", newTodo);
+      fetchMock
+        .mockGlobal()
+        .get("/todos", { todos: TODO_FIXTURES })
+        .post("/todos", newTodo);
 
       render(<App />);
 
@@ -36,10 +39,13 @@ describe("App", () => {
     });
 
     it("shows global error banner on failed create and preserves input", async () => {
-      mockGetTodos(TODO_FIXTURES).post("/todos", {
-        status: 500,
-        body: { code: "INTERNAL_ERROR", message: "Database error" },
-      });
+      fetchMock
+        .mockGlobal()
+        .get("/todos", { todos: TODO_FIXTURES })
+        .post("/todos", {
+          status: 500,
+          body: { code: "INTERNAL_ERROR", message: "Database error" },
+        });
 
       render(<App />);
 
@@ -62,7 +68,7 @@ describe("App", () => {
     });
 
     it("shows inline validation for empty input without network call", async () => {
-      mockGetTodos(TODO_FIXTURES);
+      fetchMock.mockGlobal().get("/todos", { todos: TODO_FIXTURES });
 
       render(<App />);
 
@@ -79,7 +85,7 @@ describe("App", () => {
     });
 
     it("shows inline validation for too-long input without network call", async () => {
-      mockGetTodos(TODO_FIXTURES);
+      fetchMock.mockGlobal().get("/todos", { todos: TODO_FIXTURES });
 
       render(<App />);
 
