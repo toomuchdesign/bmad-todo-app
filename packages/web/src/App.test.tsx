@@ -1,18 +1,20 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import App from "./App";
 import {
-  mockFetchError,
-  mockFetchNetworkError,
-  mockFetchSuccess,
+  createDeferred,
+  fetchMock,
+  mockGetTodos,
+  mockGetTodosError,
+  mockGetTodosNetworkError,
   TODO_FIXTURES,
 } from "./test-utils";
 
 describe("App", () => {
   describe("page structure", () => {
     it("renders the Todos heading", () => {
-      vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise(() => {})));
+      fetchMock.mockGlobal().get("/todos", new Promise(() => {}));
 
       render(<App />);
 
@@ -24,7 +26,7 @@ describe("App", () => {
 
   describe("loading state", () => {
     it("shows a loading indicator while fetching todos", () => {
-      vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise(() => {})));
+      fetchMock.mockGlobal().get("/todos", new Promise(() => {}));
 
       render(<App />);
 
@@ -35,7 +37,7 @@ describe("App", () => {
 
   describe("empty state", () => {
     it("shows empty state message when no todos exist", async () => {
-      mockFetchSuccess([]);
+      mockGetTodos([]);
 
       render(<App />);
 
@@ -48,7 +50,7 @@ describe("App", () => {
 
   describe("list state", () => {
     it("renders todo items when todos are loaded", async () => {
-      mockFetchSuccess(TODO_FIXTURES);
+      mockGetTodos(TODO_FIXTURES);
 
       render(<App />);
 
@@ -59,7 +61,7 @@ describe("App", () => {
     });
 
     it("shows completion status for each todo", async () => {
-      mockFetchSuccess(TODO_FIXTURES);
+      mockGetTodos(TODO_FIXTURES);
 
       render(<App />);
 
@@ -75,7 +77,7 @@ describe("App", () => {
 
   describe("error state", () => {
     it("shows error banner with API error message on server error", async () => {
-      mockFetchError({
+      mockGetTodosError({
         code: "INTERNAL_ERROR",
         message: "Database connection failed",
       });
@@ -91,7 +93,7 @@ describe("App", () => {
     });
 
     it("shows generic error message on network failure", async () => {
-      mockFetchNetworkError();
+      mockGetTodosNetworkError();
 
       render(<App />);
 
@@ -105,7 +107,7 @@ describe("App", () => {
     });
 
     it("shows generic error message when error body cannot be parsed", async () => {
-      mockFetchError();
+      mockGetTodosError();
 
       render(<App />);
 
@@ -119,7 +121,7 @@ describe("App", () => {
     });
 
     it("shows a Retry button that is disabled during fetch and resolves on success", async () => {
-      mockFetchNetworkError();
+      mockGetTodosNetworkError();
 
       render(<App />);
 
@@ -129,15 +131,8 @@ describe("App", () => {
         ).toBeInTheDocument();
       });
 
-      let resolveFetch!: (value: unknown) => void;
-      vi.stubGlobal(
-        "fetch",
-        vi.fn().mockReturnValue(
-          new Promise((resolve) => {
-            resolveFetch = resolve;
-          }),
-        ),
-      );
+      const deferred = createDeferred<{ todos: typeof TODO_FIXTURES }>();
+      fetchMock.removeRoutes().get("/todos", () => deferred.promise);
 
       fireEvent.click(screen.getByRole("button", { name: "Retry" }));
 
@@ -145,10 +140,7 @@ describe("App", () => {
         expect(screen.getByRole("button", { name: "Retry" })).toBeDisabled();
       });
 
-      resolveFetch({
-        ok: true,
-        json: () => Promise.resolve({ todos: TODO_FIXTURES }),
-      });
+      deferred.resolve({ todos: TODO_FIXTURES });
 
       await waitFor(() => {
         expect(screen.getByText("Buy milk")).toBeInTheDocument();

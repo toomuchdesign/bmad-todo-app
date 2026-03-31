@@ -1,5 +1,6 @@
+import fetchMock from "@fetch-mock/vitest";
+import type { FetchMock } from "fetch-mock";
 import type { Todo } from "shared";
-import { vi } from "vitest";
 
 export const TODO_FIXTURES: Todo[] = [
   {
@@ -18,32 +19,31 @@ export const TODO_FIXTURES: Todo[] = [
   },
 ];
 
-/** Stubs global fetch to return a successful GET /todos response. */
-export function mockFetchSuccess(todos: Todo[]): void {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ todos }),
-    }),
-  );
+/**
+ * Sets up fetchMock with a GET /todos route returning the given todos.
+ * Chains fluently — call additional .route() / .once() after this.
+ */
+export function mockGetTodos(todos: Todo[]): FetchMock {
+  return fetchMock.mockGlobal().get("/todos", { todos });
 }
 
-/** Stubs global fetch to return a failed response with optional error body. */
-export function mockFetchError(body?: { code: string; message: string }): void {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn().mockResolvedValue({
-      ok: false,
-      status: 500,
-      json: body
-        ? () => Promise.resolve(body)
-        : () => Promise.reject(new Error("no body")),
-    }),
-  );
+/**
+ * Sets up fetchMock with a GET /todos route that returns an HTTP error.
+ * When no body is provided, the response body cannot be parsed (simulates unparseable error).
+ */
+export function mockGetTodosError(body?: {
+  code: string;
+  message: string;
+}): FetchMock {
+  if (body) {
+    return fetchMock.mockGlobal().get("/todos", { status: 500, body });
+  }
+  return fetchMock.mockGlobal().get("/todos", { throws: new Error("no body") });
 }
 
-/** Stubs global fetch to reject with a network error. */
-export function mockFetchNetworkError(): void {
-  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network error")));
+/** Sets up fetchMock with a GET /todos route that rejects with a network error. */
+export function mockGetTodosNetworkError(): FetchMock {
+  return fetchMock
+    .mockGlobal()
+    .get("/todos", { throws: new Error("Network error") });
 }

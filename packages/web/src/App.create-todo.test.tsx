@@ -2,9 +2,9 @@
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { Todo } from "shared";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import App from "./App";
-import { mockFetchSuccess, TODO_FIXTURES } from "./test-utils";
+import { fetchMock, mockGetTodos, TODO_FIXTURES } from "./test-utils";
 
 describe("App", () => {
   describe("create todo flow", () => {
@@ -17,17 +17,7 @@ describe("App", () => {
         updatedAt: "2026-03-03T10:00:00.000Z",
       };
 
-      const mockFetch = vi
-        .fn()
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ todos: TODO_FIXTURES }),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve(newTodo),
-        });
-      vi.stubGlobal("fetch", mockFetch);
+      mockGetTodos(TODO_FIXTURES).post("/todos", newTodo);
 
       render(<App />);
 
@@ -46,22 +36,10 @@ describe("App", () => {
     });
 
     it("shows global error banner on failed create and preserves input", async () => {
-      const mockFetch = vi
-        .fn()
-        .mockResolvedValueOnce({
-          ok: true,
-          json: () => Promise.resolve({ todos: TODO_FIXTURES }),
-        })
-        .mockResolvedValueOnce({
-          ok: false,
-          status: 500,
-          json: () =>
-            Promise.resolve({
-              code: "INTERNAL_ERROR",
-              message: "Database error",
-            }),
-        });
-      vi.stubGlobal("fetch", mockFetch);
+      mockGetTodos(TODO_FIXTURES).post("/todos", {
+        status: 500,
+        body: { code: "INTERNAL_ERROR", message: "Database error" },
+      });
 
       render(<App />);
 
@@ -84,7 +62,7 @@ describe("App", () => {
     });
 
     it("shows inline validation for empty input without network call", async () => {
-      mockFetchSuccess(TODO_FIXTURES);
+      mockGetTodos(TODO_FIXTURES);
 
       render(<App />);
 
@@ -97,11 +75,11 @@ describe("App", () => {
       expect(
         screen.getByText("Todo text must not be empty."),
       ).toBeInTheDocument();
-      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveFetchedTimes(1);
     });
 
     it("shows inline validation for too-long input without network call", async () => {
-      mockFetchSuccess(TODO_FIXTURES);
+      mockGetTodos(TODO_FIXTURES);
 
       render(<App />);
 
@@ -116,7 +94,7 @@ describe("App", () => {
       expect(
         screen.getByText("Todo text must be between 1 and 200 characters."),
       ).toBeInTheDocument();
-      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveFetchedTimes(1);
     });
   });
 });

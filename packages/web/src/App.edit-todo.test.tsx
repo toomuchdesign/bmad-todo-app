@@ -3,27 +3,9 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Todo } from "shared";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import App from "./App";
-import { TODO_FIXTURES } from "./test-utils";
-
-function mockFetchForEdit(patchResponse: {
-  ok: boolean;
-  status?: number;
-  body: unknown;
-}) {
-  return vi
-    .fn()
-    .mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ todos: TODO_FIXTURES }),
-    })
-    .mockResolvedValueOnce({
-      ok: patchResponse.ok,
-      status: patchResponse.status ?? (patchResponse.ok ? 200 : 500),
-      json: () => Promise.resolve(patchResponse.body),
-    });
-}
+import { fetchMock, mockGetTodos, TODO_FIXTURES } from "./test-utils";
 
 describe("App", () => {
   describe("edit todo flow", () => {
@@ -36,8 +18,7 @@ describe("App", () => {
         createdAt: "2026-03-01T10:00:00.000Z",
         updatedAt: "2026-03-30T10:00:00.000Z",
       };
-      const mockFetch = mockFetchForEdit({ ok: true, body: updatedTodo });
-      vi.stubGlobal("fetch", mockFetch);
+      mockGetTodos(TODO_FIXTURES).patch("express:/todos/:id", updatedTodo);
 
       render(<App />);
 
@@ -61,11 +42,7 @@ describe("App", () => {
 
     it("restores original text when pressing Escape", async () => {
       const user = userEvent.setup();
-      const mockFetch = vi.fn().mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ todos: TODO_FIXTURES }),
-      });
-      vi.stubGlobal("fetch", mockFetch);
+      mockGetTodos(TODO_FIXTURES);
 
       render(<App />);
 
@@ -85,17 +62,15 @@ describe("App", () => {
       expect(
         screen.getByRole("button", { name: "Buy milk" }),
       ).toBeInTheDocument();
-      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveFetchedTimes(1);
     });
 
     it("shows global error banner on save failure and preserves edit mode", async () => {
       const user = userEvent.setup();
-      const mockFetch = mockFetchForEdit({
-        ok: false,
+      mockGetTodos(TODO_FIXTURES).patch("express:/todos/:id", {
         status: 500,
         body: { code: "INTERNAL_ERROR", message: "Database error" },
       });
-      vi.stubGlobal("fetch", mockFetch);
 
       render(<App />);
 
