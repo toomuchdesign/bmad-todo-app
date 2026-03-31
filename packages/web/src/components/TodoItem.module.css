@@ -85,6 +85,27 @@
   color: var(--s-text-error);
 }
 
+.deleteButton {
+  padding: 4px 8px;
+  font-size: 13px;
+  border: 1px solid var(--s-border);
+  border-radius: 4px;
+  background: var(--s-bg);
+  color: var(--s-text);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.deleteButton:hover:not(:disabled) {
+  border-color: var(--s-border-error);
+  color: var(--s-text-error);
+}
+
+.deleteButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .pending {
   opacity: 0.6;
   pointer-events: none;

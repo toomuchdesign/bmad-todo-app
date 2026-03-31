@@ -7,6 +7,7 @@ type TodoItemProps = {
   todo: Todo;
   onUpdateText: (id: string, text: string) => Promise<boolean>;
   onToggleCompletion: (id: string) => Promise<boolean>;
+  onDelete: (id: string) => Promise<boolean>;
   pendingAction: string | null;
 };
 
@@ -15,6 +16,7 @@ function TodoItem({
   todo,
   onUpdateText,
   onToggleCompletion,
+  onDelete,
   pendingAction,
 }: TodoItemProps) {
   const [editing, setEditing] = useState(false);
@@ -163,6 +165,15 @@ function TodoItem({
       <time className={styles.timestamp} dateTime={todo.createdAt}>
         {new Date(todo.createdAt).toLocaleDateString()}
       </time>
+      <button
+        type="button"
+        className={styles.deleteButton}
+        onClick={() => onDelete(todo.id)}
+        disabled={isPending}
+        aria-label={`Delete ${todo.text}`}
+      >
+        Delete
+      </button>
     </li>
   );
 }

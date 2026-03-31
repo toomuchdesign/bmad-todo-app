@@ -13,6 +13,7 @@ function App() {
     createTodo,
     updateTodoText,
     toggleTodoCompletion,
+    deleteTodo,
     pendingActions,
   } = useTodos();
 
@@ -28,6 +29,7 @@ function App() {
         loading={loading}
         onUpdateText={updateTodoText}
         onToggleCompletion={toggleTodoCompletion}
+        onDelete={deleteTodo}
         pendingActions={pendingActions}
       />
     </div>

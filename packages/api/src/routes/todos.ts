@@ -65,6 +65,7 @@ const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
       return reply.code(200).send(todo);
     },
   );
+
   app.delete(
     "/todos/:id",
     {

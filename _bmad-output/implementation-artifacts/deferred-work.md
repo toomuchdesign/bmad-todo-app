@@ -25,3 +25,8 @@
 
 - Concurrent mutation race conditions on same todo — if toggle and edit fire concurrently, snapshots can conflict and rollback may restore stale state. Mitigated by UI guards (`disabled={isPending}`, `pointer-events: none`). Story 2.6 addresses this at hook level with per-item AbortController.
 - Replace `pendingActions` string-keyed record in `useTodos` with a more robust solution — current `Record<string, string>` approach is loosely typed and doesn't scale well for composing or querying multiple concurrent states per item. Consider a per-item state machine or enum-based status model.
+
+## Deferred from: code review of story 2.5 (2026-03-31)
+
+- 404 on already-deleted todo loops forever — if the same todo is deleted from another tab, this tab receives 404, shows a generic error, and the todo stays visible. Retrying always hits 404 again. No distinction between 404 (already deleted — safe to remove locally) and 500 (genuine failure).
+- `pendingAction` is an untyped magic string — `"delete"`, `"edit"`, `"toggle"` are not validated against a union type. Pre-existing pattern across all mutations.

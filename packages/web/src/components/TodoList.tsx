@@ -7,6 +7,7 @@ type TodoListProps = {
   loading: boolean;
   onUpdateText: (id: string, text: string) => Promise<boolean>;
   onToggleCompletion: (id: string) => Promise<boolean>;
+  onDelete: (id: string) => Promise<boolean>;
   pendingActions: Record<string, string>;
 };
 
@@ -16,6 +17,7 @@ function TodoList({
   loading,
   onUpdateText,
   onToggleCompletion,
+  onDelete,
   pendingActions,
 }: TodoListProps) {
   if (loading) {
@@ -43,6 +45,7 @@ function TodoList({
           todo={todo}
           onUpdateText={onUpdateText}
           onToggleCompletion={onToggleCompletion}
+          onDelete={onDelete}
           pendingAction={pendingActions[todo.id] ?? null}
         />
       ))}

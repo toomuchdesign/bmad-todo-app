@@ -28,6 +28,7 @@ function renderTodoItem(
     todo?: typeof incompleteTodo;
     onUpdateText?: (id: string, text: string) => Promise<boolean>;
     onToggleCompletion?: (id: string) => Promise<boolean>;
+    onDelete?: (id: string) => Promise<boolean>;
     pendingAction?: string | null;
   } = {},
 ) {
@@ -36,6 +37,7 @@ function renderTodoItem(
     onUpdateText: overrides.onUpdateText ?? vi.fn().mockResolvedValue(true),
     onToggleCompletion:
       overrides.onToggleCompletion ?? vi.fn().mockResolvedValue(true),
+    onDelete: overrides.onDelete ?? vi.fn().mockResolvedValue(true),
     pendingAction: overrides.pendingAction ?? null,
   };
 
@@ -277,6 +279,46 @@ describe("TodoItem", () => {
       renderTodoItem({ pendingAction: "toggle" });
 
       expect(screen.getByRole("checkbox")).toBeDisabled();
+    });
+  });
+
+  describe("delete button", () => {
+    it("renders a Delete button with accessible label", () => {
+      renderTodoItem();
+
+      const button = screen.getByRole("button", {
+        name: `Delete ${incompleteTodo.text}`,
+      });
+      expect(button).toBeInTheDocument();
+      expect(button).toBeEnabled();
+    });
+
+    it("calls onDelete with todo ID on click", async () => {
+      const user = userEvent.setup();
+      const onDelete = vi.fn().mockResolvedValue(true);
+      renderTodoItem({ onDelete });
+
+      await user.click(
+        screen.getByRole("button", { name: `Delete ${incompleteTodo.text}` }),
+      );
+
+      expect(onDelete).toHaveBeenCalledWith(incompleteTodo.id);
+    });
+
+    it("is disabled when pendingAction is set", () => {
+      renderTodoItem({ pendingAction: "edit" });
+
+      expect(
+        screen.getByRole("button", { name: `Delete ${incompleteTodo.text}` }),
+      ).toBeDisabled();
+    });
+
+    it("is disabled during delete pending action", () => {
+      renderTodoItem({ pendingAction: "delete" });
+
+      expect(
+        screen.getByRole("button", { name: `Delete ${incompleteTodo.text}` }),
+      ).toBeDisabled();
     });
   });
 });

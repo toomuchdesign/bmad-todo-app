@@ -99,11 +99,13 @@ test.describe("Todo flows", () => {
       await input.fill("Todo to edit");
       await addButton.click();
       await expect(
-        page.getByRole("button", { name: "Todo to edit" }),
+        page.getByRole("button", { name: "Todo to edit", exact: true }),
       ).toBeVisible();
 
       // Click to enter edit mode
-      await page.getByRole("button", { name: "Todo to edit" }).click();
+      await page
+        .getByRole("button", { name: "Todo to edit", exact: true })
+        .click();
       const editInput = page.getByLabel("Edit todo text");
       await expect(editInput).toBeVisible();
       await expect(editInput).toBeFocused();
@@ -115,7 +117,7 @@ test.describe("Todo flows", () => {
 
       // Verify updated text is shown and edit mode exited
       await expect(
-        page.getByRole("button", { name: "Edited todo" }),
+        page.getByRole("button", { name: "Edited todo", exact: true }),
       ).toBeVisible();
       await expect(page.getByLabel("Edit todo text")).not.toBeVisible();
     });
@@ -131,11 +133,13 @@ test.describe("Todo flows", () => {
       await input.fill("Cancel test todo");
       await addButton.click();
       await expect(
-        page.getByRole("button", { name: "Cancel test todo" }),
+        page.getByRole("button", { name: "Cancel test todo", exact: true }),
       ).toBeVisible();
 
       // Click to enter edit mode
-      await page.getByRole("button", { name: "Cancel test todo" }).click();
+      await page
+        .getByRole("button", { name: "Cancel test todo", exact: true })
+        .click();
       const editInput = page.getByLabel("Edit todo text");
       await expect(editInput).toBeVisible();
 
@@ -146,7 +150,7 @@ test.describe("Todo flows", () => {
 
       // Verify original text is restored
       await expect(
-        page.getByRole("button", { name: "Cancel test todo" }),
+        page.getByRole("button", { name: "Cancel test todo", exact: true }),
       ).toBeVisible();
       await expect(page.getByLabel("Edit todo text")).not.toBeVisible();
     });
@@ -162,11 +166,13 @@ test.describe("Todo flows", () => {
       await input.fill("Validation test todo");
       await addButton.click();
       await expect(
-        page.getByRole("button", { name: "Validation test todo" }),
+        page.getByRole("button", { name: "Validation test todo", exact: true }),
       ).toBeVisible();
 
       // Click to enter edit mode
-      await page.getByRole("button", { name: "Validation test todo" }).click();
+      await page
+        .getByRole("button", { name: "Validation test todo", exact: true })
+        .click();
       const editInput = page.getByLabel("Edit todo text");
       await expect(editInput).toBeVisible();
 
@@ -194,7 +200,7 @@ test.describe("Todo flows", () => {
       await input.fill("Toggle me");
       await addButton.click();
       await expect(
-        page.getByRole("button", { name: "Toggle me" }),
+        page.getByRole("button", { name: "Toggle me", exact: true }),
       ).toBeVisible();
 
       // Toggle completion
@@ -215,7 +221,7 @@ test.describe("Todo flows", () => {
       await input.fill("Uncomplete me");
       await addButton.click();
       await expect(
-        page.getByRole("button", { name: "Uncomplete me" }),
+        page.getByRole("button", { name: "Uncomplete me", exact: true }),
       ).toBeVisible();
 
       const checkbox = page.getByRole("checkbox", { name: /Uncomplete me/ });
@@ -238,7 +244,7 @@ test.describe("Todo flows", () => {
       await input.fill("Fail toggle");
       await addButton.click();
       await expect(
-        page.getByRole("button", { name: "Fail toggle" }),
+        page.getByRole("button", { name: "Fail toggle", exact: true }),
       ).toBeVisible();
 
       // Intercept the PATCH request — hold it until deferred resolves
@@ -272,6 +278,69 @@ test.describe("Todo flows", () => {
       // After failure: checkbox reverts to unchecked and error banner shows
       await expect(checkbox).not.toBeChecked();
       await expect(page.getByRole("alert")).toBeVisible();
+    });
+  });
+
+  test.describe("delete todo flow", () => {
+    test("clicking Delete removes the todo from the list", async ({ page }) => {
+      await page.goto("/");
+
+      // Create a todo to delete
+      const input = page.getByLabel("New todo text");
+      const addButton = page.getByRole("button", { name: "Add" });
+      await input.fill("Delete me");
+      await addButton.click();
+      await expect(page.getByText("Delete me")).toBeVisible();
+
+      // Click the Delete button
+      await page.getByRole("button", { name: "Delete Delete me" }).click();
+
+      // Verify the todo is removed from the list
+      await expect(page.getByText("Delete me")).not.toBeVisible();
+    });
+
+    test("on API failure, todo remains visible and error banner is shown", async ({
+      page,
+    }) => {
+      await page.goto("/");
+
+      // Create a todo
+      const input = page.getByLabel("New todo text");
+      const addButton = page.getByRole("button", { name: "Add" });
+      await input.fill("Fail delete");
+      await addButton.click();
+      await expect(page.getByText("Fail delete")).toBeVisible();
+
+      // Intercept the DELETE request with a failure
+      const deferred = createDeferred<void>();
+      await page.route("**/todos/*", (route) => {
+        if (route.request().method() === "DELETE") {
+          deferred.promise.then(() => {
+            route.fulfill({
+              status: 500,
+              contentType: "application/json",
+              body: JSON.stringify({
+                code: "INTERNAL_ERROR",
+                message: "Server error",
+              }),
+            });
+          });
+        } else {
+          route.continue();
+        }
+      });
+
+      await page.getByRole("button", { name: "Delete Fail delete" }).click();
+
+      // Todo should still be visible (non-optimistic)
+      await expect(page.getByText("Fail delete")).toBeVisible();
+
+      // Let the DELETE failure resolve
+      deferred.resolve();
+
+      // Error banner appears and todo remains
+      await expect(page.getByRole("alert")).toBeVisible();
+      await expect(page.getByText("Fail delete")).toBeVisible();
     });
   });
 

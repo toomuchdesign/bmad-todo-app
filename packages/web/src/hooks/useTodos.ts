@@ -11,6 +11,7 @@ type UseTodosResult = {
   createTodo: (text: string) => Promise<boolean>;
   updateTodoText: (id: string, text: string) => Promise<boolean>;
   toggleTodoCompletion: (id: string) => Promise<boolean>;
+  deleteTodo: (id: string) => Promise<boolean>;
   pendingActions: Record<string, string>;
 };
 
@@ -207,6 +208,48 @@ function useTodos(): UseTodosResult {
     });
   }
 
+  /** Deletes a todo via DELETE. Non-optimistic: removes from state only on success. */
+  async function deleteTodo(id: string): Promise<boolean> {
+    setError(null);
+    setPendingActions((prev) => ({ ...prev, [id]: "delete" }));
+
+    function clearPending(): void {
+      setPendingActions((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }
+
+    try {
+      const response = await fetch(`/todos/${id}`, { method: "DELETE" });
+
+      if (!response.ok) {
+        let message = GENERIC_MUTATION_ERROR_MESSAGE;
+        try {
+          const body = (await response.json()) as ApiResponses<
+            typeof TODO_BY_ID_API_PATH,
+            "delete"
+          >["default"];
+          if (body.message) message = body.message;
+        } catch {
+          // fall back to generic message
+        }
+        setError(message);
+        clearPending();
+        return false;
+      }
+
+      setTodos((prev) => prev.filter((t) => t.id !== id));
+      clearPending();
+      return true;
+    } catch {
+      setError(GENERIC_MUTATION_ERROR_MESSAGE);
+      clearPending();
+      return false;
+    }
+  }
+
   return {
     todos,
     loading,
@@ -215,6 +258,7 @@ function useTodos(): UseTodosResult {
     createTodo,
     updateTodoText,
     toggleTodoCompletion,
+    deleteTodo,
     pendingActions,
   };
 }
