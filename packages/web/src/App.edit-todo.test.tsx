@@ -1,11 +1,12 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
 
+import fetchMock from "@fetch-mock/vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Todo } from "shared";
 import { describe, expect, it } from "vitest";
 import App from "./App";
-import { fetchMock, TODO_FIXTURES } from "./test-utils";
+import { TODO_FIXTURES } from "./test-utils";
 
 describe("App", () => {
   describe("edit todo flow", () => {
@@ -19,7 +20,6 @@ describe("App", () => {
         updatedAt: "2026-03-30T10:00:00.000Z",
       };
       fetchMock
-        .mockGlobal()
         .get("/todos", { todos: TODO_FIXTURES })
         .patch("express:/todos/:id", updatedTodo);
 
@@ -45,7 +45,7 @@ describe("App", () => {
 
     it("restores original text when pressing Escape", async () => {
       const user = userEvent.setup();
-      fetchMock.mockGlobal().get("/todos", { todos: TODO_FIXTURES });
+      fetchMock.get("/todos", { todos: TODO_FIXTURES });
 
       render(<App />);
 
@@ -71,7 +71,6 @@ describe("App", () => {
     it("shows global error banner on save failure and preserves edit mode", async () => {
       const user = userEvent.setup();
       fetchMock
-        .mockGlobal()
         .get("/todos", { todos: TODO_FIXTURES })
         .patch("express:/todos/:id", {
           status: 500,

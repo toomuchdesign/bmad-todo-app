@@ -1,11 +1,12 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
 
+import fetchMock from "@fetch-mock/vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Todo } from "shared";
 import { describe, expect, it } from "vitest";
 import App from "./App";
-import { createDeferred, fetchMock, TODO_FIXTURES } from "./test-utils";
+import { createDeferred, TODO_FIXTURES } from "./test-utils";
 
 describe("App", () => {
   describe("toggle todo flow", () => {
@@ -19,7 +20,6 @@ describe("App", () => {
         updatedAt: "2026-03-30T10:00:00.000Z",
       };
       fetchMock
-        .mockGlobal()
         .get("/todos", { todos: TODO_FIXTURES })
         .patch("express:/todos/:id", toggledTodo);
 
@@ -54,7 +54,6 @@ describe("App", () => {
       const deferred = createDeferred<void>();
 
       fetchMock
-        .mockGlobal()
         .get("/todos", { todos: TODO_FIXTURES })
         .patch("express:/todos/:id", () =>
           deferred.promise.then(() => ({

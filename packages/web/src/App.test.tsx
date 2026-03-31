@@ -1,13 +1,14 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
+import fetchMock from "@fetch-mock/vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import App from "./App";
-import { createDeferred, fetchMock, TODO_FIXTURES } from "./test-utils";
+import { createDeferred, TODO_FIXTURES } from "./test-utils";
 
 describe("App", () => {
   describe("page structure", () => {
     it("renders the Todos heading", () => {
-      fetchMock.mockGlobal().get("/todos", new Promise(() => {}));
+      fetchMock.get("/todos", new Promise(() => {}));
 
       render(<App />);
 
@@ -19,7 +20,7 @@ describe("App", () => {
 
   describe("loading state", () => {
     it("shows a loading indicator while fetching todos", () => {
-      fetchMock.mockGlobal().get("/todos", new Promise(() => {}));
+      fetchMock.get("/todos", new Promise(() => {}));
 
       render(<App />);
 
@@ -30,7 +31,7 @@ describe("App", () => {
 
   describe("empty state", () => {
     it("shows empty state message when no todos exist", async () => {
-      fetchMock.mockGlobal().get("/todos", { todos: [] });
+      fetchMock.get("/todos", { todos: [] });
 
       render(<App />);
 
@@ -43,7 +44,7 @@ describe("App", () => {
 
   describe("list state", () => {
     it("renders todo items when todos are loaded", async () => {
-      fetchMock.mockGlobal().get("/todos", { todos: TODO_FIXTURES });
+      fetchMock.get("/todos", { todos: TODO_FIXTURES });
 
       render(<App />);
 
@@ -54,7 +55,7 @@ describe("App", () => {
     });
 
     it("shows completion status for each todo", async () => {
-      fetchMock.mockGlobal().get("/todos", { todos: TODO_FIXTURES });
+      fetchMock.get("/todos", { todos: TODO_FIXTURES });
 
       render(<App />);
 
@@ -70,7 +71,7 @@ describe("App", () => {
 
   describe("error state", () => {
     it("shows error banner with API error message on server error", async () => {
-      fetchMock.mockGlobal().get("/todos", {
+      fetchMock.get("/todos", {
         status: 500,
         body: { code: "INTERNAL_ERROR", message: "Database connection failed" },
       });
@@ -86,9 +87,7 @@ describe("App", () => {
     });
 
     it("shows generic error message on network failure", async () => {
-      fetchMock
-        .mockGlobal()
-        .get("/todos", { throws: new Error("Network error") });
+      fetchMock.get("/todos", { throws: new Error("Network error") });
 
       render(<App />);
 
@@ -102,7 +101,7 @@ describe("App", () => {
     });
 
     it("shows generic error message when error body cannot be parsed", async () => {
-      fetchMock.mockGlobal().get("/todos", { throws: new Error("no body") });
+      fetchMock.get("/todos", { throws: new Error("no body") });
 
       render(<App />);
 
@@ -116,9 +115,7 @@ describe("App", () => {
     });
 
     it("shows a Retry button that is disabled during fetch and resolves on success", async () => {
-      fetchMock
-        .mockGlobal()
-        .get("/todos", { throws: new Error("Network error") });
+      fetchMock.get("/todos", { throws: new Error("Network error") });
 
       render(<App />);
 
