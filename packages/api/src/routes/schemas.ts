@@ -122,3 +122,29 @@ export const patchTodosRouteSchema = {
 export type PatchTodosRouteResponses = InferRouteResponses<
   typeof patchTodosRouteSchema.response
 >;
+
+export const deleteTodosRouteSchema = {
+  tags: ["todos"],
+  summary: "Delete todo",
+  params: {
+    type: "object",
+    required: ["id"],
+    properties: {
+      id: { type: "string", format: "uuid" },
+    },
+  },
+  response: {
+    204: {
+      headers: responseHeadersSchema,
+      type: "null",
+      description: "Todo deleted",
+    },
+    400: errorResponseSchema,
+    404: errorResponseSchema,
+    default: errorResponseSchema,
+  },
+} as const;
+
+export type DeleteTodosRouteResponses = InferRouteResponses<
+  typeof deleteTodosRouteSchema.response
+>;

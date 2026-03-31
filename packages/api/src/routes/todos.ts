@@ -1,10 +1,12 @@
 import type { FastifyPluginAsyncJsonSchemaToTs } from "@fastify/type-provider-json-schema-to-ts";
 import {
   createTodoInDatabase,
+  deleteTodoInDatabase,
   listTodosFromDatabase,
   updateTodoInDatabase,
 } from "../db/todos.js";
 import {
+  deleteTodosRouteSchema,
   getTodosRouteSchema,
   patchTodosRouteSchema,
   postTodosRouteSchema,
@@ -61,6 +63,27 @@ const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
       }
 
       return reply.code(200).send(todo);
+    },
+  );
+  app.delete(
+    "/todos/:id",
+    {
+      schema: deleteTodosRouteSchema,
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+
+      const deleted = await deleteTodoInDatabase({ id });
+
+      if (!deleted) {
+        return reply.code(404).send({
+          code: "NOT_FOUND",
+          message: "Todo not found",
+          requestId: reply.getHeader("x-request-id") as string,
+        });
+      }
+
+      return reply.code(204).send(null);
     },
   );
 };

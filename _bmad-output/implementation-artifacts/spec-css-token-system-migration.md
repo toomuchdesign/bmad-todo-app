@@ -1,9 +1,9 @@
 ---
-title: 'Migrate frontend CSS to 2-tier token system'
-type: 'refactor'
-created: '2026-03-30'
-status: 'done'
-baseline_commit: '7eb86ade'
+title: "Migrate frontend CSS to 2-tier token system"
+type: "refactor"
+created: "2026-03-30"
+status: "done"
+baseline_commit: "7eb86ade"
 context:
   - _bmad-output/planning-artifacts/architecture.md
   - project-context.md
@@ -20,6 +20,7 @@ context:
 ## Boundaries & Constraints
 
 **Always:**
+
 - Preserve a similar visual appearance — same general look, colors, and layout; minor tweaks acceptable
 - Follow the 2-tier token architecture: primitives (`--p-*`) in `tokens/primitives.css`, semantic (`--s-*`) in `tokens/semantic.css`
 - Shared design decisions (palette, spacing scale, typography, radii) flow through tokens; component-specific values that don't benefit from abstraction can remain as plain CSS values in their `.module.css`
@@ -27,9 +28,11 @@ context:
 - No `var()` fallback values on token references
 
 **Ask First:**
+
 - Introducing semantic tokens for entirely new design concepts not present in the current UI
 
 **Never:**
+
 - Modify any `.tsx` component files (pure CSS refactor)
 - Add CSS preprocessors, tooling, or dependencies
 - Force every value through a token — only abstract what benefits from shared control
@@ -49,6 +52,7 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
+
 - [x]`packages/web/src/tokens/primitives.css` -- Create with all raw palette values extracted from current CSS (colors, spacing, font stacks, sizes, radii) using `--p-*` naming
 - [x]`packages/web/src/tokens/semantic.css` -- Create with semantic aliases mapping `--p-*` to purpose-driven `--s-*` names; include the single `prefers-color-scheme: dark` override block for all dark-mode remappings
 - [x]`packages/web/src/index.css` -- Replace inline `:root` variables with `@import` of token files; keep global resets and base typography referencing `--s-*` tokens
@@ -58,6 +62,7 @@ context:
 - [x]`packages/web/src/components/GlobalErrorBanner.module.css` -- Use `--s-*` tokens for error colors/borders; remove the `@media (prefers-color-scheme: dark)` block; component-specific values stay as plain CSS
 
 **Acceptance Criteria:**
+
 - Given the app is loaded in a browser, when comparing before/after, then the visual appearance is similar (same general look and feel in both light and dark modes)
 - Given any `.module.css` file, when searching for `prefers-color-scheme`, then zero matches are found
 - Given `tokens/primitives.css` exists, when inspecting it, then all values use `--p-*` naming and contain only raw values (no `var()` references)
@@ -68,26 +73,29 @@ context:
 
 Token mapping reference (current → new):
 
-| Current | Primitive | Semantic |
-|---------|-----------|----------|
-| `--text` (#6b6375) | `--p-gray-500` | `--s-text` |
-| `--text-h` (#08060d) | `--p-gray-900` | `--s-text-heading` |
-| `--bg` (#fff) | `--p-white` | `--s-bg` |
-| `--border` (#e5e4e7) | `--p-gray-border` | `--s-border` |
-| `--accent` (#aa3bff) | `--p-purple-600` | `--s-accent` |
-| `--accent-bg` | (rgba) | `--s-bg-accent` |
-| `--accent-border` | (rgba) | `--s-border-accent` |
+| Current              | Primitive         | Semantic            |
+| -------------------- | ----------------- | ------------------- |
+| `--text` (#6b6375)   | `--p-gray-500`    | `--s-text`          |
+| `--text-h` (#08060d) | `--p-gray-900`    | `--s-text-heading`  |
+| `--bg` (#fff)        | `--p-white`       | `--s-bg`            |
+| `--border` (#e5e4e7) | `--p-gray-border` | `--s-border`        |
+| `--accent` (#aa3bff) | `--p-purple-600`  | `--s-accent`        |
+| `--accent-bg`        | (rgba)            | `--s-bg-accent`     |
+| `--accent-border`    | (rgba)            | `--s-border-accent` |
 
 Component-local dark overrides (in `AddTodoForm`, `GlobalErrorBanner`) must be consolidated into `semantic.css`. New semantic tokens needed for error and focus states currently defined only inside component modules.
 
 ## Verification
 
 **Commands:**
+
 - `npm run type:check` -- expected: no type errors
 - `npm run biome:check` -- expected: no lint/format errors
 - `npm run test:ci` -- expected: all tests pass (no visual tests, but no regressions in component tests)
+- `npm run test:e2e` -- expected: all tests pass (no visual tests, but no regressions in component tests)
 
 **Manual checks:**
+
 - Start dev servers (`npm run dev`), open `http://localhost:5173`, visually confirm identical appearance in light and dark modes
 
 ## Suggested Review Order

@@ -79,6 +79,7 @@ Use this section for persistent test rules that should apply to every future tas
   - `npm run type:check`
   - `npm run biome:check`
   - `npm run test:ci`
+  - `npm run test:e2e`
 - API changes must keep API integration tests passing in `packages/api/test`.
 - Web changes must keep component/unit tests passing in `packages/web/src`.
 

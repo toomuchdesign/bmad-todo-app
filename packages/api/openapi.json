@@ -472,6 +472,139 @@
             }
           }
         }
+      },
+      "delete": {
+        "summary": "Delete todo",
+        "tags": [
+          "todos"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Todo deleted",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "required": true,
+                  "type": "string"
+                },
+                "description": "Request correlation identifier"
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "required": true,
+                  "type": "string"
+                },
+                "description": "Request correlation identifier"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "required": true,
+                  "type": "string"
+                },
+                "description": "Request correlation identifier"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Default Response",
+            "headers": {
+              "x-request-id": {
+                "schema": {
+                  "required": true,
+                  "type": "string"
+                },
+                "description": "Request correlation identifier"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

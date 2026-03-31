@@ -96,3 +96,23 @@ export async function updateTodoInDatabase({
 
   return row ? mapTodoRowToApiTodo(row) : null;
 }
+
+/**
+ * Soft-deletes a non-deleted todo by setting deletedAt. Returns true if a row was updated.
+ */
+export async function deleteTodoInDatabase({
+  id,
+}: {
+  id: string;
+}): Promise<boolean> {
+  const db = getDb();
+  const now = new Date();
+
+  const result = await db
+    .update(todos)
+    .set({ deletedAt: now, updatedAt: now })
+    .where(and(eq(todos.id, id), isNull(todos.deletedAt)))
+    .returning();
+
+  return result.length > 0;
+}

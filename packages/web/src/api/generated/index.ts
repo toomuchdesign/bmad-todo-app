@@ -145,7 +145,74 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete todo */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Todo deleted */
+                204: {
+                    headers: {
+                        /** @description Request correlation identifier */
+                        "x-request-id"?: string;
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Default Response */
+                400: {
+                    headers: {
+                        /** @description Request correlation identifier */
+                        "x-request-id"?: string;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            requestId?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                404: {
+                    headers: {
+                        /** @description Request correlation identifier */
+                        "x-request-id"?: string;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            requestId?: string;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                default: {
+                    headers: {
+                        /** @description Request correlation identifier */
+                        "x-request-id"?: string;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            code: string;
+                            message: string;
+                            requestId?: string;
+                        };
+                    };
+                };
+            };
+        };
         options?: never;
         head?: never;
         /** Update todo */
