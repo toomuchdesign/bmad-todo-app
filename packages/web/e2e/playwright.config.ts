@@ -1,11 +1,14 @@
+import { resolve } from "node:path";
 import { loadEnvFile } from "node:process";
 import { defineConfig } from "@playwright/test";
 
 /**
- * Load .env.test so spawned dev servers use the test database.
- * dotenv (used by the API's env-schema) won't overwrite these values.
+ * Load root .env.test so spawned dev servers use the test database.
+ * env-schema (used by the API) won't overwrite these values.
  */
-loadEnvFile(`${import.meta.dirname}/../../../packages/api/.env.test`);
+loadEnvFile(resolve(import.meta.dirname, "../../../.env.test"));
+
+const apiPort = Number(process.env.API_PORT);
 
 export default defineConfig({
   testDir: ".",
@@ -15,7 +18,7 @@ export default defineConfig({
   webServer: [
     {
       command: "npm run dev:api",
-      port: 3001,
+      port: apiPort,
       cwd: "../../..",
       reuseExistingServer: !process.env.CI,
     },

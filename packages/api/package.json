@@ -16,7 +16,7 @@
     "build:openapi:stage": "npm run build:openapi && git add openapi.json",
     "db:generate": "npm run docker-compose:start && drizzle-kit generate",
     "db:migrate": "npm run docker-compose:start && drizzle-kit migrate",
-    "db:reset": "npm run docker-compose:start && tsx scripts/reset-todos.ts"
+    "db:reset": "npm run docker-compose:start && tsx scripts/db-reset.ts"
   },
   "keywords": [],
   "author": "",

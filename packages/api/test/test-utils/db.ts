@@ -1,8 +1,6 @@
 import type { QueryResult } from "pg";
 import { Client } from "pg";
 
-const testTablesToCleanup = ["todos"] as const;
-
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
@@ -34,27 +32,9 @@ export async function runQuery(
 }
 
 /**
- * Ensures required test tables exist before cleanup and test execution.
- */
-export async function ensureTestTables(): Promise<void> {
-  await runQuery(`
-    CREATE TABLE IF NOT EXISTS todos (
-      id uuid PRIMARY KEY NOT NULL,
-      text text NOT NULL,
-      completed boolean DEFAULT false NOT NULL,
-      created_at timestamp with time zone NOT NULL,
-      updated_at timestamp with time zone NOT NULL,
-      deleted_at timestamp with time zone
-    );
-  `);
-}
-
-/**
  * Cleans all configured test tables so each test starts from a known-empty state.
  */
 export async function cleanupTestDatabase(): Promise<void> {
-  await ensureTestTables();
-
-  const truncateStatement = `TRUNCATE TABLE ${testTablesToCleanup.join(", ")};`;
+  const truncateStatement = `TRUNCATE TABLE todos;`;
   await runQuery(truncateStatement);
 }

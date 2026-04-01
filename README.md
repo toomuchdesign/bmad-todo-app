@@ -67,10 +67,12 @@ Defaults:
 
 Environment variables:
 
-- The API expects config via environment variables (see `packages/api/.env.example` for the required keys).
-- DB scripts in `packages/api` auto-load `packages/api/.env` (copy from `packages/api/.env.example`) so you don't need to `export DATABASE_URL=...` before running `npm -w api run db:*`.
-- API tests (Vitest) auto-load `packages/api/.env.test`.
-- Note: the current API dev server command does not auto-load a `.env` file.
+All environment variables live in **root-level** `.env` files (no per-package env files):
+
+- `.env` — development settings (`DATABASE_URL` pointing to the dev database, `API_PORT`, `API_HOST`). Copy from `.env.example` and adjust as needed. Git-ignored.
+- `.env.test` — test settings (`DATABASE_URL` pointing to the test database). Committed to the repo so CI and all contributors share the same test config.
+
+The API dev server and DB scripts auto-load `.env`; Vitest and Playwright auto-load `.env.test`.
 
 ## Tests (recommended)
 

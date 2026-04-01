@@ -7,8 +7,8 @@ try {
   const config = getConfig();
 
   await app.listen({
-    port: config.PORT,
-    host: config.HOST,
+    port: config.API_PORT,
+    host: config.API_HOST,
   });
 } catch (err) {
   app.log.error(err);

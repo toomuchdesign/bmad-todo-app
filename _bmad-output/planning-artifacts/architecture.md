@@ -230,7 +230,7 @@ Notes:
 - `type:check`: `tsc --noEmit` (workspace-local typecheck).
 - `db:generate`: generate a new migration from Drizzle schema changes.
 - `db:migrate`: apply migrations to the configured database.
-- `db:reset`: truncate `todos` in the configured database (wraps `scripts/reset-todos.ts`; for tests use the test DB URL).
+- `db:reset`: truncate `todos` in the configured database (wraps `scripts/db-reset.ts`, which reuses `cleanupTestDatabase` from test-utils).
 
 **Shared workspace (`packages/shared/package.json`)**
 
@@ -249,12 +249,12 @@ Notes:
 - **Principle:** resetting data is a development/testing concern, not a user-facing MVP feature.
 - **Do not expose a public reset API endpoint** (avoids accidentally shipping a destructive capability).
 - **Tests:** reset state at the database level.
-  - Use a dedicated test database via `DATABASE_URL_TEST` (or separate `.env.test`) to prevent wiping dev data.
-  - API Vitest loads `packages/api/.env.test` by default; keep the test DB connection string there.
+  - Use a dedicated test database via the root `.env.test` (`DATABASE_URL` pointing to the test DB) to prevent wiping dev data.
+  - API Vitest and Playwright both load the root `.env.test` automatically.
   - Before each test: run centralized cleanup from `packages/api/vitest.setup.ts` (`cleanupTestDatabase` from `packages/api/test/test-utils/db.ts`).
   - Add new tables to the cleanup list in `packages/api/test/test-utils/db.ts` as the schema grows.
 - **Local usage:** provide a local script to clear todos in the dev database.
-  - Implement as a Node/TS script in `packages/api/scripts/reset-todos.ts` that connects via `DATABASE_URL` and truncates `todos`.
+  - Implement as a Node/TS script in `packages/api/scripts/db-reset.ts` that reuses `cleanupTestDatabase` from test-utils. The script does not load any env file itself — the caller provides `DATABASE_URL` via `--env-file` or `loadEnvFile`.
   - Expose it via an npm script in the API workspace and (optionally) a root convenience script that runs the workspace script.
 - **E2E:** run the reset script before Playwright suites (and optionally per spec) to keep runs deterministic.
 
@@ -393,8 +393,10 @@ To keep quality high while moving quickly, every story/task is considered **done
 - **Local Postgres (dev):** single root-level `docker-compose.yml` manages Postgres
   - API and migration tooling connect via `DATABASE_URL`
 - **Environment variables:**
+  - All env files live at the **project root** (`.env`, `.env.test`, `.env.example`) — no per-package env files
   - Commit `.env.example` and `.env.test`, never commit real `.env`
-  - API env access is centralized in `packages/api/src/config.ts` and validated via `env-schema`
+  - API env access is centralized in `packages/api/src/config.ts` and validated via `env-schema` (loads root `.env`)
+  - Vitest and Playwright load root `.env.test` explicitly via `loadEnvFile`
   - The rest of the API codebase must not read `process.env` directly; it consumes the exported config object instead
 - **Migrations:** Drizzle Kit runs against `DATABASE_URL` (same URL used by API runtime)
 - **Deploy shape (MVP):**
@@ -425,7 +427,7 @@ This section is the enforcement layer to prevent AI-agent divergence. The canoni
 
 ### Test & Dev Determinism (must follow)
 
-- Tests run against a dedicated DB (`DATABASE_URL_TEST` or equivalent)
+- Tests run against a dedicated DB (root `.env.test` sets `DATABASE_URL` to the test database)
 - State resets are DB-level truncations; do not add a production reset endpoint
 
 ### Testing Practices (must follow)
@@ -479,8 +481,6 @@ bmad-todo/
 │   ├── api/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
-│   │   ├── .env.example
-│   │   ├── .env.test
 │   │   ├── openapi.json                  # committed OpenAPI (generated from route schemas)
 │   │   ├── src/
 │   │   │   ├── config.ts                   # validated env config (single access point)
@@ -502,7 +502,7 @@ bmad-todo/
 │   │   │   └── migrations/                 # generated migrations
 │   │   ├── scripts/
 │   │   │   ├── build-openapi.ts            # openapi artifact generation script
-│   │   │   └── reset-todos.ts              # local/test utility (truncate todos); NOT an API endpoint
+│   │   │   └── db-reset.ts                 # local/test utility (truncate todos via cleanupTestDatabase); NOT an API endpoint
 │   │   └── test/
 │   │       ├── app.test.ts
 │   │       ├── todos.get.test.ts

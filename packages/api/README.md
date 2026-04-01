@@ -25,14 +25,14 @@ colima start # macOS only
 docker-compose up -d
 ```
 
-API expects `DATABASE_URL` (see `.env.example`).
+API expects `DATABASE_URL`, `API_PORT`, and `API_HOST` (see root `.env.example` for the required keys).
 
-- DB scripts (`db:*`) auto-load `packages/api/.env` (copy from `.env.example`) so you don't need to export `DATABASE_URL`.
-- The API dev server command does not auto-load a `.env` file; use your preferred env loader when running `dev`.
+- All env files live at the **project root** (`.env`, `.env.test`, `.env.example`).
+- The API server and DB scripts auto-load the root `.env` via `env-schema`.
 
 ## Tests (env vars)
 
-- Vitest auto-loads environment variables from `packages/api/.env.test` (see `vitest.config.ts`).
+- Vitest auto-loads the root `.env.test` (see `vitest.config.ts`).
 - Put test-only values there (for example, point `DATABASE_URL` at a dedicated test database).
 - Reuse shared API test helpers from `packages/api/test/test-utils/index.ts` in all API tests.
 

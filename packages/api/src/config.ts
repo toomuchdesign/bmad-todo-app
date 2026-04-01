@@ -1,19 +1,20 @@
+import { resolve } from "node:path";
 import envSchema from "env-schema";
 
 export type ApiConfig = {
-  HOST: string;
-  PORT: number;
+  API_HOST: string;
+  API_PORT: number;
   DATABASE_URL: string;
 };
 
 const configSchema = {
   type: "object",
-  required: ["HOST", "PORT", "DATABASE_URL"],
+  required: ["API_HOST", "API_PORT", "DATABASE_URL"],
   properties: {
-    HOST: {
+    API_HOST: {
       type: "string",
     },
-    PORT: {
+    API_PORT: {
       type: "integer",
     },
     DATABASE_URL: {
@@ -21,6 +22,11 @@ const configSchema = {
     },
   },
 } as const;
+
+/**
+ * Root-level .env path, resolved relative to the api package directory.
+ */
+const ROOT_ENV_PATH = resolve(import.meta.dirname, "../../../.env");
 
 let cachedConfig: ApiConfig | undefined;
 
@@ -31,7 +37,7 @@ export function getConfig(): ApiConfig {
 
   const config = envSchema<ApiConfig>({
     schema: configSchema,
-    dotenv: true,
+    dotenv: { path: ROOT_ENV_PATH },
   });
 
   cachedConfig = config;
