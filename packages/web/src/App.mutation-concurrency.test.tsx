@@ -82,217 +82,241 @@ describe("App", () => {
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
 
-    it("rapid toggle same checkbox while first is in-flight: first aborted, second applied, no error", async () => {
-      const user = userEvent.setup();
-      const firstDeferred = createDeferred<void>();
-      const secondDeferred = createDeferred<void>();
+    describe("given rapid toggle while first is in-flight", () => {
+      it("aborts first, applies second, shows no error", async () => {
+        const user = userEvent.setup();
+        const firstDeferred = createDeferred<void>();
+        const secondDeferred = createDeferred<void>();
 
-      const toggledOn = makeTodo({
-        completed: true,
-        updatedAt: "2026-04-01T10:00:00.000Z",
+        const toggledOn = makeTodo({
+          completed: true,
+          updatedAt: "2026-04-01T10:00:00.000Z",
+        });
+        const toggledOff = makeTodo({
+          completed: false,
+          updatedAt: "2026-04-01T11:00:00.000Z",
+        });
+
+        let patchCallCount = 0;
+        fetchMock.get("/todos", { todos: TODO_FIXTURES });
+        fetchMock.patch("express:/todos/:id", () => {
+          patchCallCount++;
+          if (patchCallCount === 1) {
+            return firstDeferred.promise.then(() => toggledOn);
+          }
+          return secondDeferred.promise.then(() => toggledOff);
+        });
+
+        render(<App />);
+
+        await waitFor(() => {
+          expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        });
+
+        // First toggle: incomplete → completed (stays in-flight)
+        await user.click(screen.getByRole("checkbox", { name: /Buy milk/ }));
+        expect(patchCallCount).toBe(1);
+
+        await waitFor(() => {
+          expect(
+            screen.getByRole("checkbox", { name: /Buy milk/ }),
+          ).toBeChecked();
+        });
+
+        // Second toggle while first is still in-flight: completed → incomplete
+        await user.click(screen.getByRole("checkbox", { name: /Buy milk/ }));
+        expect(patchCallCount).toBe(2);
+
+        await waitFor(() => {
+          expect(
+            screen.getByRole("checkbox", { name: /Buy milk/ }),
+          ).not.toBeChecked();
+        });
+
+        // Resolve first (aborted — should be ignored)
+        firstDeferred.resolve();
+        // Resolve second (the winner)
+        secondDeferred.resolve();
+
+        await waitFor(() => {
+          expect(
+            screen.getByRole("checkbox", { name: /Buy milk/ }),
+          ).not.toBeChecked();
+        });
+
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
       });
-      const toggledOff = makeTodo({
-        completed: false,
-        updatedAt: "2026-04-01T11:00:00.000Z",
-      });
-
-      let patchCallCount = 0;
-      fetchMock.get("/todos", { todos: TODO_FIXTURES });
-      fetchMock.patch("express:/todos/:id", () => {
-        patchCallCount++;
-        if (patchCallCount === 1) {
-          return firstDeferred.promise.then(() => toggledOn);
-        }
-        return secondDeferred.promise.then(() => toggledOff);
-      });
-
-      render(<App />);
-
-      await waitFor(() => {
-        expect(screen.getByText("Buy milk")).toBeInTheDocument();
-      });
-
-      // First toggle: incomplete → completed (stays in-flight)
-      await user.click(screen.getByRole("checkbox", { name: /Buy milk/ }));
-      expect(patchCallCount).toBe(1);
-
-      // Second toggle while first is still in-flight: completed → incomplete
-      await user.click(screen.getByRole("checkbox", { name: /Buy milk/ }));
-      expect(patchCallCount).toBe(2);
-
-      // Resolve first (aborted — should be ignored)
-      firstDeferred.resolve();
-      // Resolve second (the winner)
-      secondDeferred.resolve();
-
-      await waitFor(() => {
-        expect(
-          screen.getByRole("checkbox", { name: /Buy milk/ }),
-        ).not.toBeChecked();
-      });
-
-      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
 
-    it("rapid toggle same checkbox: second toggle after first resolves works correctly", async () => {
-      const user = userEvent.setup();
-      let patchCallCount = 0;
+    describe("rapid toggle same checkbox", () => {
+      it("second toggle after first resolves works correctly", async () => {
+        const user = userEvent.setup();
+        let patchCallCount = 0;
 
-      const toggledOn = makeTodo({
-        completed: true,
-        updatedAt: "2026-04-01T10:00:00.000Z",
+        const toggledOn = makeTodo({
+          completed: true,
+          updatedAt: "2026-04-01T10:00:00.000Z",
+        });
+        const toggledOff = makeTodo({
+          completed: false,
+          updatedAt: "2026-04-01T11:00:00.000Z",
+        });
+
+        fetchMock.get("/todos", { todos: TODO_FIXTURES });
+        fetchMock.patch("express:/todos/:id", () => {
+          patchCallCount++;
+          if (patchCallCount === 1) return toggledOn;
+          return toggledOff;
+        });
+
+        render(<App />);
+
+        await waitFor(() => {
+          expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        });
+
+        // First toggle: incomplete → completed
+        await user.click(screen.getByRole("checkbox", { name: /Buy milk/ }));
+        await waitFor(() => {
+          expect(
+            screen.getByRole("checkbox", { name: /Buy milk/ }),
+          ).toBeChecked();
+        });
+
+        // Second toggle: completed → incomplete
+        await user.click(screen.getByRole("checkbox", { name: /Buy milk/ }));
+        await waitFor(() => {
+          expect(
+            screen.getByRole("checkbox", { name: /Buy milk/ }),
+          ).not.toBeChecked();
+        });
+
+        expect(patchCallCount).toBe(2);
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
       });
-      const toggledOff = makeTodo({
-        completed: false,
-        updatedAt: "2026-04-01T11:00:00.000Z",
-      });
-
-      fetchMock.get("/todos", { todos: TODO_FIXTURES });
-      fetchMock.patch("express:/todos/:id", () => {
-        patchCallCount++;
-        if (patchCallCount === 1) return toggledOn;
-        return toggledOff;
-      });
-
-      render(<App />);
-
-      await waitFor(() => {
-        expect(screen.getByText("Buy milk")).toBeInTheDocument();
-      });
-
-      // First toggle: incomplete → completed
-      await user.click(screen.getByRole("checkbox", { name: /Buy milk/ }));
-      await waitFor(() => {
-        expect(
-          screen.getByRole("checkbox", { name: /Buy milk/ }),
-        ).toBeChecked();
-      });
-
-      // Second toggle: completed → incomplete
-      await user.click(screen.getByRole("checkbox", { name: /Buy milk/ }));
-      await waitFor(() => {
-        expect(
-          screen.getByRole("checkbox", { name: /Buy milk/ }),
-        ).not.toBeChecked();
-      });
-
-      expect(patchCallCount).toBe(2);
-      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
 
-    it("edit text then toggle same todo: both changes applied after sequential resolution", async () => {
-      const user = userEvent.setup();
-      let patchCallCount = 0;
+    describe("edit text then toggle same todo", () => {
+      it("both changes applied after sequential resolution", async () => {
+        const user = userEvent.setup();
+        let patchCallCount = 0;
 
-      const editedTodo = makeTodo({
-        text: "Buy oat milk",
-        updatedAt: "2026-04-01T10:00:00.000Z",
-      });
-      const toggledTodo = makeTodo({
-        text: "Buy oat milk",
-        completed: true,
-        updatedAt: "2026-04-01T11:00:00.000Z",
-      });
+        const editedTodo = makeTodo({
+          text: "Buy oat milk",
+          updatedAt: "2026-04-01T10:00:00.000Z",
+        });
+        const toggledTodo = makeTodo({
+          text: "Buy oat milk",
+          completed: true,
+          updatedAt: "2026-04-01T11:00:00.000Z",
+        });
 
-      fetchMock.get("/todos", { todos: TODO_FIXTURES });
-      fetchMock.patch("express:/todos/:id", () => {
-        patchCallCount++;
-        if (patchCallCount === 1) return editedTodo;
-        return toggledTodo;
-      });
+        fetchMock.get("/todos", { todos: TODO_FIXTURES });
+        fetchMock.patch("express:/todos/:id", () => {
+          patchCallCount++;
+          if (patchCallCount === 1) return editedTodo;
+          return toggledTodo;
+        });
 
-      render(<App />);
+        render(<App />);
 
-      await waitFor(() => {
-        expect(screen.getByText("Buy milk")).toBeInTheDocument();
-      });
+        await waitFor(() => {
+          expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        });
 
-      // Edit text
-      await user.click(screen.getByRole("button", { name: "Buy milk" }));
-      const input = screen.getByRole("textbox", { name: "Edit todo text" });
-      await user.clear(input);
-      await user.type(input, "Buy oat milk{Enter}");
+        // Edit text
+        await user.click(screen.getByRole("button", { name: "Buy milk" }));
+        const input = screen.getByRole("textbox", { name: "Edit todo text" });
+        await user.clear(input);
+        await user.type(input, "Buy oat milk{Enter}");
 
-      await waitFor(() => {
-        expect(screen.getByText("Buy oat milk")).toBeInTheDocument();
-      });
+        await waitFor(() => {
+          expect(screen.getByText("Buy oat milk")).toBeInTheDocument();
+        });
 
-      // Toggle completion after edit resolves
-      await user.click(screen.getByRole("checkbox", { name: /Buy oat milk/ }));
-
-      await waitFor(() => {
-        expect(
+        // Toggle completion after edit resolves
+        await user.click(
           screen.getByRole("checkbox", { name: /Buy oat milk/ }),
-        ).toBeChecked();
-      });
+        );
 
-      expect(patchCallCount).toBe(2);
-      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+        await waitFor(() => {
+          expect(
+            screen.getByRole("checkbox", { name: /Buy oat milk/ }),
+          ).toBeChecked();
+        });
+
+        expect(patchCallCount).toBe(2);
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      });
     });
 
-    it("out-of-order resolution of concurrent different-item mutations does not show error", async () => {
-      const user = userEvent.setup();
-      const firstDeferred = createDeferred<void>();
-      const secondDeferred = createDeferred<void>();
+    describe("out-of-order resolution of concurrent different-item mutations", () => {
+      it("does not show error", async () => {
+        const user = userEvent.setup();
+        const firstDeferred = createDeferred<void>();
+        const secondDeferred = createDeferred<void>();
 
-      const toggledFirst = makeTodo({
-        id: "1",
-        completed: true,
-        updatedAt: "2026-04-01T10:00:00.000Z",
-      });
+        const toggledFirst = makeTodo({
+          id: "1",
+          completed: true,
+          updatedAt: "2026-04-01T10:00:00.000Z",
+        });
 
-      const toggledSecond = makeTodo({
-        id: "2",
-        text: "Walk the dog",
-        completed: false,
-        createdAt: "2026-03-02T12:00:00.000Z",
-        updatedAt: "2026-04-01T10:00:00.000Z",
-      });
+        const toggledSecond = makeTodo({
+          id: "2",
+          text: "Walk the dog",
+          completed: false,
+          createdAt: "2026-03-02T12:00:00.000Z",
+          updatedAt: "2026-04-01T10:00:00.000Z",
+        });
 
-      let patchCallCount = 0;
-      fetchMock.get("/todos", { todos: TODO_FIXTURES });
-      fetchMock.patch("express:/todos/:id", () => {
-        patchCallCount++;
-        if (patchCallCount === 1) {
-          return firstDeferred.promise.then(() => toggledFirst);
-        }
-        return secondDeferred.promise.then(() => toggledSecond);
-      });
+        let patchCallCount = 0;
+        fetchMock.get("/todos", { todos: TODO_FIXTURES });
+        fetchMock.patch("express:/todos/:id", () => {
+          patchCallCount++;
+          if (patchCallCount === 1) {
+            return firstDeferred.promise.then(() => toggledFirst);
+          }
+          return secondDeferred.promise.then(() => toggledSecond);
+        });
 
-      render(<App />);
+        render(<App />);
 
-      await waitFor(() => {
-        expect(screen.getByText("Buy milk")).toBeInTheDocument();
-      });
+        await waitFor(() => {
+          expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        });
 
-      // Toggle first todo
-      await user.click(screen.getByRole("checkbox", { name: /Buy milk/ }));
+        // Toggle first todo
+        await user.click(screen.getByRole("checkbox", { name: /Buy milk/ }));
 
-      // Toggle second todo while first is in flight
-      await user.click(screen.getByRole("checkbox", { name: /Walk the dog/ }));
-
-      expect(patchCallCount).toBe(2);
-
-      // Resolve SECOND request first (out of order)
-      secondDeferred.resolve();
-
-      await waitFor(() => {
-        expect(
+        // Toggle second todo while first is in flight
+        await user.click(
           screen.getByRole("checkbox", { name: /Walk the dog/ }),
-        ).not.toBeChecked();
+        );
+
+        expect(patchCallCount).toBe(2);
+
+        // Resolve SECOND request first (out of order)
+        secondDeferred.resolve();
+
+        await waitFor(() => {
+          expect(
+            screen.getByRole("checkbox", { name: /Walk the dog/ }),
+          ).not.toBeChecked();
+        });
+
+        // Then resolve first request
+        firstDeferred.resolve();
+
+        await waitFor(() => {
+          expect(
+            screen.getByRole("checkbox", { name: /Buy milk/ }),
+          ).toBeChecked();
+        });
+
+        // No error from out-of-order resolution
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
       });
-
-      // Then resolve first request
-      firstDeferred.resolve();
-
-      await waitFor(() => {
-        expect(
-          screen.getByRole("checkbox", { name: /Buy milk/ }),
-        ).toBeChecked();
-      });
-
-      // No error from out-of-order resolution
-      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
   });
 });

@@ -70,7 +70,7 @@ describe("TodoItem", () => {
   });
 
   describe("entering edit mode", () => {
-    it("shows an input with current text on click", async () => {
+    it("shows an input with current text", async () => {
       const user = userEvent.setup();
       renderTodoItem();
 
@@ -145,7 +145,7 @@ describe("TodoItem", () => {
   });
 
   describe("unchanged text", () => {
-    it("exits edit mode without API call when text is unchanged", async () => {
+    it("exits edit mode without API call", async () => {
       const user = userEvent.setup();
       const onUpdate = vi.fn().mockResolvedValue(true);
       renderTodoItem({ onUpdate });
@@ -161,45 +161,47 @@ describe("TodoItem", () => {
   });
 
   describe("inline validation", () => {
-    it("shows error for empty text on Enter", async () => {
-      const user = userEvent.setup();
-      const onUpdate = vi.fn();
-      renderTodoItem({ onUpdate });
+    describe("on Enter", () => {
+      it("shows error for empty text", async () => {
+        const user = userEvent.setup();
+        const onUpdate = vi.fn();
+        renderTodoItem({ onUpdate });
 
-      await user.click(
-        screen.getByRole("button", { name: incompleteTodo.text }),
-      );
-      const input = screen.getByRole("textbox", { name: "Edit todo text" });
-      await user.clear(input);
-      await user.keyboard("{Enter}");
+        await user.click(
+          screen.getByRole("button", { name: incompleteTodo.text }),
+        );
+        const input = screen.getByRole("textbox", { name: "Edit todo text" });
+        await user.clear(input);
+        await user.keyboard("{Enter}");
 
-      expect(
-        screen.getByText("Todo text must not be empty."),
-      ).toBeInTheDocument();
-      expect(input).toBeInTheDocument();
-      expect(onUpdate).not.toHaveBeenCalled();
-    });
+        expect(
+          screen.getByText("Todo text must not be empty."),
+        ).toBeInTheDocument();
+        expect(input).toBeInTheDocument();
+        expect(onUpdate).not.toHaveBeenCalled();
+      });
 
-    it("shows error for too-long text on Enter", async () => {
-      const user = userEvent.setup();
-      const onUpdate = vi.fn();
-      renderTodoItem({ onUpdate });
+      it("shows error for too-long text", async () => {
+        const user = userEvent.setup();
+        const onUpdate = vi.fn();
+        renderTodoItem({ onUpdate });
 
-      await user.click(
-        screen.getByRole("button", { name: incompleteTodo.text }),
-      );
-      const input = screen.getByRole("textbox", { name: "Edit todo text" });
-      await user.clear(input);
-      await user.type(input, "a".repeat(MAX_TODO_TEXT_LENGTH + 1));
-      await user.keyboard("{Enter}");
+        await user.click(
+          screen.getByRole("button", { name: incompleteTodo.text }),
+        );
+        const input = screen.getByRole("textbox", { name: "Edit todo text" });
+        await user.clear(input);
+        await user.type(input, "a".repeat(MAX_TODO_TEXT_LENGTH + 1));
+        await user.keyboard("{Enter}");
 
-      expect(
-        screen.getByText(
-          `Todo text must be between 1 and ${MAX_TODO_TEXT_LENGTH} characters.`,
-        ),
-      ).toBeInTheDocument();
-      expect(input).toBeInTheDocument();
-      expect(onUpdate).not.toHaveBeenCalled();
+        expect(
+          screen.getByText(
+            `Todo text must be between 1 and ${MAX_TODO_TEXT_LENGTH} characters.`,
+          ),
+        ).toBeInTheDocument();
+        expect(input).toBeInTheDocument();
+        expect(onUpdate).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -248,7 +250,7 @@ describe("TodoItem", () => {
   });
 
   describe("toggle completion", () => {
-    it("calls onUpdate with completed field on checkbox change", async () => {
+    it("calls onUpdate with completed field", async () => {
       const user = userEvent.setup();
       const onUpdate = vi.fn().mockResolvedValue(true);
       renderTodoItem({ onUpdate });
@@ -272,7 +274,7 @@ describe("TodoItem", () => {
       expect(button).toBeEnabled();
     });
 
-    it("calls onDelete with todo ID on click", async () => {
+    it("calls onDelete with todo ID", async () => {
       const user = userEvent.setup();
       const onDelete = vi.fn().mockResolvedValue(true);
       renderTodoItem({ onDelete });

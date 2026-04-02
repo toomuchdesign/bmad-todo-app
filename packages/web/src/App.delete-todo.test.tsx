@@ -36,94 +36,106 @@ describe("App", () => {
       });
     });
 
-    it("removes the todo from the list on successful delete", async () => {
-      const user = userEvent.setup();
+    describe("on successful delete", () => {
+      it("removes the todo from the list", async () => {
+        const user = userEvent.setup();
 
-      fetchMock
-        .get("/todos", { todos: TODO_FIXTURES })
-        .delete("express:/todos/:id", 204);
+        fetchMock
+          .get("/todos", { todos: TODO_FIXTURES })
+          .delete("express:/todos/:id", 204);
 
-      render(<App />);
+        render(<App />);
 
-      await waitFor(() => {
-        expect(screen.getByText("Buy milk")).toBeInTheDocument();
-      });
+        await waitFor(() => {
+          expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        });
 
-      await user.click(screen.getByRole("button", { name: "Delete Buy milk" }));
-
-      await waitFor(() => {
-        expect(screen.queryByText("Buy milk")).not.toBeInTheDocument();
-      });
-
-      // Other todo is still present
-      expect(screen.getByText("Walk the dog")).toBeInTheDocument();
-    });
-
-    it("keeps the todo visible and shows error banner on API failure", async () => {
-      const user = userEvent.setup();
-      const deferred = createDeferred<void>();
-
-      fetchMock
-        .get("/todos", { todos: TODO_FIXTURES })
-        .delete("express:/todos/:id", () =>
-          deferred.promise.then(() => ({
-            status: 500,
-            body: { code: "INTERNAL_ERROR", message: "Server error" },
-          })),
+        await user.click(
+          screen.getByRole("button", { name: "Delete Buy milk" }),
         );
 
-      render(<App />);
+        await waitFor(() => {
+          expect(screen.queryByText("Buy milk")).not.toBeInTheDocument();
+        });
 
-      await waitFor(() => {
-        expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        // Other todo is still present
+        expect(screen.getByText("Walk the dog")).toBeInTheDocument();
       });
-
-      await user.click(screen.getByRole("button", { name: "Delete Buy milk" }));
-
-      // Non-optimistic: todo is still visible
-      expect(screen.getByText("Buy milk")).toBeInTheDocument();
-
-      deferred.resolve();
-
-      await waitFor(() => {
-        expect(screen.getByRole("alert")).toBeInTheDocument();
-      });
-      expect(screen.getByText("Server error")).toBeInTheDocument();
-      expect(screen.getByText("Buy milk")).toBeInTheDocument();
     });
 
-    it("keeps the todo visible and shows error banner on network error", async () => {
-      const user = userEvent.setup();
-      const deferred = createDeferred<void>();
+    describe("on API failure", () => {
+      it("keeps the todo visible and shows error banner", async () => {
+        const user = userEvent.setup();
+        const deferred = createDeferred<void>();
 
-      fetchMock
-        .get("/todos", { todos: TODO_FIXTURES })
-        .delete("express:/todos/:id", () =>
-          deferred.promise.then(() => {
-            throw new TypeError("Failed to fetch");
-          }),
+        fetchMock
+          .get("/todos", { todos: TODO_FIXTURES })
+          .delete("express:/todos/:id", () =>
+            deferred.promise.then(() => ({
+              status: 500,
+              body: { code: "INTERNAL_ERROR", message: "Server error" },
+            })),
+          );
+
+        render(<App />);
+
+        await waitFor(() => {
+          expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        });
+
+        await user.click(
+          screen.getByRole("button", { name: "Delete Buy milk" }),
         );
 
-      render(<App />);
+        // Non-optimistic: todo is still visible
+        expect(screen.getByText("Buy milk")).toBeInTheDocument();
 
-      await waitFor(() => {
+        deferred.resolve();
+
+        await waitFor(() => {
+          expect(screen.getByRole("alert")).toBeInTheDocument();
+        });
+        expect(screen.getByText("Server error")).toBeInTheDocument();
         expect(screen.getByText("Buy milk")).toBeInTheDocument();
       });
+    });
 
-      await user.click(screen.getByRole("button", { name: "Delete Buy milk" }));
+    describe("on network error", () => {
+      it("keeps the todo visible and shows error banner", async () => {
+        const user = userEvent.setup();
+        const deferred = createDeferred<void>();
 
-      // Non-optimistic: todo is still visible
-      expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        fetchMock
+          .get("/todos", { todos: TODO_FIXTURES })
+          .delete("express:/todos/:id", () =>
+            deferred.promise.then(() => {
+              throw new TypeError("Failed to fetch");
+            }),
+          );
 
-      deferred.resolve();
+        render(<App />);
 
-      await waitFor(() => {
-        expect(screen.getByRole("alert")).toBeInTheDocument();
+        await waitFor(() => {
+          expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        });
+
+        await user.click(
+          screen.getByRole("button", { name: "Delete Buy milk" }),
+        );
+
+        // Non-optimistic: todo is still visible
+        expect(screen.getByText("Buy milk")).toBeInTheDocument();
+
+        deferred.resolve();
+
+        await waitFor(() => {
+          expect(screen.getByRole("alert")).toBeInTheDocument();
+        });
+        expect(
+          screen.getByText("Couldn't save changes. Please try again."),
+        ).toBeInTheDocument();
+        expect(screen.getByText("Buy milk")).toBeInTheDocument();
       });
-      expect(
-        screen.getByText("Couldn't save changes. Please try again."),
-      ).toBeInTheDocument();
-      expect(screen.getByText("Buy milk")).toBeInTheDocument();
     });
   });
 });

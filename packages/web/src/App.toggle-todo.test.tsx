@@ -49,50 +49,52 @@ describe("App", () => {
       });
     });
 
-    it("reverts checkbox and shows error banner when toggle API fails", async () => {
-      const user = userEvent.setup();
-      const deferred = createDeferred<void>();
+    describe("when toggle API fails", () => {
+      it("reverts checkbox and shows error banner", async () => {
+        const user = userEvent.setup();
+        const deferred = createDeferred<void>();
 
-      fetchMock
-        .get("/todos", { todos: TODO_FIXTURES })
-        .patch("express:/todos/:id", () =>
-          deferred.promise.then(() => ({
-            status: 500,
-            body: { code: "INTERNAL_ERROR", message: "Database error" },
-          })),
-        );
+        fetchMock
+          .get("/todos", { todos: TODO_FIXTURES })
+          .patch("express:/todos/:id", () =>
+            deferred.promise.then(() => ({
+              status: 500,
+              body: { code: "INTERNAL_ERROR", message: "Database error" },
+            })),
+          );
 
-      render(<App />);
+        render(<App />);
 
-      await waitFor(() => {
-        expect(screen.getByText("Buy milk")).toBeInTheDocument();
-      });
+        await waitFor(() => {
+          expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        });
 
-      const checkbox = screen.getByRole("checkbox", {
-        name: /Buy milk/,
-      });
-      expect(checkbox).not.toBeChecked();
+        const checkbox = screen.getByRole("checkbox", {
+          name: /Buy milk/,
+        });
+        expect(checkbox).not.toBeChecked();
 
-      await user.click(checkbox);
+        await user.click(checkbox);
 
-      // Optimistic: checkbox is immediately checked before API responds
-      await waitFor(() => {
+        // Optimistic: checkbox is immediately checked before API responds
+        await waitFor(() => {
+          expect(
+            screen.getByRole("checkbox", { name: /Buy milk/ }),
+          ).toBeChecked();
+        });
+
+        // Let the PATCH failure resolve
+        deferred.resolve();
+
+        // After failure: checkbox reverts to unchecked and error banner appears
+        await waitFor(() => {
+          expect(screen.getByRole("alert")).toBeInTheDocument();
+        });
+        expect(screen.getByText("Database error")).toBeInTheDocument();
         expect(
           screen.getByRole("checkbox", { name: /Buy milk/ }),
-        ).toBeChecked();
+        ).not.toBeChecked();
       });
-
-      // Let the PATCH failure resolve
-      deferred.resolve();
-
-      // After failure: checkbox reverts to unchecked and error banner appears
-      await waitFor(() => {
-        expect(screen.getByRole("alert")).toBeInTheDocument();
-      });
-      expect(screen.getByText("Database error")).toBeInTheDocument();
-      expect(
-        screen.getByRole("checkbox", { name: /Buy milk/ }),
-      ).not.toBeChecked();
     });
   });
 });

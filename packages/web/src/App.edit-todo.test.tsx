@@ -43,58 +43,62 @@ describe("App", () => {
       ).not.toBeInTheDocument();
     });
 
-    it("restores original text when pressing Escape", async () => {
-      const user = userEvent.setup();
-      fetchMock.get("/todos", { todos: TODO_FIXTURES });
+    describe("when pressing Escape", () => {
+      it("restores original text", async () => {
+        const user = userEvent.setup();
+        fetchMock.get("/todos", { todos: TODO_FIXTURES });
 
-      render(<App />);
+        render(<App />);
 
-      await waitFor(() => {
-        expect(screen.getByText("Buy milk")).toBeInTheDocument();
-      });
-
-      await user.click(screen.getByRole("button", { name: "Buy milk" }));
-      const input = screen.getByRole("textbox", { name: "Edit todo text" });
-      await user.clear(input);
-      await user.type(input, "Something else");
-      await user.keyboard("{Escape}");
-
-      expect(
-        screen.queryByRole("textbox", { name: "Edit todo text" }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: "Buy milk" }),
-      ).toBeInTheDocument();
-      expect(fetchMock).toHaveFetchedTimes(1);
-    });
-
-    it("shows global error banner on save failure and preserves edit mode", async () => {
-      const user = userEvent.setup();
-      fetchMock
-        .get("/todos", { todos: TODO_FIXTURES })
-        .patch("express:/todos/:id", {
-          status: 500,
-          body: { code: "INTERNAL_ERROR", message: "Database error" },
+        await waitFor(() => {
+          expect(screen.getByText("Buy milk")).toBeInTheDocument();
         });
 
-      render(<App />);
+        await user.click(screen.getByRole("button", { name: "Buy milk" }));
+        const input = screen.getByRole("textbox", { name: "Edit todo text" });
+        await user.clear(input);
+        await user.type(input, "Something else");
+        await user.keyboard("{Escape}");
 
-      await waitFor(() => {
-        expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        expect(
+          screen.queryByRole("textbox", { name: "Edit todo text" }),
+        ).not.toBeInTheDocument();
+        expect(
+          screen.getByRole("button", { name: "Buy milk" }),
+        ).toBeInTheDocument();
+        expect(fetchMock).toHaveFetchedTimes(1);
       });
+    });
 
-      await user.click(screen.getByRole("button", { name: "Buy milk" }));
-      const input = screen.getByRole("textbox", { name: "Edit todo text" });
-      await user.clear(input);
-      await user.type(input, "Failed edit{Enter}");
+    describe("on save failure", () => {
+      it("shows global error banner and preserves edit mode", async () => {
+        const user = userEvent.setup();
+        fetchMock
+          .get("/todos", { todos: TODO_FIXTURES })
+          .patch("express:/todos/:id", {
+            status: 500,
+            body: { code: "INTERNAL_ERROR", message: "Database error" },
+          });
 
-      await waitFor(() => {
-        expect(screen.getByRole("alert")).toBeInTheDocument();
+        render(<App />);
+
+        await waitFor(() => {
+          expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        });
+
+        await user.click(screen.getByRole("button", { name: "Buy milk" }));
+        const input = screen.getByRole("textbox", { name: "Edit todo text" });
+        await user.clear(input);
+        await user.type(input, "Failed edit{Enter}");
+
+        await waitFor(() => {
+          expect(screen.getByRole("alert")).toBeInTheDocument();
+        });
+        expect(screen.getByText("Database error")).toBeInTheDocument();
+        expect(
+          screen.getByRole("textbox", { name: "Edit todo text" }),
+        ).toHaveValue("Failed edit");
       });
-      expect(screen.getByText("Database error")).toBeInTheDocument();
-      expect(
-        screen.getByRole("textbox", { name: "Edit todo text" }),
-      ).toHaveValue("Failed edit");
     });
   });
 });

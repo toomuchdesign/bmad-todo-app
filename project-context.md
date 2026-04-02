@@ -128,7 +128,7 @@ if (attempts > 3) { ... }
 - All tests use nested `describe` → `it` blocks — no top-level `it()`
 - `describe`: the subject or condition being tested (imperative: "given an expired token")
 - `it`: the expected outcome ("returns 401 with error message")
-- If an `it` contains a condition like "when", "if", "for", or "on" — that condition belongs in a `describe` block
+- If an `it` contains a condition like "when", "if", "for", ":", or "on" — that condition belongs in a `describe` block
 
 ### AAA Pattern
 

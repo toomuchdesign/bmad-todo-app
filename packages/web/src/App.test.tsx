@@ -70,47 +70,56 @@ describe("App", () => {
   });
 
   describe("error state", () => {
-    it("shows error banner with API error message on server error", async () => {
-      fetchMock.get("/todos", {
-        status: 500,
-        body: { code: "INTERNAL_ERROR", message: "Database connection failed" },
-      });
+    describe("on server error", () => {
+      it("shows error banner with API error message", async () => {
+        fetchMock.get("/todos", {
+          status: 500,
+          body: {
+            code: "INTERNAL_ERROR",
+            message: "Database connection failed",
+          },
+        });
 
-      render(<App />);
+        render(<App />);
 
-      await waitFor(() => {
-        expect(
-          screen.getByText("Database connection failed"),
-        ).toBeInTheDocument();
-      });
-      expect(screen.getByRole("alert")).toBeInTheDocument();
-    });
-
-    it("shows generic error message on network failure", async () => {
-      fetchMock.get("/todos", { throws: new Error("Network error") });
-
-      render(<App />);
-
-      await waitFor(() => {
-        expect(
-          screen.getByText(
-            "Couldn't load todos. Check your connection and try again.",
-          ),
-        ).toBeInTheDocument();
+        await waitFor(() => {
+          expect(
+            screen.getByText("Database connection failed"),
+          ).toBeInTheDocument();
+        });
+        expect(screen.getByRole("alert")).toBeInTheDocument();
       });
     });
 
-    it("shows generic error message when error body cannot be parsed", async () => {
-      fetchMock.get("/todos", { throws: new Error("no body") });
+    describe("on network failure", () => {
+      it("shows generic error message", async () => {
+        fetchMock.get("/todos", { throws: new Error("Network error") });
 
-      render(<App />);
+        render(<App />);
 
-      await waitFor(() => {
-        expect(
-          screen.getByText(
-            "Couldn't load todos. Check your connection and try again.",
-          ),
-        ).toBeInTheDocument();
+        await waitFor(() => {
+          expect(
+            screen.getByText(
+              "Couldn't load todos. Check your connection and try again.",
+            ),
+          ).toBeInTheDocument();
+        });
+      });
+    });
+
+    describe("when error body cannot be parsed", () => {
+      it("shows generic error message", async () => {
+        fetchMock.get("/todos", { throws: new Error("no body") });
+
+        render(<App />);
+
+        await waitFor(() => {
+          expect(
+            screen.getByText(
+              "Couldn't load todos. Check your connection and try again.",
+            ),
+          ).toBeInTheDocument();
+        });
       });
     });
 

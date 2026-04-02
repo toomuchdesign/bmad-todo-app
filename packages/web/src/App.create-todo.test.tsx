@@ -9,57 +9,63 @@ import { TODO_FIXTURES } from "./test-utils";
 
 describe("App", () => {
   describe("create todo flow", () => {
-    it("adds a new todo to the list on successful create", async () => {
-      const newTodo: Todo = {
-        id: "3",
-        text: "New task",
-        completed: false,
-        createdAt: "2026-03-03T10:00:00.000Z",
-        updatedAt: "2026-03-03T10:00:00.000Z",
-      };
+    describe("on successful create", () => {
+      it("adds the new todo to the list", async () => {
+        const newTodo: Todo = {
+          id: "3",
+          text: "New task",
+          completed: false,
+          createdAt: "2026-03-03T10:00:00.000Z",
+          updatedAt: "2026-03-03T10:00:00.000Z",
+        };
 
-      fetchMock.get("/todos", { todos: TODO_FIXTURES }).post("/todos", newTodo);
+        fetchMock
+          .get("/todos", { todos: TODO_FIXTURES })
+          .post("/todos", newTodo);
 
-      render(<App />);
+        render(<App />);
 
-      await waitFor(() => {
-        expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        await waitFor(() => {
+          expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        });
+
+        const input = screen.getByRole("textbox", { name: "New todo text" });
+        fireEvent.change(input, { target: { value: "New task" } });
+        fireEvent.click(screen.getByRole("button", { name: "Add" }));
+
+        await waitFor(() => {
+          expect(screen.getByText("New task")).toBeInTheDocument();
+        });
+        expect(input).toHaveValue("");
       });
-
-      const input = screen.getByRole("textbox", { name: "New todo text" });
-      fireEvent.change(input, { target: { value: "New task" } });
-      fireEvent.click(screen.getByRole("button", { name: "Add" }));
-
-      await waitFor(() => {
-        expect(screen.getByText("New task")).toBeInTheDocument();
-      });
-      expect(input).toHaveValue("");
     });
 
-    it("shows global error banner on failed create and preserves input", async () => {
-      fetchMock.get("/todos", { todos: TODO_FIXTURES }).post("/todos", {
-        status: 500,
-        body: { code: "INTERNAL_ERROR", message: "Database error" },
+    describe("on failed create", () => {
+      it("shows global error banner and preserves input", async () => {
+        fetchMock.get("/todos", { todos: TODO_FIXTURES }).post("/todos", {
+          status: 500,
+          body: { code: "INTERNAL_ERROR", message: "Database error" },
+        });
+
+        render(<App />);
+
+        await waitFor(() => {
+          expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        });
+
+        const input = screen.getByRole("textbox", { name: "New todo text" });
+        fireEvent.change(input, { target: { value: "New task" } });
+        fireEvent.click(screen.getByRole("button", { name: "Add" }));
+
+        await waitFor(() => {
+          expect(screen.getByText("Database error")).toBeInTheDocument();
+        });
+        expect(screen.getByRole("alert")).toBeInTheDocument();
+        expect(input).toHaveValue("New task");
+        expect(
+          screen.queryByText("New task", { selector: "span" }),
+        ).not.toBeInTheDocument();
       });
-
-      render(<App />);
-
-      await waitFor(() => {
-        expect(screen.getByText("Buy milk")).toBeInTheDocument();
-      });
-
-      const input = screen.getByRole("textbox", { name: "New todo text" });
-      fireEvent.change(input, { target: { value: "New task" } });
-      fireEvent.click(screen.getByRole("button", { name: "Add" }));
-
-      await waitFor(() => {
-        expect(screen.getByText("Database error")).toBeInTheDocument();
-      });
-      expect(screen.getByRole("alert")).toBeInTheDocument();
-      expect(input).toHaveValue("New task");
-      expect(
-        screen.queryByText("New task", { selector: "span" }),
-      ).not.toBeInTheDocument();
     });
 
     it("shows inline validation for empty input without network call", async () => {
