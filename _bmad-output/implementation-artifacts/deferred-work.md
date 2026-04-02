@@ -30,3 +30,8 @@
 
 - 404 on already-deleted todo loops forever — if the same todo is deleted from another tab, this tab receives 404, shows a generic error, and the todo stays visible. Retrying always hits 404 again. No distinction between 404 (already deleted — safe to remove locally) and 500 (genuine failure).
 - `pendingAction` is an untyped magic string — `"delete"`, `"edit"`, `"toggle"` are not validated against a union type. Pre-existing pattern across all mutations.
+
+## Deferred from: code review of story 2.6 (2026-04-02)
+
+- `fetchTodos` retry during in-flight updates leaves stale `pendingFields`/`snapshots`/`mutationControllers` refs. If user retries while mutations are in-flight, the fresh server data can conflict with stale rollback state.
+- `createTodo` and `updateTodo` both call `setError(null)` at entry, clearing each other's errors. A rapid sequence can hide a failed mutation's error before the user sees it.

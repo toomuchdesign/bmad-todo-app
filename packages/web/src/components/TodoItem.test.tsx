@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import type { Todo } from "shared";
 import { MAX_TODO_TEXT_LENGTH } from "shared";
 import { describe, expect, it, vi } from "vitest";
+import type { TodoUpdatableFields } from "../hooks/useTodos";
 import { TodoItem } from "./TodoItem";
 
 const incompleteTodo: Todo = {
@@ -26,19 +27,14 @@ const completedTodo: Todo = {
 function renderTodoItem(
   overrides: {
     todo?: typeof incompleteTodo;
-    onUpdateText?: (id: string, text: string) => Promise<boolean>;
-    onToggleCompletion?: (id: string) => Promise<boolean>;
+    onUpdate?: (id: string, fields: TodoUpdatableFields) => Promise<boolean>;
     onDelete?: (id: string) => Promise<boolean>;
-    pendingAction?: string | null;
   } = {},
 ) {
   const props = {
     todo: overrides.todo ?? incompleteTodo,
-    onUpdateText: overrides.onUpdateText ?? vi.fn().mockResolvedValue(true),
-    onToggleCompletion:
-      overrides.onToggleCompletion ?? vi.fn().mockResolvedValue(true),
+    onUpdate: overrides.onUpdate ?? vi.fn().mockResolvedValue(true),
     onDelete: overrides.onDelete ?? vi.fn().mockResolvedValue(true),
-    pendingAction: overrides.pendingAction ?? null,
   };
 
   return { ...render(<TodoItem {...props} />), props };
@@ -110,10 +106,10 @@ describe("TodoItem", () => {
   });
 
   describe("saving with Enter", () => {
-    it("calls onUpdateText with valid changed text", async () => {
+    it("calls onUpdate with text field for valid changed text", async () => {
       const user = userEvent.setup();
-      const onUpdateText = vi.fn().mockResolvedValue(true);
-      renderTodoItem({ onUpdateText });
+      const onUpdate = vi.fn().mockResolvedValue(true);
+      renderTodoItem({ onUpdate });
 
       await user.click(
         screen.getByRole("button", { name: incompleteTodo.text }),
@@ -122,18 +118,17 @@ describe("TodoItem", () => {
       await user.clear(input);
       await user.type(input, "Updated text{Enter}");
 
-      expect(onUpdateText).toHaveBeenCalledWith(
-        incompleteTodo.id,
-        "Updated text",
-      );
+      expect(onUpdate).toHaveBeenCalledWith(incompleteTodo.id, {
+        text: "Updated text",
+      });
     });
   });
 
   describe("saving with blur (click-outside)", () => {
-    it("calls onUpdateText with valid changed text", async () => {
+    it("calls onUpdate with text field for valid changed text", async () => {
       const user = userEvent.setup();
-      const onUpdateText = vi.fn().mockResolvedValue(true);
-      renderTodoItem({ onUpdateText });
+      const onUpdate = vi.fn().mockResolvedValue(true);
+      renderTodoItem({ onUpdate });
 
       await user.click(
         screen.getByRole("button", { name: incompleteTodo.text }),
@@ -143,25 +138,24 @@ describe("TodoItem", () => {
       await user.type(input, "Blurred text");
       await user.tab();
 
-      expect(onUpdateText).toHaveBeenCalledWith(
-        incompleteTodo.id,
-        "Blurred text",
-      );
+      expect(onUpdate).toHaveBeenCalledWith(incompleteTodo.id, {
+        text: "Blurred text",
+      });
     });
   });
 
   describe("unchanged text", () => {
     it("exits edit mode without API call when text is unchanged", async () => {
       const user = userEvent.setup();
-      const onUpdateText = vi.fn().mockResolvedValue(true);
-      renderTodoItem({ onUpdateText });
+      const onUpdate = vi.fn().mockResolvedValue(true);
+      renderTodoItem({ onUpdate });
 
       await user.click(
         screen.getByRole("button", { name: incompleteTodo.text }),
       );
       await user.keyboard("{Enter}");
 
-      expect(onUpdateText).not.toHaveBeenCalled();
+      expect(onUpdate).not.toHaveBeenCalled();
       expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
     });
   });
@@ -169,8 +163,8 @@ describe("TodoItem", () => {
   describe("inline validation", () => {
     it("shows error for empty text on Enter", async () => {
       const user = userEvent.setup();
-      const onUpdateText = vi.fn();
-      renderTodoItem({ onUpdateText });
+      const onUpdate = vi.fn();
+      renderTodoItem({ onUpdate });
 
       await user.click(
         screen.getByRole("button", { name: incompleteTodo.text }),
@@ -183,13 +177,13 @@ describe("TodoItem", () => {
         screen.getByText("Todo text must not be empty."),
       ).toBeInTheDocument();
       expect(input).toBeInTheDocument();
-      expect(onUpdateText).not.toHaveBeenCalled();
+      expect(onUpdate).not.toHaveBeenCalled();
     });
 
     it("shows error for too-long text on Enter", async () => {
       const user = userEvent.setup();
-      const onUpdateText = vi.fn();
-      renderTodoItem({ onUpdateText });
+      const onUpdate = vi.fn();
+      renderTodoItem({ onUpdate });
 
       await user.click(
         screen.getByRole("button", { name: incompleteTodo.text }),
@@ -205,15 +199,15 @@ describe("TodoItem", () => {
         ),
       ).toBeInTheDocument();
       expect(input).toBeInTheDocument();
-      expect(onUpdateText).not.toHaveBeenCalled();
+      expect(onUpdate).not.toHaveBeenCalled();
     });
   });
 
   describe("save failure", () => {
     it("keeps edit mode open with typed text preserved", async () => {
       const user = userEvent.setup();
-      const onUpdateText = vi.fn().mockResolvedValue(false);
-      renderTodoItem({ onUpdateText });
+      const onUpdate = vi.fn().mockResolvedValue(false);
+      renderTodoItem({ onUpdate });
 
       await user.click(
         screen.getByRole("button", { name: incompleteTodo.text }),
@@ -223,7 +217,7 @@ describe("TodoItem", () => {
       await user.type(input, "Failed save{Enter}");
 
       await waitFor(() => {
-        expect(onUpdateText).toHaveBeenCalled();
+        expect(onUpdate).toHaveBeenCalled();
       });
 
       expect(
@@ -232,17 +226,6 @@ describe("TodoItem", () => {
       expect(
         screen.getByRole("textbox", { name: "Edit todo text" }),
       ).toHaveValue("Failed save");
-    });
-  });
-
-  describe("pending state", () => {
-    it("disables interactions when pendingAction is set", () => {
-      renderTodoItem({ pendingAction: "edit" });
-
-      expect(
-        screen.queryByRole("button", { name: incompleteTodo.text }),
-      ).not.toBeInTheDocument();
-      expect(screen.getByText(incompleteTodo.text)).toBeInTheDocument();
     });
   });
 
@@ -265,20 +248,16 @@ describe("TodoItem", () => {
   });
 
   describe("toggle completion", () => {
-    it("calls onToggleCompletion with todo ID on checkbox change", async () => {
+    it("calls onUpdate with completed field on checkbox change", async () => {
       const user = userEvent.setup();
-      const onToggleCompletion = vi.fn().mockResolvedValue(true);
-      renderTodoItem({ onToggleCompletion });
+      const onUpdate = vi.fn().mockResolvedValue(true);
+      renderTodoItem({ onUpdate });
 
       await user.click(screen.getByRole("checkbox"));
 
-      expect(onToggleCompletion).toHaveBeenCalledWith(incompleteTodo.id);
-    });
-
-    it("disables checkbox when pendingAction is set", () => {
-      renderTodoItem({ pendingAction: "toggle" });
-
-      expect(screen.getByRole("checkbox")).toBeDisabled();
+      expect(onUpdate).toHaveBeenCalledWith(incompleteTodo.id, {
+        completed: true,
+      });
     });
   });
 
@@ -303,22 +282,6 @@ describe("TodoItem", () => {
       );
 
       expect(onDelete).toHaveBeenCalledWith(incompleteTodo.id);
-    });
-
-    it("is disabled when pendingAction is set", () => {
-      renderTodoItem({ pendingAction: "edit" });
-
-      expect(
-        screen.getByRole("button", { name: `Delete ${incompleteTodo.text}` }),
-      ).toBeDisabled();
-    });
-
-    it("is disabled during delete pending action", () => {
-      renderTodoItem({ pendingAction: "delete" });
-
-      expect(
-        screen.getByRole("button", { name: `Delete ${incompleteTodo.text}` }),
-      ).toBeDisabled();
     });
   });
 });

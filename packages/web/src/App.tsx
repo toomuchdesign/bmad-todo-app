@@ -5,17 +5,8 @@ import { TodoList } from "./components/TodoList";
 import { useTodos } from "./hooks/useTodos";
 
 function App() {
-  const {
-    todos,
-    loading,
-    error,
-    retry,
-    createTodo,
-    updateTodoText,
-    toggleTodoCompletion,
-    deleteTodo,
-    pendingActions,
-  } = useTodos();
+  const { todos, loading, error, retry, createTodo, updateTodo, deleteTodo } =
+    useTodos();
 
   return (
     <div className={styles.app}>
@@ -27,10 +18,8 @@ function App() {
       <TodoList
         todos={todos}
         loading={loading}
-        onUpdateText={updateTodoText}
-        onToggleCompletion={toggleTodoCompletion}
+        onUpdate={updateTodo}
         onDelete={deleteTodo}
-        pendingActions={pendingActions}
       />
     </div>
   );

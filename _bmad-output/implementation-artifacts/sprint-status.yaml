@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26 19:38:27
-last_updated: 2026-03-31T12:00:00
+last_updated: 2026-04-02
 project: bmad-todo
 project_key: NOKEY
 tracking_system: file-system
@@ -59,7 +59,7 @@ development_status:
   2-3-toggle-completion-with-optimistic-ui-and-rollback-on-failure: done
   2-4-implement-delete-todos-id-as-soft-delete-and-confirm-its-excluded-from-list: done
   2-5-delete-from-the-ui-without-optimistic-removal-remove-only-on-success: done
-  2-6-per-item-abortcontroller-map-for-mutation-concurrency: backlog
+  2-6-per-item-abortcontroller-map-for-mutation-concurrency: done
   epic-2-retrospective: optional
 
   epic-3: backlog

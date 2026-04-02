@@ -1,25 +1,17 @@
 import type { Todo } from "shared";
+import type { TodoUpdatableFields } from "../hooks/useTodos";
 import { TodoItem } from "./TodoItem";
 import styles from "./TodoList.module.css";
 
 type TodoListProps = {
   todos: Todo[];
   loading: boolean;
-  onUpdateText: (id: string, text: string) => Promise<boolean>;
-  onToggleCompletion: (id: string) => Promise<boolean>;
+  onUpdate: (id: string, fields: TodoUpdatableFields) => Promise<boolean>;
   onDelete: (id: string) => Promise<boolean>;
-  pendingActions: Record<string, string>;
 };
 
 /** Renders loading, empty, or populated todo list states. */
-function TodoList({
-  todos,
-  loading,
-  onUpdateText,
-  onToggleCompletion,
-  onDelete,
-  pendingActions,
-}: TodoListProps) {
+function TodoList({ todos, loading, onUpdate, onDelete }: TodoListProps) {
   if (loading) {
     return (
       <div className={styles.stateContainer} aria-busy="true">
@@ -43,10 +35,8 @@ function TodoList({
         <TodoItem
           key={todo.id}
           todo={todo}
-          onUpdateText={onUpdateText}
-          onToggleCompletion={onToggleCompletion}
+          onUpdate={onUpdate}
           onDelete={onDelete}
-          pendingAction={pendingActions[todo.id] ?? null}
         />
       ))}
     </ul>

@@ -1,24 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import type { Todo } from "shared";
 import { MAX_TODO_TEXT_LENGTH } from "../contracts";
+import type { TodoUpdatableFields } from "../hooks/useTodos";
 import styles from "./TodoItem.module.css";
 
 type TodoItemProps = {
   todo: Todo;
-  onUpdateText: (id: string, text: string) => Promise<boolean>;
-  onToggleCompletion: (id: string) => Promise<boolean>;
+  onUpdate: (id: string, fields: TodoUpdatableFields) => Promise<boolean>;
   onDelete: (id: string) => Promise<boolean>;
-  pendingAction: string | null;
 };
 
 /** Renders a single todo item with inline edit support. */
-function TodoItem({
-  todo,
-  onUpdateText,
-  onToggleCompletion,
-  onDelete,
-  pendingAction,
-}: TodoItemProps) {
+function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -36,7 +29,7 @@ function TodoItem({
   }, [shouldFocus]);
 
   function enterEditMode(): void {
-    if (todo.completed || pendingAction) return;
+    if (todo.completed) return;
     cancelledRef.current = false;
     setEditing(true);
     setEditText(todo.text);
@@ -75,7 +68,7 @@ function TodoItem({
 
     savingRef.current = true;
     try {
-      const success = await onUpdateText(todo.id, trimmed);
+      const success = await onUpdate(todo.id, { text: trimmed });
 
       if (success) {
         setEditing(false);
@@ -109,10 +102,6 @@ function TodoItem({
     }
   }
 
-  const isPending = pendingAction !== null;
-  const itemClassName = isPending
-    ? `${styles.item} ${styles.pending}`
-    : styles.item;
   const textClassName = todo.completed
     ? `${styles.text} ${styles.completed}`
     : styles.text;
@@ -122,13 +111,12 @@ function TodoItem({
     : styles.editInput;
 
   return (
-    <li className={itemClassName}>
+    <li className={styles.item}>
       <input
         type="checkbox"
         className={styles.checkbox}
         checked={todo.completed}
-        disabled={isPending}
-        onChange={() => onToggleCompletion(todo.id)}
+        onChange={() => onUpdate(todo.id, { completed: !todo.completed })}
         aria-label={`${todo.text} – ${todo.completed ? "completed" : "not completed"}`}
       />
       {editing ? (
@@ -143,7 +131,6 @@ function TodoItem({
             onBlur={handleBlur}
             aria-label="Edit todo text"
             aria-invalid={!!validationError}
-            disabled={isPending}
           />
           {validationError && (
             <p className={styles.validationError} aria-live="polite">
@@ -151,7 +138,7 @@ function TodoItem({
             </p>
           )}
         </div>
-      ) : todo.completed || isPending ? (
+      ) : todo.completed ? (
         <span className={textClassName}>{todo.text}</span>
       ) : (
         <button
@@ -169,7 +156,6 @@ function TodoItem({
         type="button"
         className={styles.deleteButton}
         onClick={() => onDelete(todo.id)}
-        disabled={isPending}
         aria-label={`Delete ${todo.text}`}
       >
         Delete

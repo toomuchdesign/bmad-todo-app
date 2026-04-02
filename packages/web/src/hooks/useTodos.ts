@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Todo } from "shared";
 import type { ApiResponses } from "../contracts";
 import { type TODO_BY_ID_API_PATH, TODOS_API_PATH } from "../contracts";
 import { HttpError, httpClient } from "../utils";
+
+type TodoUpdatableFields = Partial<Pick<Todo, "text" | "completed">>;
 
 type UseTodosResult = {
   todos: Todo[];
@@ -10,10 +12,8 @@ type UseTodosResult = {
   error: string | null;
   retry: () => void;
   createTodo: (text: string) => Promise<boolean>;
-  updateTodoText: (id: string, text: string) => Promise<boolean>;
-  toggleTodoCompletion: (id: string) => Promise<boolean>;
+  updateTodo: (id: string, fields: TodoUpdatableFields) => Promise<boolean>;
   deleteTodo: (id: string) => Promise<boolean>;
-  pendingActions: Record<string, string>;
 };
 
 const GENERIC_ERROR_MESSAGE =
@@ -35,9 +35,29 @@ function useTodos(): UseTodosResult {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [pendingActions, setPendingActions] = useState<Record<string, string>>(
-    {},
-  );
+
+  // Accumulated dirty fields per todo ID, not yet confirmed by the server
+  const pendingFields = useRef<Map<string, TodoUpdatableFields>>(new Map());
+  // Last server-confirmed state per todo ID, used for rollback on failure
+  const snapshots = useRef<Map<string, Todo>>(new Map());
+  // In-flight mutation controller per todo ID, aborted when a newer mutation supersedes
+  const mutationControllers = useRef<Map<string, AbortController>>(new Map());
+
+  /** Aborts existing controller for `id`, creates and stores a new one. */
+  function abortAndReplace(id: string): AbortController {
+    const existing = mutationControllers.current.get(id);
+    if (existing) existing.abort();
+    const controller = new AbortController();
+    mutationControllers.current.set(id, controller);
+    return controller;
+  }
+
+  /** Removes the controller entry for `id` only if it still owns the slot (avoids deleting a superseding controller). */
+  function clearController(id: string, controller: AbortController): void {
+    if (mutationControllers.current.get(id) === controller) {
+      mutationControllers.current.delete(id);
+    }
+  }
 
   const fetchTodos = useCallback(async () => {
     setLoading(true);
@@ -80,95 +100,75 @@ function useTodos(): UseTodosResult {
     }
   }
 
-  /**
-   * Patches a todo with optimistic update and rollback on failure.
-   * Applies `optimisticFields` to state immediately, sends them to the API,
-   * and reverts to the previous state if the request fails.
-   */
-  async function patchTodo({
-    id,
-    updateFn,
-    pendingAction,
-  }: {
-    id: string;
-    updateFn: (currentTodo: Todo) => Partial<Pick<Todo, "text" | "completed">>;
-    pendingAction: string;
-  }): Promise<boolean> {
-    const currentTodo = todos.find((t) => t.id === id);
-    if (!currentTodo) return false;
-
-    const snapshot = { ...currentTodo };
-    const fields = updateFn(currentTodo);
-
+  /** Updates a todo with optimistic update, abort-resend with merged fields, and rollback on failure. */
+  async function updateTodo(
+    id: string,
+    fields: TodoUpdatableFields,
+  ): Promise<boolean> {
     setError(null);
+
+    // Take snapshot before first optimistic update in a sequence
+    setTodos((prev) => {
+      const currentTodo = prev.find((t) => t.id === id);
+      if (currentTodo && !snapshots.current.has(id)) {
+        snapshots.current.set(id, { ...currentTodo });
+      }
+      return prev;
+    });
+
+    // Merge new fields into accumulated pending fields
+    const newPendingFields = { ...pendingFields.current.get(id), ...fields };
+    pendingFields.current.set(id, newPendingFields);
+
+    // Optimistic update
     setTodos((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, ...fields } : t)),
+      prev.map((t) => (t.id === id ? { ...t, ...newPendingFields } : t)),
     );
-    setPendingActions((prev) => ({ ...prev, [id]: pendingAction }));
 
-    function clearPending(): void {
-      setPendingActions((prev) => {
-        const next = { ...prev };
-        delete next[id];
-        return next;
-      });
-    }
+    // Abort previous in-flight request for same id, create new controller
+    const controller = abortAndReplace(id);
 
-    function rollback(message = GENERIC_MUTATION_ERROR_MESSAGE): void {
-      setTodos((prev) => prev.map((t) => (t.id === id ? snapshot : t)));
+    function rollback(message: string): void {
+      const snap = snapshots.current.get(id);
+      if (snap) {
+        setTodos((prev) => prev.map((t) => (t.id === id ? snap : t)));
+      }
+      pendingFields.current.delete(id);
+      snapshots.current.delete(id);
       setError(message);
     }
 
     try {
       const updated = await httpClient.patch<
         ApiResponses<typeof TODO_BY_ID_API_PATH, "patch">["200"]
-      >(`/todos/${id}`, { body: fields });
+      >(`/todos/${id}`, { body: newPendingFields, signal: controller.signal });
 
       setTodos((prev) => prev.map((t) => (t.id === id ? updated : t)));
-      clearPending();
+      pendingFields.current.delete(id);
+      snapshots.current.delete(id);
+      clearController(id, controller);
       return true;
     } catch (err) {
+      if (controller.signal.aborted) {
+        // Superseding request owns state — exit silently
+        return false;
+      }
       rollback(extractErrorMessage(err, GENERIC_MUTATION_ERROR_MESSAGE));
-      clearPending();
+      clearController(id, controller);
       return false;
     }
-  }
-
-  /** Updates a todo's text via PATCH with optimistic update and rollback. */
-  async function updateTodoText(id: string, text: string): Promise<boolean> {
-    return patchTodo({ id, updateFn: () => ({ text }), pendingAction: "edit" });
-  }
-
-  /** Toggles a todo's completion via PATCH with optimistic update and rollback. */
-  async function toggleTodoCompletion(id: string): Promise<boolean> {
-    return patchTodo({
-      id,
-      updateFn: (currentTodo) => ({ completed: !currentTodo.completed }),
-      pendingAction: "toggle",
-    });
   }
 
   /** Deletes a todo via DELETE. Non-optimistic: removes from state only on success. */
   async function deleteTodo(id: string): Promise<boolean> {
     setError(null);
-    setPendingActions((prev) => ({ ...prev, [id]: "delete" }));
-
-    function clearPending(): void {
-      setPendingActions((prev) => {
-        const next = { ...prev };
-        delete next[id];
-        return next;
-      });
-    }
 
     try {
       await httpClient.del(`/todos/${id}`);
       setTodos((prev) => prev.filter((t) => t.id !== id));
-      clearPending();
       return true;
     } catch (err) {
       setError(extractErrorMessage(err, GENERIC_MUTATION_ERROR_MESSAGE));
-      clearPending();
       return false;
     }
   }
@@ -179,11 +179,10 @@ function useTodos(): UseTodosResult {
     error,
     retry,
     createTodo,
-    updateTodoText,
-    toggleTodoCompletion,
+    updateTodo,
     deleteTodo,
-    pendingActions,
   };
 }
 
+export type { TodoUpdatableFields };
 export { useTodos };
