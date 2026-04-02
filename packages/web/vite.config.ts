@@ -5,6 +5,7 @@ import { defineConfig } from "vite";
 
 loadEnvFile(resolve(import.meta.dirname, "../../.env"));
 
+const apiHost = process.env.API_HOST;
 const apiPort = process.env.API_PORT;
 
 // https://vite.dev/config/
@@ -12,7 +13,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      "/todos": `http://localhost:${apiPort}`,
+      "/todos": `http://${apiHost}:${apiPort}`,
     },
   },
 });

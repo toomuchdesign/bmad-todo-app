@@ -8,7 +8,8 @@ import { defineConfig } from "@playwright/test";
  */
 loadEnvFile(resolve(import.meta.dirname, "../../../.env.test"));
 
-const apiPort = Number(process.env.API_PORT);
+const apiHost = process.env.API_HOST;
+const apiPort = process.env.API_PORT;
 
 export default defineConfig({
   testDir: ".",
@@ -18,7 +19,7 @@ export default defineConfig({
   webServer: [
     {
       command: "npm run dev:api",
-      port: apiPort,
+      url: `http://${apiHost}:${apiPort}/todos`,
       cwd: "../../..",
       reuseExistingServer: !process.env.CI,
     },
