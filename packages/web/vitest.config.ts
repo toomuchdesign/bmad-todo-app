@@ -1,8 +1,8 @@
-import { defineConfig } from "vitest/config";
+import { defineProject } from "vitest/config";
 
-export default defineConfig({
+export default defineProject({
   test: {
-    dir: "src",
+    include: ["src/**/*.test.ts?(x)"],
     restoreMocks: true,
     mockReset: true,
     unstubGlobals: true,

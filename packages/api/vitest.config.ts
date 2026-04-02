@@ -1,12 +1,12 @@
 import { resolve } from "node:path";
 import { loadEnvFile } from "node:process";
-import { defineConfig } from "vitest/config";
+import { defineProject } from "vitest/config";
 
 loadEnvFile(resolve(import.meta.dirname, "../../.env.test"));
 
-export default defineConfig({
+export default defineProject({
   test: {
-    dir: "test",
+    include: ["test/**/*.test.ts?(x)"],
     fileParallelism: false,
     restoreMocks: true,
     mockReset: true,
