@@ -4,6 +4,22 @@ This file captures project conventions and non-obvious rules that should stay co
 
 ## Coding Practices
 
+### GIT
+
+### Conventional Commits Instruction
+
+When committing code, always follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/):
+
+- Format: <type>[optional scope]: <description>
+- Types: feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert
+- Rules:
+  - Use lowercase for type and description
+  - Keep the subject line under 72 characters
+  - Use imperative mood ("add feature" not "added feature")
+  - Add a ! after the type/scope for breaking changes (e.g. feat!: drop support for Node 18)
+  - Optionally include a body (blank line after subject) for context on why, not what
+  - Optionally add footers for metadata (e.g. BREAKING CHANGE:, Closes #123)
+
 ### Functions
 
 - Use arrow functions only for inline use

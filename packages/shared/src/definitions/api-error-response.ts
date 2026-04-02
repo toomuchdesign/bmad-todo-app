@@ -10,7 +10,6 @@ export const apiErrorResponseSchema = {
   properties: {
     code: { type: "string" },
     message: { type: "string" },
-    requestId: { type: "string" },
   },
 } as const;
 

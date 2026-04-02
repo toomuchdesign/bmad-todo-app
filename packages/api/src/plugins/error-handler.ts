@@ -10,7 +10,6 @@ const errorHandlerPlugin: FastifyPluginAsync = async (app) => {
       const response: ApiErrorResponse = {
         code: "VALIDATION_ERROR",
         message: error.message,
-        requestId: request.requestId,
       };
 
       return reply.code(400).send(response);
@@ -21,7 +20,6 @@ const errorHandlerPlugin: FastifyPluginAsync = async (app) => {
     const response: ApiErrorResponse = {
       code: "INTERNAL_ERROR",
       message: "Internal server error",
-      requestId: request.requestId,
     };
 
     return reply.code(500).send(response);

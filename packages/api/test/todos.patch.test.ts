@@ -153,7 +153,6 @@ describe("PATCH /todos/:id", () => {
       expect(body).toEqual({
         code: "VALIDATION_ERROR",
         message: expect.any(String),
-        requestId: response.headers["x-request-id"],
       });
     });
   });
@@ -179,7 +178,6 @@ describe("PATCH /todos/:id", () => {
       expect(body).toEqual({
         code: "VALIDATION_ERROR",
         message: expect.any(String),
-        requestId: response.headers["x-request-id"],
       });
     });
   });
@@ -204,7 +202,6 @@ describe("PATCH /todos/:id", () => {
       expect(body).toEqual({
         code: "NOT_FOUND",
         message: "Todo not found",
-        requestId: response.headers["x-request-id"],
       });
     });
   });
@@ -232,7 +229,6 @@ describe("PATCH /todos/:id", () => {
       expect(body).toEqual({
         code: "NOT_FOUND",
         message: "Todo not found",
-        requestId: response.headers["x-request-id"],
       });
     });
   });

@@ -58,7 +58,6 @@ const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
         return reply.code(404).send({
           code: "NOT_FOUND",
           message: "Todo not found",
-          requestId: reply.getHeader("x-request-id") as string,
         });
       }
 
@@ -80,7 +79,6 @@ const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
         return reply.code(404).send({
           code: "NOT_FOUND",
           message: "Todo not found",
-          requestId: reply.getHeader("x-request-id") as string,
         });
       }
 

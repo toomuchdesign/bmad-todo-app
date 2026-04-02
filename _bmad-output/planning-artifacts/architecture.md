@@ -46,7 +46,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 
 - Single-user MVP; no auth, multi-tenancy, realtime, or offline-first required.
 - Modern browser support; mobile-first; single route/screen.
-- API must emit stable error codes + human messages and include requestId when available.
+- API must emit stable error codes + human messages; every response includes `x-request-id` header.
 - Soft delete semantics must be consistent across API + UI.
 
 ### Cross-Cutting Concerns Identified
@@ -54,7 +54,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 - Error taxonomy + mapping to UX copy (global banner vs inline validation).
 - State consistency rules for optimistic updates and rollback/revert behavior.
 - Validation consistency (trim rules, max length constant, preservation of typed text).
-- Observability/debuggability via requestId propagation.
+- Observability/debuggability via `x-request-id` header propagation.
 - Accessibility and focus management as part of core flow correctness.
 - Testability: deterministic states for load/mutation failures and retries.
 
@@ -306,7 +306,7 @@ To keep quality high while moving quickly, every story/task is considered **done
   - Use env var `WEB_ORIGIN` to configure the allowed origin in non-local environments.
 - **Security headers:** baseline security headers via `@fastify/helmet@13.0.2`
 - **Rate limiting:** optional; default off for MVP (enable later if needed) via `@fastify/rate-limit@10.3.0`
-- **Error/validation hygiene (baseline):** validate inputs at the API boundary; never render user text as HTML; return a stable error response shape with machine code + human message and include `requestId` when available.
+- **Error/validation hygiene (baseline):** validate inputs at the API boundary; never render user text as HTML; return a stable error response shape with machine code + human message; `x-request-id` is conveyed via response header only.
 
 ### API & Communication Patterns
 
@@ -343,7 +343,6 @@ To keep quality high while moving quickly, every story/task is considered **done
   export type ApiErrorResponse = {
     code: string;
     message: string;
-    requestId?: string;
   };
   ```
 
@@ -355,11 +354,10 @@ To keep quality high while moving quickly, every story/task is considered **done
   - `409` for conflicts if/when applicable (`CONFLICT`)
   - `500` for unexpected failures (`INTERNAL_ERROR`)
 
-- **requestId propagation:**
-  - API always produces a `requestId` per request
-  - API returns it via `x-request-id` response header
-  - API includes it in JSON error bodies as `requestId`
-  - If an inbound `x-request-id` is provided, the API may reuse it; otherwise generate one
+- **`x-request-id` propagation:**
+  - API always produces a request ID per request
+  - API returns it via a required `x-request-id` response header (not in the JSON body)
+  - If an inbound `x-request-id` is provided, the API reuses it; otherwise generates a new UUID
 
 - **Retry semantics (MVP):**
   - Retries are client behavior
@@ -422,8 +420,8 @@ This section is the enforcement layer to prevent AI-agent divergence. The canoni
 ### API Format Invariants (must follow)
 
 - No response envelope like `{ data: ... }`
-- Error responses always include `code` + `message` and include `requestId` when available
-- `x-request-id` response header is always present
+- Error responses always include `code` + `message` (no `requestId` in body)
+- `x-request-id` response header is always present (required)
 
 ### Test & Dev Determinism (must follow)
 
@@ -591,7 +589,7 @@ bmad-todo/
 
 - The stack is coherent: Vite + React SPA, Fastify API, Postgres persistence, Drizzle ORM/Kit, npm workspaces, Biome, and the selected test tooling do not conflict.
 - The “no `{ data: ... }` wrapper” rule is consistent with the FE plan (typed `fetch` wrapper) and reduces agent divergence.
-- The `requestId` contract is implementable without third-party plugins (a tiny Fastify plugin can generate/echo `x-request-id` and attach it to error bodies).
+- The `x-request-id` contract is implementable without third-party plugins (a tiny Fastify plugin can generate/echo `x-request-id` via response headers).
 
 **Pattern Consistency:**
 
@@ -609,7 +607,7 @@ bmad-todo/
 - FR1–FR5 (CRUD + list ordering + soft delete) are covered by the `/todos` endpoints and the Drizzle/Postgres model.
 - FR6–FR8 (inline validation + preserve text) are covered by shared `MAX_TODO_TEXT_LENGTH = 200` + trim rules + UI validation patterns.
 - FR10/FR13–FR15 (consistent UI on failure + global error + retry) are covered by the global error banner + explicit retry for load + non-auto-retry mutation policy.
-- FR22–FR23 (stable machine code + human message + optional details + requestId) are covered by the `ApiErrorResponse` contract + `x-request-id` propagation rule.
+- FR22–FR23 (stable machine code + human message + optional details) are covered by the `ApiErrorResponse` contract + `x-request-id` header propagation rule.
 
 **Non-Functional Requirements Coverage:**
 
@@ -714,7 +712,7 @@ bmad-todo/
 Architecture workflow is complete for `bmad-todo`. You now have:
 
 - A fully specified TypeScript-first monorepo stack (web/api/shared)
-- A stable API contract (success shapes + error shapes + requestId)
+- A stable API contract (success shapes + error shapes + `x-request-id` header)
 - Consistency rules that prevent AI-agent divergence
 - A concrete project tree mapping requirements to files
 

@@ -72,7 +72,6 @@ describe("POST /todos", () => {
         expect(body).toEqual({
           code: "VALIDATION_ERROR",
           message: expect.any(String),
-          requestId: response.headers["x-request-id"],
         });
       });
     });
@@ -99,7 +98,6 @@ describe("POST /todos", () => {
         expect(body).toEqual({
           code: "VALIDATION_ERROR",
           message: expect.any(String),
-          requestId: response.headers["x-request-id"],
         });
       });
     });

@@ -15,7 +15,10 @@ export interface paths {
         get: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    /** @description Optional correlation ID for request tracing. If provided, the API echoes it back in the response; otherwise a new UUID is generated. */
+                    "x-request-id"?: string;
+                };
                 path?: never;
                 cookie?: never;
             };
@@ -65,7 +68,10 @@ export interface paths {
         post: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    /** @description Optional correlation ID for request tracing. If provided, the API echoes it back in the response; otherwise a new UUID is generated. */
+                    "x-request-id"?: string;
+                };
                 path?: never;
                 cookie?: never;
             };
@@ -149,7 +155,10 @@ export interface paths {
         delete: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    /** @description Optional correlation ID for request tracing. If provided, the API echoes it back in the response; otherwise a new UUID is generated. */
+                    "x-request-id"?: string;
+                };
                 path: {
                     id: string;
                 };
@@ -219,7 +228,10 @@ export interface paths {
         patch: {
             parameters: {
                 query?: never;
-                header?: never;
+                header?: {
+                    /** @description Optional correlation ID for request tracing. If provided, the API echoes it back in the response; otherwise a new UUID is generated. */
+                    "x-request-id"?: string;
+                };
                 path: {
                     id: string;
                 };

@@ -5,6 +5,17 @@ import {
   todoSchema,
 } from "shared";
 
+const requestHeadersSchema = {
+  type: "object",
+  properties: {
+    "x-request-id": {
+      type: "string",
+      description:
+        "Optional correlation ID for request tracing. If provided, the API echoes it back in the response; otherwise a new UUID is generated.",
+    },
+  },
+} as const;
+
 const responseHeadersSchema = {
   "x-request-id": {
     required: true,
@@ -33,6 +44,7 @@ export type InferRouteResponses<TResponse extends RouteResponseSchemas> = {
 export const getTodosRouteSchema = {
   tags: ["todos"],
   summary: "List todos",
+  headers: requestHeadersSchema,
   response: {
     200: {
       headers: responseHeadersSchema,
@@ -56,6 +68,7 @@ export type GetTodosRouteResponses = InferRouteResponses<
 export const postTodosRouteSchema = {
   tags: ["todos"],
   summary: "Create todo",
+  headers: requestHeadersSchema,
   body: {
     type: "object",
     required: ["text"],
@@ -86,6 +99,7 @@ export type PostTodosRouteResponses = InferRouteResponses<
 export const patchTodosRouteSchema = {
   tags: ["todos"],
   summary: "Update todo",
+  headers: requestHeadersSchema,
   params: {
     type: "object",
     required: ["id"],
@@ -126,6 +140,7 @@ export type PatchTodosRouteResponses = InferRouteResponses<
 export const deleteTodosRouteSchema = {
   tags: ["todos"],
   summary: "Delete todo",
+  headers: requestHeadersSchema,
   params: {
     type: "object",
     required: ["id"],
