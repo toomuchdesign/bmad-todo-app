@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Todo } from "shared";
 import type { ApiResponses } from "../contracts";
 import { type TODO_BY_ID_API_PATH, TODOS_API_PATH } from "../contracts";
+import { HttpError, httpClient } from "../utils";
 
 type UseTodosResult = {
   todos: Todo[];
@@ -21,6 +22,14 @@ const GENERIC_ERROR_MESSAGE =
 const GENERIC_MUTATION_ERROR_MESSAGE =
   "Couldn't save changes. Please try again.";
 
+/** Extracts a user-facing message from an error, falling back to a default. */
+function extractErrorMessage(err: unknown, fallback: string): string {
+  if (err instanceof HttpError && err.message) {
+    return err.message;
+  }
+  return fallback;
+}
+
 /** Fetches todos on mount and exposes loading/error state with retry. */
 function useTodos(): UseTodosResult {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -34,34 +43,14 @@ function useTodos(): UseTodosResult {
     setLoading(true);
 
     try {
-      const response = await fetch(TODOS_API_PATH);
-
-      if (!response.ok) {
-        let message = GENERIC_ERROR_MESSAGE;
-        try {
-          const body = (await response.json()) as ApiResponses<
-            typeof TODOS_API_PATH,
-            "get"
-          >["default"];
-          if (body.message) {
-            message = body.message;
-          }
-        } catch {
-          // fall back to generic message
-        }
-        setError(message);
-        setLoading(false);
-        return;
-      }
-
-      const data = (await response.json()) as ApiResponses<
-        typeof TODOS_API_PATH,
-        "get"
-      >["200"];
+      const data =
+        await httpClient.get<ApiResponses<typeof TODOS_API_PATH, "get">["200"]>(
+          TODOS_API_PATH,
+        );
       setTodos(data.todos);
       setError(null);
-    } catch {
-      setError(GENERIC_ERROR_MESSAGE);
+    } catch (err) {
+      setError(extractErrorMessage(err, GENERIC_ERROR_MESSAGE));
     }
 
     setLoading(false);
@@ -80,37 +69,13 @@ function useTodos(): UseTodosResult {
     setError(null);
 
     try {
-      const response = await fetch(TODOS_API_PATH, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-
-      if (!response.ok) {
-        let message = GENERIC_MUTATION_ERROR_MESSAGE;
-        try {
-          const body = (await response.json()) as ApiResponses<
-            typeof TODOS_API_PATH,
-            "post"
-          >["default"];
-          if (body.message) {
-            message = body.message;
-          }
-        } catch {
-          // fall back to generic message
-        }
-        setError(message);
-        return false;
-      }
-
-      const created = (await response.json()) as ApiResponses<
-        typeof TODOS_API_PATH,
-        "post"
-      >["201"];
+      const created = await httpClient.post<
+        ApiResponses<typeof TODOS_API_PATH, "post">["201"]
+      >(TODOS_API_PATH, { body: { text } });
       setTodos((prev) => [created, ...prev]);
       return true;
-    } catch {
-      setError(GENERIC_MUTATION_ERROR_MESSAGE);
+    } catch (err) {
+      setError(extractErrorMessage(err, GENERIC_MUTATION_ERROR_MESSAGE));
       return false;
     }
   }
@@ -155,40 +120,15 @@ function useTodos(): UseTodosResult {
     }
 
     try {
-      const response = await fetch(`/todos/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fields),
-      });
-
-      if (!response.ok) {
-        let message = GENERIC_MUTATION_ERROR_MESSAGE;
-        try {
-          const body = (await response.json()) as ApiResponses<
-            typeof TODO_BY_ID_API_PATH,
-            "patch"
-          >["default"];
-          if (body.message) {
-            message = body.message;
-          }
-        } catch {
-          // fall back to generic message
-        }
-        rollback(message);
-        clearPending();
-        return false;
-      }
-
-      const updated = (await response.json()) as ApiResponses<
-        typeof TODO_BY_ID_API_PATH,
-        "patch"
-      >["200"];
+      const updated = await httpClient.patch<
+        ApiResponses<typeof TODO_BY_ID_API_PATH, "patch">["200"]
+      >(`/todos/${id}`, { body: fields });
 
       setTodos((prev) => prev.map((t) => (t.id === id ? updated : t)));
       clearPending();
       return true;
-    } catch {
-      rollback();
+    } catch (err) {
+      rollback(extractErrorMessage(err, GENERIC_MUTATION_ERROR_MESSAGE));
       clearPending();
       return false;
     }
@@ -222,29 +162,12 @@ function useTodos(): UseTodosResult {
     }
 
     try {
-      const response = await fetch(`/todos/${id}`, { method: "DELETE" });
-
-      if (!response.ok) {
-        let message = GENERIC_MUTATION_ERROR_MESSAGE;
-        try {
-          const body = (await response.json()) as ApiResponses<
-            typeof TODO_BY_ID_API_PATH,
-            "delete"
-          >["default"];
-          if (body.message) message = body.message;
-        } catch {
-          // fall back to generic message
-        }
-        setError(message);
-        clearPending();
-        return false;
-      }
-
+      await httpClient.del(`/todos/${id}`);
       setTodos((prev) => prev.filter((t) => t.id !== id));
       clearPending();
       return true;
-    } catch {
-      setError(GENERIC_MUTATION_ERROR_MESSAGE);
+    } catch (err) {
+      setError(extractErrorMessage(err, GENERIC_MUTATION_ERROR_MESSAGE));
       clearPending();
       return false;
     }

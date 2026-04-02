@@ -512,23 +512,7 @@ So that regressions in UX and failure handling are caught early.
 **When** I run web tests
 **Then** tests cover: initial load success, initial load failure with Retry, empty state, create validation, create success, and create failure showing global error
 
-### Story 3.3: End-to-end tests covering all PRD MVP flows (success and failure)
-
-As a maintainer,
-I want E2E tests that exercise the real app,
-So that the MVP flows are validated end-to-end.
-
-**Acceptance Criteria:**
-
-**Given** the app can run locally
-**When** I run Playwright E2E tests
-**Then** the suite covers: load success, load failure + retry, create with validation failure, create success, edit success/failure, toggle success/failure, delete success/failure
-
-**Given** E2E tests must be deterministic
-**When** the Playwright suite starts
-**Then** the todos table is reset via the DB reset script (not via a public reset API endpoint)
-
-### Story 3.4: Accessibility and focus behavior baseline
+### Story 3.3: Accessibility and focus behavior baseline
 
 As a keyboard user,
 I want the app to be operable via keyboard with predictable focus,

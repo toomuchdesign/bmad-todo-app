@@ -14,13 +14,16 @@ This file captures project conventions and non-obvious rules that should stay co
 ### Code structure
 
 - Only exports from modules when there is an importer
+- Use only named exports, no default exports
+- Never used \* exports\imports but named ones
 - Organize `utils` or `test-utils` as domain modules with a barrel index
 
 ### Typescript
 
 - Do not use `any` type. Use `unknown` is an entity is actually not known
 - Never force type inference. Type must always flow naturally
-- If something cannot be properly typed use `// @ts-expect-error error description/motivation`
+- If something cannot be properly typed use `// @ts-expect-error error description/motivation` instead of `as`
+- Types and generics: always use descriptive type names in plain english. Avoid cryptic single letter type names.
 
 ## Testing Practices
 
