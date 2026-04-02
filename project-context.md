@@ -1,82 +1,205 @@
-# General project Context
+# Project Context
 
-This file captures project conventions and non-obvious rules that should stay consistent over time.
+Conventions and non-obvious rules that must stay consistent across all tasks.
+When in doubt, prefer explicitness over cleverness.
 
-## Coding Practices
+---
 
-### GIT
+## Git
 
-### Conventional Commits Instruction
+### Commits
 
-When committing code, always follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/):
+Follow the [Conventional Commits](https://www.conventionalcommits.org/) spec.
 
-- Format: <type>[optional scope]: <description>
-- Types: feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert
-- Rules:
-  - Use lowercase for type and description
-  - Keep the subject line under 72 characters
-  - Use imperative mood ("add feature" not "added feature")
-  - Add a ! after the type/scope for breaking changes (e.g. feat!: drop support for Node 18)
-  - Optionally include a body (blank line after subject) for context on why, not what
-  - Optionally add footers for metadata (e.g. BREAKING CHANGE:, Closes #123)
+Format: `<type>[optional scope]: <description>`
+
+Types: `feat` `fix` `docs` `style` `refactor` `perf` `test` `chore` `ci` `build` `revert`
+
+- Lowercase type and description
+- Subject line ≤ 72 characters
+- Imperative mood: "add feature", not "added feature"
+- Breaking changes: append `!` → `feat!: remove v1 endpoints`
+- Body (optional): explain _why_, not _what_ — separated by a blank line
+- Footers (optional): `BREAKING CHANGE:`, `Closes #123`
+
+Never commit with vague messages (`fix`, `update`, `wip`).
+Each commit must be atomic — one logical change.
+
+### Branches
+
+Mirror commit types: `feat/`, `fix/`, `chore/`, `docs/` prefixes.
+Example: `feat/oauth-login`, `fix/null-payment-response`
+
+---
+
+## Code Style
 
 ### Functions
 
-- Use arrow functions only for inline use
-- Any other function with a name should use function declaration (`function myFunctionName(){}`)
-- Complex functions and exported functions (even non public ones) should come with a brief jsdoc comment
-- Always prefer named arguments when function accepts 2+ arguments
+- Named functions → always use `function` declarations
+- Inline/callback → arrow functions only
+- 2+ arguments → always use named (destructured) arguments
 
-### Code structure
+  ```ts
+  // ✅
+  function createUser({ id, name, role }: CreateUserArgs) {}
 
-- Only exports from modules when there is an importer
-- Use only named exports, no default exports
-- Never used \* exports\imports but named ones
-- Organize `utils` or `test-utils` as domain modules with a barrel index
+  // ❌
+  function createUser(id: string, name: string, role: string) {}
+  ```
 
-### Typescript
+- Complex and exported functions must have a brief JSDoc comment stating intent
 
-- Do not use `any` type. Use `unknown` is an entity is actually not known
-- Never force type inference. Type must always flow naturally
-- If something cannot be properly typed use `// @ts-expect-error error description/motivation` instead of `as`
-- Types and generics: always use descriptive type names in plain english. Avoid cryptic single letter type names.
+### Modules & Exports
 
-## Testing Practices
+- Only export what has an importer — no speculative exports
+- Named exports only — no default exports
+- No `* imports/exports` — always use explicit named bindings
+- `utils` and `test-utils` are domain modules with a barrel `index.ts`
 
-- Every implementation task must include or update focused tests for changed behavior.
-- All tests must use nested `describe` → `it` blocks.
-- Assertion style: use explicit `expect(...)` checks that verify observable behavior.
-- Prefer a single assertion against the whole entity/object when manageable for clarity, even at the cost of some repetition.
-- If tests are repetitive and expected objects are large, it is acceptable to assert specific properties instead of the full object.
-- In case of structured input/output comparison: use the `actual` vs `expected` const definitions
-- Use multiple nested `describe` blocks if necessary: `describe` must contain the subject or the tested condition, `it` must contain the outcome/expectation
-  - If `it` statements contain elements like "when"/"if"/"on" it means that there is a condition to be expressed as a `describe` block
-  - Condition should be expressed in an imperative mode
-- Keep tests deterministic and avoid relying on network/external state.
-- Abstract shared test utilities in local `test-utils` folders
-- File-wide setup/teardown hooks should be top-level (outside root `describe`) to keep structure consistent.
+### File Naming
 
-### Preferred Test Patterns
+- Files and folders: `kebab-case`
+- Classes and types: `PascalCase`
+- Constants: `SCREAMING_SNAKE_CASE`
 
-All tests must follow the AAA pattern:
+### Imports
 
-- **Arrange**: Set up the test context — initialize objects, define inputs, configure mocks and stubs, and establish any preconditions.
-- **Act**: Execute the single behavior under test — one action, one call.
-- **Assert**: Verify the outcome — check return values, state changes, or side effects. One logical assertion group per test.
+Order imports in three groups, separated by a blank line:
 
-Each section should be visually separated by a blank line. If the Arrange block grows large, extract it into a helper or factory. A test that cannot be cleanly split into these three sections is a signal the unit under test needs refactoring.
+1. External packages
+2. Internal absolute paths
+3. Relative paths
 
-### Test Anti-Patterns To Avoid
+### Constants
 
-- No top-level `it(...)` / `test(...)` outside nested `describe` blocks.
-- No dependency on real external network calls in unit/component tests.
-- No flaky timing assumptions (implicit sleeps/timeouts without need).
-- No merging changes with only targeted tests run; always run full `test:ci` before completion.
+No magic numbers or strings inline in logic. Extract to named constants
+that describe intent, not value.
+
+```ts
+// ✅
+const MAX_RETRY_ATTEMPTS = 3;
+
+// ❌
+if (attempts > 3) { ... }
+```
+
+---
+
+## TypeScript
+
+- No `any`. Use `unknown` for genuinely unknown shapes
+- Types must flow naturally — do not fight the compiler with casts
+- When something truly cannot be typed: use `// @ts-expect-error <reason>`, never `as`
+- Descriptive type and generic names in plain English — no single-letter generics outside trivial map/filter lambdas
+
+---
+
+## Async & Error Handling
+
+- Always use `async/await` — no raw `.then()/.catch()` chains
+- Never swallow errors silently. Either handle, rethrow, or log with context
+- Typed errors: prefer custom error classes or discriminated union result types over throwing plain strings
+- Expected failure paths (validation, not-found, auth) should return typed results, not throw
+
+---
+
+## Security
+
+- No secrets, tokens, API keys, or credentials in source code or commits — ever
+- Read all secrets from environment variables
+- Never log sensitive values (tokens, passwords, PII)
+
+---
+
+## Dependencies
+
+- Prefer the standard library and existing project dependencies before adding new ones
+- Every new dependency requires a brief justification comment in the PR
+- Pin major versions; avoid `*` or `latest` ranges
+
+---
+
+## Testing
+
+### Structure
+
+- Every implementation change must include or update tests for the affected behavior
+- All tests use nested `describe` → `it` blocks — no top-level `it()`
+- `describe`: the subject or condition being tested (imperative: "given an expired token")
+- `it`: the expected outcome ("returns 401 with error message")
+- If an `it` contains "when", "if", or "on" — that condition belongs in a `describe` block
+
+### AAA Pattern
+
+Every test must follow Arrange → Act → Assert, separated by blank lines.
+A test that can't be cleanly split into three sections signals the unit needs refactoring.
+
+```ts
+it("returns the discounted price", () => {
+  // Arrange
+  const cart = buildCart({ items: [{ price: 100 }] });
+  const coupon = buildCoupon({ discount: 0.2 });
+
+  // Act
+  const actual = applyDiscount(cart, coupon);
+
+  // Expected
+  const expected = { total: 80 };
+  expect(actual).toEqual(expected);
+});
+```
+
+### Assertions
+
+- Prefer a single assertion against the whole entity/object when manageable
+- Use `actual` / `expected` named constants for structured comparisons
+- Avoid asserting implementation details — test observable behavior
+
+### Anti-Patterns
+
+- No real network calls in unit/component tests
+- No implicit timing assumptions or arbitrary sleeps
+- No merging without running the full `test:ci` suite
+- No shared mutable state between tests
+
+### Utilities
+
+- Abstract shared setup into local `test-utils/` folders as domain modules
+- File-wide `beforeEach`/`afterAll` hooks go at the top level, outside the root `describe`
+
+---
+
+## Documentation Consistency
+
+Before marking any task complete, check whether these files need updating:
+
+- `README.md` — setup steps, usage examples, environment variables
+- `ARCHITECTURE.md` — component responsibilities, data flow, system boundaries
+- `docs/` — any affected guides, API references, or ADRs
+- Inline JSDoc — updated to reflect changed signatures or behavior
+
+If a change makes existing documentation misleading or incomplete, updating it
+is part of the task — not optional follow-up work.
+
+---
+
+## Definition of Done
+
+An agent task is complete only when:
+
+- [ ] All changed behavior has corresponding tests
+- [ ] `test:ci` passes with no failures
+- [ ] No lint or type errors
+- [ ] No dead code, unused imports, or leftover debug statements
+- [ ] Commit message follows Conventional Commits spec
+
+---
 
 ## Debugging Artifacts
 
-- All debugging artifacts (screenshots, downloaded files, generated reports) must be saved into the `.debug/` folder at the project root.
-- This folder is git-ignored. Do not commit its contents.
+All debugging output (screenshots, reports, downloaded files) goes into `.debug/` at the project root.
+This folder is git-ignored. Never commit its contents.
 
 # Specific project context
 
