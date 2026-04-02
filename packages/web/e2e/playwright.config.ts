@@ -19,7 +19,7 @@ export default defineConfig({
   webServer: [
     {
       command: "npm run dev:api",
-      url: `http://${apiHost}:${apiPort}/todos`,
+      url: `http://${apiHost}:${apiPort}/healthcheck`,
       cwd: "../../..",
       reuseExistingServer: !process.env.CI,
     },

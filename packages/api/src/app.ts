@@ -34,6 +34,8 @@ export async function buildApp(
   await requestIdPlugin(app, {});
   await errorHandlerPlugin(app, {});
 
+  app.get("/healthcheck", async () => ({ status: "ok" }));
+
   app.register(todosRoutes);
 
   app.addHook("onClose", async () => {
