@@ -11,7 +11,7 @@ import { TodoItem } from "./TodoItem";
 const incompleteTodo: Todo = {
   id: "1",
   title: "Buy milk",
-  text: null,
+  text: "",
   completed: false,
   createdAt: "2026-03-01T10:00:00.000Z",
   updatedAt: "2026-03-01T10:00:00.000Z",
@@ -140,7 +140,7 @@ describe("TodoItem", () => {
     });
   });
 
-  describe("saving with Enter in textarea", () => {
+  describe("saving with Ctrl+Enter in textarea", () => {
     it("calls onUpdate with title and text fields", async () => {
       const user = userEvent.setup();
       const onUpdate = vi.fn().mockResolvedValue(true);
@@ -159,7 +159,7 @@ describe("TodoItem", () => {
       await user.type(titleInput, "Updated title");
       await user.click(textInput);
       await user.type(textInput, "Some details");
-      await user.keyboard("{Enter}");
+      await user.keyboard("{Control>}{Enter}{/Control}");
 
       expect(onUpdate).toHaveBeenCalledWith(incompleteTodo.id, {
         title: "Updated title",
@@ -168,7 +168,7 @@ describe("TodoItem", () => {
     });
   });
 
-  describe("Ctrl+Enter in textarea", () => {
+  describe("Enter in textarea", () => {
     it("inserts a newline instead of saving", async () => {
       const user = userEvent.setup();
       const onUpdate = vi.fn().mockResolvedValue(true);
@@ -181,9 +181,7 @@ describe("TodoItem", () => {
         name: "Edit todo description",
       });
       await user.click(textInput);
-      await user.type(textInput, "Line one");
-      await user.keyboard("{Control>}{Enter}{/Control}");
-      await user.type(textInput, "Line two");
+      await user.type(textInput, "Line one{Enter}Line two");
 
       expect(textInput).toHaveValue("Line one\nLine two");
       expect(onUpdate).not.toHaveBeenCalled();
@@ -224,9 +222,8 @@ describe("TodoItem", () => {
       await user.clear(titleInput);
       await user.type(titleInput, "Blurred title");
 
-      // Tab past textarea to leave the edit wrapper
-      await user.tab(); // focus textarea
-      await user.tab(); // focus outside
+      // Click outside the item to trigger blur-save
+      await user.click(document.body);
 
       expect(onUpdate).toHaveBeenCalledWith(incompleteTodo.id, {
         title: "Blurred title",
@@ -243,9 +240,9 @@ describe("TodoItem", () => {
       await user.click(
         screen.getByRole("button", { name: incompleteTodo.title }),
       );
-      // Press Enter to move to textarea, then Enter to save without changes
+      // Press Enter to move to textarea, then Ctrl+Enter to save without changes
       await user.keyboard("{Enter}");
-      await user.keyboard("{Enter}");
+      await user.keyboard("{Control>}{Enter}{/Control}");
 
       expect(onUpdate).not.toHaveBeenCalled();
       expect(
@@ -268,9 +265,9 @@ describe("TodoItem", () => {
           name: "Edit todo title",
         });
         await user.clear(input);
-        // Move to textarea and Enter to trigger save
+        // Move to textarea and Ctrl+Enter to trigger save
         await user.tab();
-        await user.keyboard("{Enter}");
+        await user.keyboard("{Control>}{Enter}{/Control}");
 
         expect(
           screen.getByText("Title must not be empty."),
@@ -293,7 +290,7 @@ describe("TodoItem", () => {
         await user.clear(input);
         await user.type(input, "a".repeat(MAX_TODO_TITLE_LENGTH + 1));
         await user.tab();
-        await user.keyboard("{Enter}");
+        await user.keyboard("{Control>}{Enter}{/Control}");
 
         expect(
           screen.getByText(
@@ -321,7 +318,7 @@ describe("TodoItem", () => {
       await user.clear(titleInput);
       await user.type(titleInput, "Failed save");
       await user.tab();
-      await user.keyboard("{Enter}");
+      await user.keyboard("{Control>}{Enter}{/Control}");
 
       await waitFor(() => {
         expect(onUpdate).toHaveBeenCalled();

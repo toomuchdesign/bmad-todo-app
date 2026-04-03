@@ -37,7 +37,7 @@ export interface paths {
                                 /** Format: uuid */
                                 id: string;
                                 title: string;
-                                text?: string | null;
+                                text: string;
                                 completed: boolean;
                                 /** Format: date-time */
                                 createdAt: string;
@@ -97,7 +97,7 @@ export interface paths {
                             /** Format: uuid */
                             id: string;
                             title: string;
-                            text?: string | null;
+                            text: string;
                             completed: boolean;
                             /** Format: date-time */
                             createdAt: string;
@@ -258,7 +258,7 @@ export interface paths {
                             /** Format: uuid */
                             id: string;
                             title: string;
-                            text?: string | null;
+                            text: string;
                             completed: boolean;
                             /** Format: date-time */
                             createdAt: string;

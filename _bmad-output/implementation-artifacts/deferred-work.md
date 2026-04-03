@@ -31,3 +31,13 @@
 
 - `fetchTodos` retry during in-flight updates leaves stale `pendingFields`/`snapshots`/`mutationControllers` refs. If user retries while mutations are in-flight, the fresh server data can conflict with stale rollback state. **→ Fix in Epic 3 prep story (3.0) — clear mutation refs on re-fetch success**
 - `createTodo` and `updateTodo` both call `setError(null)` at entry, clearing each other's errors. A rapid sequence can hide a failed mutation's error before the user sees it. **→ Accepted, low impact for MVP**
+
+## Deferred from: code review of story 3.0 (2026-04-04)
+
+- PATCH with empty body bumps `updatedAt` — no `minProperties` constraint on PATCH schema, so `{}` passes and writes only `updatedAt`. Pre-existing pattern.
+- No DB-level CHECK constraint on `title` — route schema is the only guard against empty strings. Pre-existing pattern.
+- `export default` in todosRoutes — violates "named exports only" rule from project-context.md. Pre-existing.
+- cancelEdit doesn't abort in-flight save — if user presses Escape during a slow save, `onUpdate` still completes server-side. Pre-existing concurrency pattern.
+- Duplicate validation logic between AddTodoForm and TodoItem — identical trim+validate code. No shared validator. Pre-existing.
+- Ctrl+Enter newline uses stale closure state — rapid typing + Ctrl+Enter could read stale `editText`. Low probability, pre-existing React pattern.
+- handleBlur during in-flight save exits early silently — `savingRef` guard returns without retry. Benign, pre-existing.

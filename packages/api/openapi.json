@@ -52,6 +52,7 @@
                         "required": [
                           "id",
                           "title",
+                          "text",
                           "completed",
                           "createdAt",
                           "updatedAt"
@@ -65,14 +66,7 @@
                             "type": "string"
                           },
                           "text": {
-                            "anyOf": [
-                              {
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
+                            "type": "string"
                           },
                           "completed": {
                             "type": "boolean"
@@ -161,9 +155,7 @@
                   },
                   "text": {
                     "type": "string",
-                    "minLength": 1,
-                    "maxLength": 500,
-                    "pattern": ".*\\S.*"
+                    "maxLength": 500
                   }
                 }
               }
@@ -200,6 +192,7 @@
                   "required": [
                     "id",
                     "title",
+                    "text",
                     "completed",
                     "createdAt",
                     "updatedAt"
@@ -213,14 +206,7 @@
                       "type": "string"
                     },
                     "text": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
+                      "type": "string"
                     },
                     "completed": {
                       "type": "boolean"
@@ -336,9 +322,7 @@
                   },
                   "text": {
                     "type": "string",
-                    "minLength": 1,
-                    "maxLength": 500,
-                    "pattern": ".*\\S.*"
+                    "maxLength": 500
                   },
                   "completed": {
                     "type": "boolean"
@@ -387,6 +371,7 @@
                   "required": [
                     "id",
                     "title",
+                    "text",
                     "completed",
                     "createdAt",
                     "updatedAt"
@@ -400,14 +385,7 @@
                       "type": "string"
                     },
                     "text": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
+                      "type": "string"
                     },
                     "completed": {
                       "type": "boolean"

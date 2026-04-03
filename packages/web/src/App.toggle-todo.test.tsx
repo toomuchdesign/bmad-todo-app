@@ -15,7 +15,7 @@ describe("App", () => {
       const toggledTodo: Todo = {
         id: "1",
         title: "Buy milk",
-        text: null,
+        text: "",
         completed: true,
         createdAt: "2026-03-01T10:00:00.000Z",
         updatedAt: "2026-03-30T10:00:00.000Z",

@@ -14,7 +14,7 @@ function mapTodoRowToApiTodo(row: TodoRow): Todo {
   return {
     id: row.id,
     title: row.title,
-    text: row.text ?? null,
+    text: row.text ?? "",
     completed: row.completed,
     createdAt: toIsoDateTimeString(row.createdAt),
     updatedAt: toIsoDateTimeString(row.updatedAt),
@@ -52,7 +52,7 @@ export async function createTodoInDatabase({
     .values({
       id: randomUUID(),
       title,
-      text: text ?? null,
+      text: text || null,
       completed: false,
       createdAt: now,
       updatedAt: now,
@@ -91,7 +91,7 @@ export async function updateTodoInDatabase({
     setClause.title = title;
   }
   if (text !== undefined) {
-    setClause.text = text;
+    setClause.text = text || null;
   }
   if (completed !== undefined) {
     setClause.completed = completed;

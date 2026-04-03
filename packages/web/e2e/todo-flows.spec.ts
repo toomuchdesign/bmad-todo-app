@@ -103,7 +103,7 @@ test.describe("Todo flows", () => {
   });
 
   test.describe("inline edit flow", () => {
-    test("edits a todo title and saves with Enter in textarea", async ({
+    test("edits a todo title and saves with Ctrl+Enter in textarea", async ({
       page,
     }) => {
       await page.goto("/");
@@ -129,11 +129,11 @@ test.describe("Todo flows", () => {
       await editTitleInput.clear();
       await editTitleInput.fill("Edited todo");
 
-      // Move to textarea and save with Enter
+      // Move to textarea and save with Ctrl+Enter
       await editTitleInput.press("Enter");
       const editTextInput = page.getByLabel("Edit todo description");
       await expect(editTextInput).toBeFocused();
-      await editTextInput.press("Enter");
+      await editTextInput.press("Control+Enter");
 
       // Verify updated title is shown and edit mode exited
       await expect(
@@ -200,14 +200,14 @@ test.describe("Todo flows", () => {
       await editTitleInput.clear();
       await editTitleInput.press("Enter");
       const editTextInput = page.getByLabel("Edit todo description");
-      await editTextInput.press("Enter");
+      await editTextInput.press("Control+Enter");
 
       // Verify validation error and edit mode stays open
       await expect(page.getByText("Title must not be empty.")).toBeVisible();
       await expect(editTitleInput).toBeVisible();
     });
 
-    test("Ctrl+Enter in textarea inserts a newline instead of saving", async ({
+    test("Enter in textarea inserts a newline instead of saving", async ({
       page,
     }) => {
       await page.goto("/");
@@ -230,9 +230,9 @@ test.describe("Todo flows", () => {
       const editTextInput = page.getByLabel("Edit todo description");
       await expect(editTextInput).toBeFocused();
 
-      // Ctrl+Enter should insert a newline, not save
+      // Enter should insert a newline, not save
       await editTextInput.fill("Line one");
-      await editTextInput.press("Control+Enter");
+      await editTextInput.press("Enter");
       await editTextInput.pressSequentially("Line two");
 
       await expect(editTextInput).toHaveValue("Line one\nLine two");

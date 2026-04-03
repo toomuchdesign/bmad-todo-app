@@ -240,7 +240,7 @@ When asked to visually check the app or take a screenshot:
 4. **Wait ~5s**, then verify readiness: `curl -s -o /dev/null -w "%{http_code}" http://localhost:5173`
 5. **Navigate** browser to `http://localhost:5173`
 6. **Ports are configurable** via `.env` (dev) and `.env.test` (E2E) — test suite uses separate ports (5174/3002) to avoid conflicts with running dev servers
-6. **Take screenshot** (full page) and save to `.debug/` folder
+7. **Take screenshot** (full page) and save to `.debug/` folder
 
 This is a frequent workflow — proceed promptly without extra confirmation.
 

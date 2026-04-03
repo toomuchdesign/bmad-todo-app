@@ -88,7 +88,7 @@ describe("PATCH /todos/:id", () => {
       expect(body).toEqual({
         id: seed.id,
         title: seed.title,
-        text: null,
+        text: "",
         completed: true,
         createdAt: seed.createdAt,
         updatedAt: expect.any(String),
@@ -118,7 +118,7 @@ describe("PATCH /todos/:id", () => {
       expect(body).toEqual({
         id: seed.id,
         title: "new title",
-        text: null,
+        text: "",
         completed: true,
         createdAt: seed.createdAt,
         updatedAt: expect.any(String),

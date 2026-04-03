@@ -14,7 +14,7 @@ describe("App", () => {
         const newTodo: Todo = {
           id: "3",
           title: "New task",
-          text: null,
+          text: "",
           completed: false,
           createdAt: "2026-03-03T10:00:00.000Z",
           updatedAt: "2026-03-03T10:00:00.000Z",

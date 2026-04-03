@@ -12,7 +12,7 @@ function makeTodo(overrides: Partial<Todo>): Todo {
   return {
     id: "1",
     title: "Buy milk",
-    text: null,
+    text: "",
     completed: false,
     createdAt: "2026-03-01T10:00:00.000Z",
     updatedAt: "2026-03-01T10:00:00.000Z",
@@ -234,7 +234,7 @@ describe("App", () => {
         await user.clear(titleInput);
         await user.type(titleInput, "Buy oat milk");
         await user.tab();
-        await user.keyboard("{Enter}");
+        await user.keyboard("{Control>}{Enter}{/Control}");
 
         await waitFor(() => {
           expect(screen.getByText("Buy oat milk")).toBeInTheDocument();

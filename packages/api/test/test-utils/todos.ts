@@ -15,7 +15,7 @@ export function makeSeedTodo(
   return {
     id: randomUUID(),
     title: "seed todo",
-    text: null,
+    text: "",
     completed: false,
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
@@ -41,7 +41,7 @@ export async function seedTodo(input: SeedTodoInput): Promise<void> {
     [
       input.id,
       input.title,
-      input.text,
+      input.text || null,
       input.completed,
       input.createdAt,
       input.updatedAt,

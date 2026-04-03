@@ -63,7 +63,7 @@ describe("GET /todos", () => {
         {
           id: "33333333-3333-3333-3333-333333333333",
           title: "newer active",
-          text: null,
+          text: "",
           completed: true,
           createdAt: "2026-03-04T10:00:00.000Z",
           updatedAt: "2026-03-04T10:00:00.000Z",
@@ -72,7 +72,7 @@ describe("GET /todos", () => {
         {
           id: "11111111-1111-1111-1111-111111111111",
           title: "older active",
-          text: null,
+          text: "",
           completed: false,
           createdAt: "2026-03-01T10:00:00.000Z",
           updatedAt: "2026-03-01T10:00:00.000Z",

@@ -6,13 +6,11 @@ import type { FromSchema } from "json-schema-to-ts";
  */
 export const todoSchema = {
   type: "object",
-  required: ["id", "title", "completed", "createdAt", "updatedAt"],
+  required: ["id", "title", "text", "completed", "createdAt", "updatedAt"],
   properties: {
     id: { type: "string", format: "uuid" },
     title: { type: "string" },
-    text: {
-      anyOf: [{ type: "string" }, { type: "null" }],
-    },
+    text: { type: "string" },
     completed: { type: "boolean" },
     createdAt: { type: "string", format: "date-time" },
     updatedAt: { type: "string", format: "date-time" },

@@ -27,7 +27,8 @@
     "test:ci": "npm run test -- --run",
     "test:web": "npm -w web run test",
     "test:api": "npm -w api run test",
-    "test:e2e": "npm -w web run test:e2e"
+    "test:e2e": "npm -w web run test:e2e",
+    "test:e2e:ui": "npm -w web run test:e2e -- --ui"
   },
   "simple-git-hooks": {
     "pre-commit": "npm run build:openapi:api-types:stage && npm run source:fix && npm run source:check && npm run test:ci && npm run test:e2e"

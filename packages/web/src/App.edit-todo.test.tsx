@@ -15,7 +15,7 @@ describe("App", () => {
       const updatedTodo: Todo = {
         id: "1",
         title: "Buy oat milk",
-        text: null,
+        text: "",
         completed: false,
         createdAt: "2026-03-01T10:00:00.000Z",
         updatedAt: "2026-03-30T10:00:00.000Z",
@@ -36,9 +36,9 @@ describe("App", () => {
       });
       await user.clear(titleInput);
       await user.type(titleInput, "Buy oat milk");
-      // Move to textarea and save with Enter
+      // Move to textarea and save with Ctrl+Enter
       await user.tab();
-      await user.keyboard("{Enter}");
+      await user.keyboard("{Control>}{Enter}{/Control}");
 
       await waitFor(() => {
         expect(screen.getByText("Buy oat milk")).toBeInTheDocument();
@@ -101,7 +101,7 @@ describe("App", () => {
         await user.clear(titleInput);
         await user.type(titleInput, "Failed edit");
         await user.tab();
-        await user.keyboard("{Enter}");
+        await user.keyboard("{Control>}{Enter}{/Control}");
 
         await waitFor(() => {
           expect(screen.getByRole("alert")).toBeInTheDocument();

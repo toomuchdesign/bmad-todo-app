@@ -19,6 +19,7 @@ function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
   const [shouldFocus, setShouldFocus] = useState(false);
   const savingRef = useRef(false);
   const cancelledRef = useRef(false);
+  const itemRef = useRef<HTMLLIElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -35,7 +36,7 @@ function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
     cancelledRef.current = false;
     setEditing(true);
     setEditTitle(todo.title);
-    setEditText(todo.text ?? "");
+    setEditText(todo.text);
     setValidationError(null);
     setShouldFocus(true);
   }
@@ -44,7 +45,7 @@ function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
     cancelledRef.current = true;
     setEditing(false);
     setEditTitle(todo.title);
-    setEditText(todo.text ?? "");
+    setEditText(todo.text);
     setValidationError(null);
   }
 
@@ -73,8 +74,7 @@ function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
       return;
     }
 
-    const newText = trimmedText || null;
-    if (trimmedTitle === todo.title && newText === (todo.text ?? null)) {
+    if (trimmedTitle === todo.title && trimmedText === todo.text) {
       setEditing(false);
       return;
     }
@@ -85,8 +85,8 @@ function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
       if (trimmedTitle !== todo.title) {
         fields.title = trimmedTitle;
       }
-      if (newText !== null && newText !== (todo.text ?? null)) {
-        fields.text = newText;
+      if (trimmedText !== todo.text) {
+        fields.text = trimmedText;
       }
 
       const success = await onUpdate(todo.id, fields);
@@ -114,21 +114,6 @@ function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
   ): void {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
-      const { selectionStart, selectionEnd } = e.currentTarget;
-      const before = editText.slice(0, selectionStart);
-      const after = editText.slice(selectionEnd);
-      const newCursor = selectionStart + 1;
-      setEditText(`${before}\n${after}`);
-      setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.selectionStart = newCursor;
-          textareaRef.current.selectionEnd = newCursor;
-        }
-      }, 0);
-      return;
-    }
-    if (e.key === "Enter") {
-      e.preventDefault();
       saveEdit();
     } else if (e.key === "Escape") {
       cancelEdit();
@@ -140,9 +125,9 @@ function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
       cancelledRef.current = false;
       return;
     }
-    // Only save if focus moves away from both edit inputs
+    // Only save if focus leaves the entire item
     const target = e.relatedTarget;
-    if (target === titleInputRef.current || target === textareaRef.current) {
+    if (target && itemRef.current?.contains(target as Node)) {
       return;
     }
     saveEdit();
@@ -171,7 +156,7 @@ function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
     : styles.editInput;
 
   return (
-    <li className={styles.item}>
+    <li ref={itemRef} className={styles.item}>
       <input
         type="checkbox"
         className={styles.checkbox}

@@ -83,9 +83,7 @@ export const postTodosRouteSchema = {
       },
       text: {
         type: "string",
-        minLength: 1,
         maxLength: MAX_TODO_TEXT_LENGTH,
-        pattern: ".*\\S.*",
       },
     },
   },
@@ -126,9 +124,7 @@ export const patchTodosRouteSchema = {
       },
       text: {
         type: "string",
-        minLength: 1,
         maxLength: MAX_TODO_TEXT_LENGTH,
-        pattern: ".*\\S.*",
       },
       completed: {
         type: "boolean",

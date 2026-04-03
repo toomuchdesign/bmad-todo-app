@@ -1,6 +1,6 @@
 # Story 3.0: Add title field to todos with text as optional description
 
-Status: review
+Status: done
 
 ## Story
 
@@ -350,6 +350,25 @@ Claude Opus 4.6 (1M context)
 - packages/web/src/App.toggle-todo.test.tsx (modified)
 - packages/web/src/App.mutation-concurrency.test.tsx (modified)
 - packages/web/e2e/todo-flows.spec.ts (modified)
+
+### Review Findings
+
+- [x] [Review][Patch] Replace `null` with `""` for `text` field across the stack — DB boundary translates null↔empty string [multiple files] — **fixed**
+- [x] [Review][Patch] Migration journal timestamp out of order — entry 0001 had earlier timestamp than entry 0000 [packages/api/drizzle/meta/_journal.json] — **fixed**
+- [x] [Review][Patch] AC7 keyboard behavior inverted — Ctrl+Enter now saves, bare Enter inserts newline in textarea [packages/web/src/components/TodoItem.tsx] — **fixed**
+- [x] [Review][Patch] Description clearing was a no-op — `null` never sent to API, now sends `""` which DB maps to NULL [packages/web/src/components/TodoItem.tsx] — **fixed**
+- [x] [Review][Patch] handleBlur race with Delete button — now uses `itemRef.contains()` to prevent save when focus moves within the same `<li>` [packages/web/src/components/TodoItem.tsx] — **fixed**
+- [x] [Review][Patch] Tests asserted inverted keyboard behavior — updated all unit, integration, and E2E tests for Ctrl+Enter saves [multiple test files] — **fixed**
+- [x] [Review][Patch] Missing POST test for title-only success case — added test asserting `text: ""` in response [packages/api/test/todos.post.test.ts] — **fixed**
+- [x] [Review][Patch] Missing POST test for text exceeding MAX_TODO_TEXT_LENGTH — added 400 validation test [packages/api/test/todos.post.test.ts] — **fixed**
+- [x] [Review][Patch] Duplicate step number in project-context.md — fixed numbering [project-context.md] — **fixed**
+- [x] [Review][Defer] PATCH with empty body bumps `updatedAt` — pre-existing pattern, no `minProperties` constraint
+- [x] [Review][Defer] No DB-level CHECK constraint on `title` — pre-existing, route schema is the only guard
+- [x] [Review][Defer] `export default` in todosRoutes — pre-existing violation of "named exports only" rule
+- [x] [Review][Defer] cancelEdit doesn't abort in-flight save — pre-existing concurrency pattern
+- [x] [Review][Defer] Duplicate validation logic between AddTodoForm and TodoItem — pre-existing, no shared validator
+- [x] [Review][Defer] Ctrl+Enter newline uses stale closure state — low probability, pre-existing React pattern
+- [x] [Review][Defer] handleBlur during in-flight save exits early silently — benign, pre-existing
 
 ## Change Log
 
