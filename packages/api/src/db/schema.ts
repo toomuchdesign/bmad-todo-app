@@ -2,7 +2,8 @@ import { boolean, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const todos = pgTable("todos", {
   id: uuid("id").primaryKey().notNull(),
-  text: text("text").notNull(),
+  title: text("title").notNull(),
+  text: text("text"),
   completed: boolean("completed").notNull().default(false),
   createdAt: timestamp("created_at", {
     withTimezone: true,

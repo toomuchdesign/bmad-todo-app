@@ -14,7 +14,8 @@ export function makeSeedTodo(
 ): SeedTodoInput {
   return {
     id: randomUUID(),
-    text: "seed todo",
+    title: "seed todo",
+    text: null,
     completed: false,
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
@@ -35,10 +36,11 @@ export async function dropTodosTable(): Promise<void> {
  */
 export async function seedTodo(input: SeedTodoInput): Promise<void> {
   await runQuery(
-    `INSERT INTO todos (id, text, completed, created_at, updated_at, deleted_at)
-     VALUES ($1::uuid, $2::text, $3::boolean, $4::timestamptz, $5::timestamptz, $6::timestamptz);`,
+    `INSERT INTO todos (id, title, text, completed, created_at, updated_at, deleted_at)
+     VALUES ($1::uuid, $2::text, $3::text, $4::boolean, $5::timestamptz, $6::timestamptz, $7::timestamptz);`,
     [
       input.id,
+      input.title,
       input.text,
       input.completed,
       input.createdAt,

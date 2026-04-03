@@ -13,7 +13,8 @@ function toIsoDateTimeString(value: Date): Todo["createdAt"] {
 function mapTodoRowToApiTodo(row: TodoRow): Todo {
   return {
     id: row.id,
-    text: row.text,
+    title: row.title,
+    text: row.text ?? null,
     completed: row.completed,
     createdAt: toIsoDateTimeString(row.createdAt),
     updatedAt: toIsoDateTimeString(row.updatedAt),
@@ -37,9 +38,11 @@ export async function listTodosFromDatabase(): Promise<Todo[]> {
  * Creates a new todo row and maps it to the API contract shape.
  */
 export async function createTodoInDatabase({
+  title,
   text,
 }: {
-  text: string;
+  title: string;
+  text?: string;
 }): Promise<Todo> {
   const db = getDb();
   const now = new Date();
@@ -48,7 +51,8 @@ export async function createTodoInDatabase({
     .insert(todos)
     .values({
       id: randomUUID(),
-      text,
+      title,
+      text: text ?? null,
       completed: false,
       createdAt: now,
       updatedAt: now,
@@ -68,10 +72,12 @@ export async function createTodoInDatabase({
  */
 export async function updateTodoInDatabase({
   id,
+  title,
   text,
   completed,
 }: {
   id: string;
+  title?: string;
   text?: string;
   completed?: boolean;
 }): Promise<Todo | null> {
@@ -81,6 +87,9 @@ export async function updateTodoInDatabase({
     updatedAt: new Date(),
   };
 
+  if (title !== undefined) {
+    setClause.title = title;
+  }
   if (text !== undefined) {
     setClause.text = text;
   }

@@ -51,17 +51,28 @@
                         "type": "object",
                         "required": [
                           "id",
-                          "text",
+                          "title",
                           "completed",
                           "createdAt",
                           "updatedAt"
                         ],
                         "properties": {
                           "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "title": {
                             "type": "string"
                           },
                           "text": {
-                            "type": "string"
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "completed": {
                             "type": "boolean"
@@ -118,9 +129,6 @@
                     },
                     "message": {
                       "type": "string"
-                    },
-                    "requestId": {
-                      "type": "string"
                     }
                   }
                 }
@@ -141,14 +149,20 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "text"
+                  "title"
                 ],
                 "additionalProperties": false,
                 "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "pattern": ".*\\S.*"
+                  },
                   "text": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 200,
+                    "maxLength": 500,
                     "pattern": ".*\\S.*"
                   }
                 }
@@ -185,17 +199,28 @@
                   "type": "object",
                   "required": [
                     "id",
-                    "text",
+                    "title",
                     "completed",
                     "createdAt",
                     "updatedAt"
                   ],
                   "properties": {
                     "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "title": {
                       "type": "string"
                     },
                     "text": {
-                      "type": "string"
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "completed": {
                       "type": "boolean"
@@ -249,9 +274,6 @@
                     },
                     "message": {
                       "type": "string"
-                    },
-                    "requestId": {
-                      "type": "string"
                     }
                   }
                 }
@@ -283,9 +305,6 @@
                     },
                     "message": {
                       "type": "string"
-                    },
-                    "requestId": {
-                      "type": "string"
                     }
                   }
                 }
@@ -309,10 +328,16 @@
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "pattern": ".*\\S.*"
+                  },
                   "text": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 200,
+                    "maxLength": 500,
                     "pattern": ".*\\S.*"
                   },
                   "completed": {
@@ -361,17 +386,28 @@
                   "type": "object",
                   "required": [
                     "id",
-                    "text",
+                    "title",
                     "completed",
                     "createdAt",
                     "updatedAt"
                   ],
                   "properties": {
                     "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "title": {
                       "type": "string"
                     },
                     "text": {
-                      "type": "string"
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "completed": {
                       "type": "boolean"
@@ -425,9 +461,6 @@
                     },
                     "message": {
                       "type": "string"
-                    },
-                    "requestId": {
-                      "type": "string"
                     }
                   }
                 }
@@ -459,9 +492,6 @@
                     },
                     "message": {
                       "type": "string"
-                    },
-                    "requestId": {
-                      "type": "string"
                     }
                   }
                 }
@@ -492,9 +522,6 @@
                       "type": "string"
                     },
                     "message": {
-                      "type": "string"
-                    },
-                    "requestId": {
                       "type": "string"
                     }
                   }
@@ -567,9 +594,6 @@
                     },
                     "message": {
                       "type": "string"
-                    },
-                    "requestId": {
-                      "type": "string"
                     }
                   }
                 }
@@ -601,9 +625,6 @@
                     },
                     "message": {
                       "type": "string"
-                    },
-                    "requestId": {
-                      "type": "string"
                     }
                   }
                 }
@@ -634,9 +655,6 @@
                       "type": "string"
                     },
                     "message": {
-                      "type": "string"
-                    },
-                    "requestId": {
                       "type": "string"
                     }
                   }

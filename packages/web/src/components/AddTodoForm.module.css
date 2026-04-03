@@ -31,6 +31,25 @@
   border-color: var(--s-border-error);
 }
 
+.textarea {
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  border: 1px solid var(--s-border);
+  border-radius: 6px;
+  background: var(--s-bg);
+  color: var(--s-text);
+  outline: none;
+  resize: vertical;
+  margin-top: 6px;
+  transition: border-color 0.2s;
+}
+
+.textarea:focus {
+  border-color: var(--s-border-focus);
+  box-shadow: 0 0 0 2px var(--s-focus-ring);
+}
+
 .validationError {
   margin: 4px 0 0;
   font-size: 13px;

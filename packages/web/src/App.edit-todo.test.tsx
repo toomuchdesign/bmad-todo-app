@@ -10,11 +10,12 @@ import { TODO_FIXTURES } from "./test-utils";
 
 describe("App", () => {
   describe("edit todo flow", () => {
-    it("updates todo text in the list after editing and pressing Enter", async () => {
+    it("updates todo title in the list after editing and saving with Ctrl+Enter", async () => {
       const user = userEvent.setup();
       const updatedTodo: Todo = {
         id: "1",
-        text: "Buy oat milk",
+        title: "Buy oat milk",
+        text: null,
         completed: false,
         createdAt: "2026-03-01T10:00:00.000Z",
         updatedAt: "2026-03-30T10:00:00.000Z",
@@ -30,21 +31,26 @@ describe("App", () => {
       });
 
       await user.click(screen.getByRole("button", { name: "Buy milk" }));
-      const input = screen.getByRole("textbox", { name: "Edit todo text" });
-      await user.clear(input);
-      await user.type(input, "Buy oat milk{Enter}");
+      const titleInput = screen.getByRole("textbox", {
+        name: "Edit todo title",
+      });
+      await user.clear(titleInput);
+      await user.type(titleInput, "Buy oat milk");
+      // Move to textarea and save with Enter
+      await user.tab();
+      await user.keyboard("{Enter}");
 
       await waitFor(() => {
         expect(screen.getByText("Buy oat milk")).toBeInTheDocument();
       });
       expect(screen.queryByText("Buy milk")).not.toBeInTheDocument();
       expect(
-        screen.queryByRole("textbox", { name: "Edit todo text" }),
+        screen.queryByRole("textbox", { name: "Edit todo title" }),
       ).not.toBeInTheDocument();
     });
 
     describe("when pressing Escape", () => {
-      it("restores original text", async () => {
+      it("restores original title", async () => {
         const user = userEvent.setup();
         fetchMock.get("/todos", { todos: TODO_FIXTURES });
 
@@ -55,13 +61,15 @@ describe("App", () => {
         });
 
         await user.click(screen.getByRole("button", { name: "Buy milk" }));
-        const input = screen.getByRole("textbox", { name: "Edit todo text" });
+        const input = screen.getByRole("textbox", {
+          name: "Edit todo title",
+        });
         await user.clear(input);
         await user.type(input, "Something else");
         await user.keyboard("{Escape}");
 
         expect(
-          screen.queryByRole("textbox", { name: "Edit todo text" }),
+          screen.queryByRole("textbox", { name: "Edit todo title" }),
         ).not.toBeInTheDocument();
         expect(
           screen.getByRole("button", { name: "Buy milk" }),
@@ -87,16 +95,20 @@ describe("App", () => {
         });
 
         await user.click(screen.getByRole("button", { name: "Buy milk" }));
-        const input = screen.getByRole("textbox", { name: "Edit todo text" });
-        await user.clear(input);
-        await user.type(input, "Failed edit{Enter}");
+        const titleInput = screen.getByRole("textbox", {
+          name: "Edit todo title",
+        });
+        await user.clear(titleInput);
+        await user.type(titleInput, "Failed edit");
+        await user.tab();
+        await user.keyboard("{Enter}");
 
         await waitFor(() => {
           expect(screen.getByRole("alert")).toBeInTheDocument();
         });
         expect(screen.getByText("Database error")).toBeInTheDocument();
         expect(
-          screen.getByRole("textbox", { name: "Edit todo text" }),
+          screen.getByRole("textbox", { name: "Edit todo title" }),
         ).toHaveValue("Failed edit");
       });
     });

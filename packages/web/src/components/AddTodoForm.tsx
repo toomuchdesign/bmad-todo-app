@@ -1,22 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { MAX_TODO_TEXT_LENGTH } from "../contracts";
+import { MAX_TODO_TEXT_LENGTH, MAX_TODO_TITLE_LENGTH } from "../contracts";
 import styles from "./AddTodoForm.module.css";
 
 type AddTodoFormProps = {
-  onSubmit: (text: string) => Promise<boolean>;
+  onSubmit: (data: { title: string; text?: string }) => Promise<boolean>;
 };
 
-/** Form for adding a new todo with inline client-side validation. */
+/** Form for adding a new todo with title input and optional description textarea. */
 function AddTodoForm({ onSubmit }: AddTodoFormProps) {
+  const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [shouldFocus, setShouldFocus] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (shouldFocus) {
-      inputRef.current?.focus();
+      titleInputRef.current?.focus();
       setShouldFocus(false);
     }
   }, [shouldFocus]);
@@ -26,25 +27,37 @@ function AddTodoForm({ onSubmit }: AddTodoFormProps) {
   ): Promise<void> {
     e.preventDefault();
 
-    const trimmed = text.trim();
+    const trimmedTitle = title.trim();
+    const trimmedText = text.trim();
 
-    if (trimmed.length === 0) {
-      setValidationError("Todo text must not be empty.");
+    if (trimmedTitle.length === 0) {
+      setValidationError("Title must not be empty.");
       return;
     }
 
-    if (trimmed.length > MAX_TODO_TEXT_LENGTH) {
+    if (trimmedTitle.length > MAX_TODO_TITLE_LENGTH) {
       setValidationError(
-        `Todo text must be between 1 and ${MAX_TODO_TEXT_LENGTH} characters.`,
+        `Title must be between 1 and ${MAX_TODO_TITLE_LENGTH} characters.`,
+      );
+      return;
+    }
+
+    if (trimmedText.length > MAX_TODO_TEXT_LENGTH) {
+      setValidationError(
+        `Description must be ${MAX_TODO_TEXT_LENGTH} characters or fewer.`,
       );
       return;
     }
 
     setSubmitting(true);
     try {
-      const success = await onSubmit(trimmed);
+      const success = await onSubmit({
+        title: trimmedTitle,
+        ...(trimmedText && { text: trimmedText }),
+      });
 
       if (success) {
+        setTitle("");
         setText("");
         setShouldFocus(true);
       }
@@ -53,14 +66,21 @@ function AddTodoForm({ onSubmit }: AddTodoFormProps) {
     }
   }
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>): void {
+  function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>): void {
+    setTitle(e.target.value);
+    if (validationError) {
+      setValidationError(null);
+    }
+  }
+
+  function handleTextChange(e: React.ChangeEvent<HTMLTextAreaElement>): void {
     setText(e.target.value);
     if (validationError) {
       setValidationError(null);
     }
   }
 
-  const inputClassName = validationError
+  const titleClassName = validationError
     ? `${styles.input} ${styles.invalid}`
     : styles.input;
 
@@ -68,15 +88,24 @@ function AddTodoForm({ onSubmit }: AddTodoFormProps) {
     <form className={styles.form} onSubmit={handleSubmit}>
       <div className={styles.inputWrapper}>
         <input
-          ref={inputRef}
+          ref={titleInputRef}
           type="text"
-          className={inputClassName}
-          value={text}
-          onChange={handleChange}
+          className={titleClassName}
+          value={title}
+          onChange={handleTitleChange}
           placeholder="What needs to be done?"
-          aria-label="New todo text"
+          aria-label="New todo title"
           aria-describedby={validationError ? "add-todo-error" : undefined}
           disabled={submitting}
+        />
+        <textarea
+          className={styles.textarea}
+          value={text}
+          onChange={handleTextChange}
+          placeholder="Add details... (optional)"
+          aria-label="New todo description"
+          disabled={submitting}
+          rows={2}
         />
         {validationError && (
           <p

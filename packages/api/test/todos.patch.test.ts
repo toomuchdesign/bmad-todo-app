@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
-import { MAX_TODO_TEXT_LENGTH } from "shared";
+import { MAX_TODO_TEXT_LENGTH, MAX_TODO_TITLE_LENGTH } from "shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import type {
@@ -24,7 +24,7 @@ afterEach(async () => {
 });
 
 describe("PATCH /todos/:id", () => {
-  describe("valid text update", () => {
+  describe("valid title and text update", () => {
     it("returns 200 with updated todo and advanced updatedAt", async () => {
       // Arrange
       const seed = makeSeedTodo();
@@ -34,7 +34,10 @@ describe("PATCH /todos/:id", () => {
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${seed.id}`,
-        payload: { text: "  updated text  " },
+        payload: {
+          title: "  updated title  ",
+          text: "  some details  ",
+        },
       });
 
       // Assert
@@ -45,7 +48,8 @@ describe("PATCH /todos/:id", () => {
 
       expect(body).toEqual({
         id: seed.id,
-        text: "updated text",
+        title: "updated title",
+        text: "some details",
         completed: false,
         createdAt: seed.createdAt,
         updatedAt: expect.any(String),
@@ -58,7 +62,7 @@ describe("PATCH /todos/:id", () => {
       const listed = getResponse.json<GetTodosRouteResponses[200]>();
 
       expect(listed.todos).toEqual([
-        expect.objectContaining({ id: seed.id, text: "updated text" }),
+        expect.objectContaining({ id: seed.id, title: "updated title" }),
       ]);
     });
   });
@@ -83,7 +87,8 @@ describe("PATCH /todos/:id", () => {
 
       expect(body).toEqual({
         id: seed.id,
-        text: seed.text,
+        title: seed.title,
+        text: null,
         completed: true,
         createdAt: seed.createdAt,
         updatedAt: expect.any(String),
@@ -92,7 +97,7 @@ describe("PATCH /todos/:id", () => {
     });
   });
 
-  describe("valid text and completion update", () => {
+  describe("valid title and completion update", () => {
     it("returns 200 with both fields updated", async () => {
       // Arrange
       const seed = makeSeedTodo();
@@ -102,7 +107,7 @@ describe("PATCH /todos/:id", () => {
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${seed.id}`,
-        payload: { text: "new text", completed: true },
+        payload: { title: "new title", completed: true },
       });
 
       // Assert
@@ -112,7 +117,8 @@ describe("PATCH /todos/:id", () => {
 
       expect(body).toEqual({
         id: seed.id,
-        text: "new text",
+        title: "new title",
+        text: null,
         completed: true,
         createdAt: seed.createdAt,
         updatedAt: expect.any(String),
@@ -125,14 +131,14 @@ describe("PATCH /todos/:id", () => {
       expect(listed.todos).toEqual([
         expect.objectContaining({
           id: seed.id,
-          text: "new text",
+          title: "new title",
           completed: true,
         }),
       ]);
     });
   });
 
-  describe("empty or whitespace text", () => {
+  describe("empty or whitespace title", () => {
     it("returns 400 with VALIDATION_ERROR", async () => {
       // Arrange
       const seed = makeSeedTodo();
@@ -142,7 +148,32 @@ describe("PATCH /todos/:id", () => {
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${seed.id}`,
-        payload: { text: "   " },
+        payload: { title: "   " },
+      });
+
+      // Assert
+      expect(response.statusCode).toBe(400);
+
+      const body = response.json<PatchTodosRouteResponses[400]>();
+
+      expect(body).toEqual({
+        code: "VALIDATION_ERROR",
+        message: expect.any(String),
+      });
+    });
+  });
+
+  describe("title exceeding MAX_TODO_TITLE_LENGTH", () => {
+    it("returns 400 with VALIDATION_ERROR", async () => {
+      // Arrange
+      const seed = makeSeedTodo();
+      await seedTodo(seed);
+
+      // Act
+      const response = await app.inject({
+        method: "PATCH",
+        url: `/todos/${seed.id}`,
+        payload: { title: "a".repeat(MAX_TODO_TITLE_LENGTH + 1) },
       });
 
       // Assert
@@ -191,7 +222,7 @@ describe("PATCH /todos/:id", () => {
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${fakeId}`,
-        payload: { text: "whatever" },
+        payload: { title: "whatever" },
       });
 
       // Assert
@@ -218,7 +249,7 @@ describe("PATCH /todos/:id", () => {
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${seed.id}`,
-        payload: { text: "should not work" },
+        payload: { title: "should not work" },
       });
 
       // Assert
@@ -238,7 +269,7 @@ describe("PATCH /todos/:id", () => {
     injectInput: {
       method: "PATCH",
       url: `/todos/${randomUUID()}`,
-      payload: { text: "task" },
+      payload: { title: "task" },
     },
   });
 });

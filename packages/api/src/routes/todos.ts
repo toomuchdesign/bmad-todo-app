@@ -31,8 +31,11 @@ const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
       schema: postTodosRouteSchema,
     },
     async (request, reply) => {
+      const { title, text } = request.body;
+
       const todo = await createTodoInDatabase({
-        text: request.body.text.trim(),
+        title: title.trim(),
+        ...(text !== undefined && { text: text.trim() }),
       });
 
       return reply.code(201).send(todo);
@@ -46,10 +49,11 @@ const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
     },
     async (request, reply) => {
       const { id } = request.params;
-      const { text, completed } = request.body;
+      const { title, text, completed } = request.body;
 
       const todo = await updateTodoInDatabase({
         id,
+        ...(title !== undefined && { title: title.trim() }),
         ...(text !== undefined && { text: text.trim() }),
         ...(completed !== undefined && { completed }),
       });

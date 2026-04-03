@@ -34,8 +34,10 @@ export interface paths {
                     content: {
                         "application/json": {
                             todos: {
+                                /** Format: uuid */
                                 id: string;
-                                text: string;
+                                title: string;
+                                text?: string | null;
                                 completed: boolean;
                                 /** Format: date-time */
                                 createdAt: string;
@@ -57,7 +59,6 @@ export interface paths {
                         "application/json": {
                             code: string;
                             message: string;
-                            requestId?: string;
                         };
                     };
                 };
@@ -78,7 +79,8 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        text: string;
+                        title: string;
+                        text?: string;
                     };
                 };
             };
@@ -92,8 +94,10 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            /** Format: uuid */
                             id: string;
-                            text: string;
+                            title: string;
+                            text?: string | null;
                             completed: boolean;
                             /** Format: date-time */
                             createdAt: string;
@@ -114,7 +118,6 @@ export interface paths {
                         "application/json": {
                             code: string;
                             message: string;
-                            requestId?: string;
                         };
                     };
                 };
@@ -129,7 +132,6 @@ export interface paths {
                         "application/json": {
                             code: string;
                             message: string;
-                            requestId?: string;
                         };
                     };
                 };
@@ -186,7 +188,6 @@ export interface paths {
                         "application/json": {
                             code: string;
                             message: string;
-                            requestId?: string;
                         };
                     };
                 };
@@ -201,7 +202,6 @@ export interface paths {
                         "application/json": {
                             code: string;
                             message: string;
-                            requestId?: string;
                         };
                     };
                 };
@@ -216,7 +216,6 @@ export interface paths {
                         "application/json": {
                             code: string;
                             message: string;
-                            requestId?: string;
                         };
                     };
                 };
@@ -240,6 +239,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
+                        title?: string;
                         text?: string;
                         completed?: boolean;
                     };
@@ -255,8 +255,10 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            /** Format: uuid */
                             id: string;
-                            text: string;
+                            title: string;
+                            text?: string | null;
                             completed: boolean;
                             /** Format: date-time */
                             createdAt: string;
@@ -277,7 +279,6 @@ export interface paths {
                         "application/json": {
                             code: string;
                             message: string;
-                            requestId?: string;
                         };
                     };
                 };
@@ -292,7 +293,6 @@ export interface paths {
                         "application/json": {
                             code: string;
                             message: string;
-                            requestId?: string;
                         };
                     };
                 };
@@ -307,7 +307,6 @@ export interface paths {
                         "application/json": {
                             code: string;
                             message: string;
-                            requestId?: string;
                         };
                     };
                 };

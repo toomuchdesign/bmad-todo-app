@@ -11,7 +11,8 @@ import { createDeferred, TODO_FIXTURES } from "./test-utils";
 function makeTodo(overrides: Partial<Todo>): Todo {
   return {
     id: "1",
-    text: "Buy milk",
+    title: "Buy milk",
+    text: null,
     completed: false,
     createdAt: "2026-03-01T10:00:00.000Z",
     updatedAt: "2026-03-01T10:00:00.000Z",
@@ -34,7 +35,8 @@ describe("App", () => {
 
       const toggledSecond = makeTodo({
         id: "2",
-        text: "Walk the dog",
+        title: "Walk the dog",
+        text: "Take the usual route through the park",
         completed: false,
         createdAt: "2026-03-02T12:00:00.000Z",
         updatedAt: "2026-04-01T10:00:00.000Z",
@@ -196,17 +198,17 @@ describe("App", () => {
       });
     });
 
-    describe("edit text then toggle same todo", () => {
+    describe("edit title then toggle same todo", () => {
       it("both changes applied after sequential resolution", async () => {
         const user = userEvent.setup();
         let patchCallCount = 0;
 
         const editedTodo = makeTodo({
-          text: "Buy oat milk",
+          title: "Buy oat milk",
           updatedAt: "2026-04-01T10:00:00.000Z",
         });
         const toggledTodo = makeTodo({
-          text: "Buy oat milk",
+          title: "Buy oat milk",
           completed: true,
           updatedAt: "2026-04-01T11:00:00.000Z",
         });
@@ -224,11 +226,15 @@ describe("App", () => {
           expect(screen.getByText("Buy milk")).toBeInTheDocument();
         });
 
-        // Edit text
+        // Edit title
         await user.click(screen.getByRole("button", { name: "Buy milk" }));
-        const input = screen.getByRole("textbox", { name: "Edit todo text" });
-        await user.clear(input);
-        await user.type(input, "Buy oat milk{Enter}");
+        const titleInput = screen.getByRole("textbox", {
+          name: "Edit todo title",
+        });
+        await user.clear(titleInput);
+        await user.type(titleInput, "Buy oat milk");
+        await user.tab();
+        await user.keyboard("{Enter}");
 
         await waitFor(() => {
           expect(screen.getByText("Buy oat milk")).toBeInTheDocument();
@@ -264,7 +270,8 @@ describe("App", () => {
 
         const toggledSecond = makeTodo({
           id: "2",
-          text: "Walk the dog",
+          title: "Walk the dog",
+          text: "Take the usual route through the park",
           completed: false,
           createdAt: "2026-03-02T12:00:00.000Z",
           updatedAt: "2026-04-01T10:00:00.000Z",

@@ -3,14 +3,24 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Todo } from "shared";
-import { MAX_TODO_TEXT_LENGTH } from "shared";
+import { MAX_TODO_TITLE_LENGTH } from "shared";
 import { describe, expect, it, vi } from "vitest";
 import type { TodoUpdatableFields } from "../hooks/useTodos";
 import { TodoItem } from "./TodoItem";
 
 const incompleteTodo: Todo = {
   id: "1",
-  text: "Buy milk",
+  title: "Buy milk",
+  text: null,
+  completed: false,
+  createdAt: "2026-03-01T10:00:00.000Z",
+  updatedAt: "2026-03-01T10:00:00.000Z",
+};
+
+const incompleteTodoWithDescription: Todo = {
+  id: "1",
+  title: "Buy milk",
+  text: "Whole milk from the store",
   completed: false,
   createdAt: "2026-03-01T10:00:00.000Z",
   updatedAt: "2026-03-01T10:00:00.000Z",
@@ -18,7 +28,8 @@ const incompleteTodo: Todo = {
 
 const completedTodo: Todo = {
   id: "2",
-  text: "Walk the dog",
+  title: "Walk the dog",
+  text: "Take the usual route through the park",
   completed: true,
   createdAt: "2026-03-02T12:00:00.000Z",
   updatedAt: "2026-03-02T14:00:00.000Z",
@@ -26,7 +37,7 @@ const completedTodo: Todo = {
 
 function renderTodoItem(
   overrides: {
-    todo?: typeof incompleteTodo;
+    todo?: Todo;
     onUpdate?: (id: string, fields: TodoUpdatableFields) => Promise<boolean>;
     onDelete?: (id: string) => Promise<boolean>;
   } = {},
@@ -42,11 +53,11 @@ function renderTodoItem(
 
 describe("TodoItem", () => {
   describe("read-only mode", () => {
-    it("renders todo text as a clickable button by default", () => {
+    it("renders todo title as a clickable button by default", () => {
       renderTodoItem();
 
       expect(
-        screen.getByRole("button", { name: incompleteTodo.text }),
+        screen.getByRole("button", { name: incompleteTodo.title }),
       ).toBeInTheDocument();
     });
 
@@ -67,136 +78,226 @@ describe("TodoItem", () => {
         ),
       ).toBeInTheDocument();
     });
+
+    it("renders description text when present", () => {
+      renderTodoItem({ todo: incompleteTodoWithDescription });
+
+      expect(screen.getByText("Whole milk from the store")).toBeInTheDocument();
+    });
+
+    it("does not render description when text is null", () => {
+      renderTodoItem({ todo: incompleteTodo });
+
+      expect(
+        screen.queryByText("Whole milk from the store"),
+      ).not.toBeInTheDocument();
+    });
   });
 
   describe("entering edit mode", () => {
-    it("shows an input with current text", async () => {
+    it("shows title input and description textarea with current values", async () => {
       const user = userEvent.setup();
-      renderTodoItem();
+      renderTodoItem({ todo: incompleteTodoWithDescription });
 
       await user.click(
-        screen.getByRole("button", { name: incompleteTodo.text }),
+        screen.getByRole("button", {
+          name: incompleteTodoWithDescription.title,
+        }),
       );
 
-      const input = screen.getByRole("textbox", { name: "Edit todo text" });
-      expect(input).toBeInTheDocument();
-      expect(input).toHaveValue(incompleteTodo.text);
-      expect(input).toHaveFocus();
+      const titleInput = screen.getByRole("textbox", {
+        name: "Edit todo title",
+      });
+      const textInput = screen.getByRole("textbox", {
+        name: "Edit todo description",
+      });
+      expect(titleInput).toBeInTheDocument();
+      expect(titleInput).toHaveValue(incompleteTodoWithDescription.title);
+      expect(titleInput).toHaveFocus();
+      expect(textInput).toHaveValue(incompleteTodoWithDescription.text);
     });
   });
 
   describe("cancelling edit with Escape", () => {
-    it("restores original text and exits edit mode", async () => {
+    it("restores original title and exits edit mode", async () => {
       const user = userEvent.setup();
       renderTodoItem();
 
       await user.click(
-        screen.getByRole("button", { name: incompleteTodo.text }),
+        screen.getByRole("button", { name: incompleteTodo.title }),
       );
-      const input = screen.getByRole("textbox", { name: "Edit todo text" });
+      const input = screen.getByRole("textbox", { name: "Edit todo title" });
       await user.clear(input);
-      await user.type(input, "Changed text");
+      await user.type(input, "Changed title");
       await user.keyboard("{Escape}");
 
-      expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: incompleteTodo.text }),
+        screen.queryByRole("textbox", { name: "Edit todo title" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: incompleteTodo.title }),
       ).toBeInTheDocument();
     });
   });
 
-  describe("saving with Enter", () => {
-    it("calls onUpdate with text field for valid changed text", async () => {
+  describe("saving with Enter in textarea", () => {
+    it("calls onUpdate with title and text fields", async () => {
       const user = userEvent.setup();
       const onUpdate = vi.fn().mockResolvedValue(true);
       renderTodoItem({ onUpdate });
 
       await user.click(
-        screen.getByRole("button", { name: incompleteTodo.text }),
+        screen.getByRole("button", { name: incompleteTodo.title }),
       );
-      const input = screen.getByRole("textbox", { name: "Edit todo text" });
-      await user.clear(input);
-      await user.type(input, "Updated text{Enter}");
+      const titleInput = screen.getByRole("textbox", {
+        name: "Edit todo title",
+      });
+      const textInput = screen.getByRole("textbox", {
+        name: "Edit todo description",
+      });
+      await user.clear(titleInput);
+      await user.type(titleInput, "Updated title");
+      await user.click(textInput);
+      await user.type(textInput, "Some details");
+      await user.keyboard("{Enter}");
 
       expect(onUpdate).toHaveBeenCalledWith(incompleteTodo.id, {
-        text: "Updated text",
+        title: "Updated title",
+        text: "Some details",
       });
+    });
+  });
+
+  describe("Ctrl+Enter in textarea", () => {
+    it("inserts a newline instead of saving", async () => {
+      const user = userEvent.setup();
+      const onUpdate = vi.fn().mockResolvedValue(true);
+      renderTodoItem({ onUpdate });
+
+      await user.click(
+        screen.getByRole("button", { name: incompleteTodo.title }),
+      );
+      const textInput = screen.getByRole("textbox", {
+        name: "Edit todo description",
+      });
+      await user.click(textInput);
+      await user.type(textInput, "Line one");
+      await user.keyboard("{Control>}{Enter}{/Control}");
+      await user.type(textInput, "Line two");
+
+      expect(textInput).toHaveValue("Line one\nLine two");
+      expect(onUpdate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Enter in title input", () => {
+    it("moves focus to textarea instead of saving", async () => {
+      const user = userEvent.setup();
+      const onUpdate = vi.fn().mockResolvedValue(true);
+      renderTodoItem({ onUpdate });
+
+      await user.click(
+        screen.getByRole("button", { name: incompleteTodo.title }),
+      );
+      await user.keyboard("{Enter}");
+
+      const textInput = screen.getByRole("textbox", {
+        name: "Edit todo description",
+      });
+      expect(textInput).toHaveFocus();
+      expect(onUpdate).not.toHaveBeenCalled();
     });
   });
 
   describe("saving with blur (click-outside)", () => {
-    it("calls onUpdate with text field for valid changed text", async () => {
+    it("calls onUpdate when focus leaves edit wrapper", async () => {
       const user = userEvent.setup();
       const onUpdate = vi.fn().mockResolvedValue(true);
       renderTodoItem({ onUpdate });
 
       await user.click(
-        screen.getByRole("button", { name: incompleteTodo.text }),
+        screen.getByRole("button", { name: incompleteTodo.title }),
       );
-      const input = screen.getByRole("textbox", { name: "Edit todo text" });
-      await user.clear(input);
-      await user.type(input, "Blurred text");
-      await user.tab();
+      const titleInput = screen.getByRole("textbox", {
+        name: "Edit todo title",
+      });
+      await user.clear(titleInput);
+      await user.type(titleInput, "Blurred title");
+
+      // Tab past textarea to leave the edit wrapper
+      await user.tab(); // focus textarea
+      await user.tab(); // focus outside
 
       expect(onUpdate).toHaveBeenCalledWith(incompleteTodo.id, {
-        text: "Blurred text",
+        title: "Blurred title",
       });
     });
   });
 
-  describe("unchanged text", () => {
+  describe("unchanged values", () => {
     it("exits edit mode without API call", async () => {
       const user = userEvent.setup();
       const onUpdate = vi.fn().mockResolvedValue(true);
       renderTodoItem({ onUpdate });
 
       await user.click(
-        screen.getByRole("button", { name: incompleteTodo.text }),
+        screen.getByRole("button", { name: incompleteTodo.title }),
       );
+      // Press Enter to move to textarea, then Enter to save without changes
+      await user.keyboard("{Enter}");
       await user.keyboard("{Enter}");
 
       expect(onUpdate).not.toHaveBeenCalled();
-      expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("textbox", { name: "Edit todo title" }),
+      ).not.toBeInTheDocument();
     });
   });
 
   describe("inline validation", () => {
-    describe("on Enter", () => {
-      it("shows error for empty text", async () => {
+    describe("on save attempt", () => {
+      it("shows error for empty title", async () => {
         const user = userEvent.setup();
         const onUpdate = vi.fn();
         renderTodoItem({ onUpdate });
 
         await user.click(
-          screen.getByRole("button", { name: incompleteTodo.text }),
+          screen.getByRole("button", { name: incompleteTodo.title }),
         );
-        const input = screen.getByRole("textbox", { name: "Edit todo text" });
+        const input = screen.getByRole("textbox", {
+          name: "Edit todo title",
+        });
         await user.clear(input);
+        // Move to textarea and Enter to trigger save
+        await user.tab();
         await user.keyboard("{Enter}");
 
         expect(
-          screen.getByText("Todo text must not be empty."),
+          screen.getByText("Title must not be empty."),
         ).toBeInTheDocument();
         expect(input).toBeInTheDocument();
         expect(onUpdate).not.toHaveBeenCalled();
       });
 
-      it("shows error for too-long text", async () => {
+      it("shows error for too-long title", async () => {
         const user = userEvent.setup();
         const onUpdate = vi.fn();
         renderTodoItem({ onUpdate });
 
         await user.click(
-          screen.getByRole("button", { name: incompleteTodo.text }),
+          screen.getByRole("button", { name: incompleteTodo.title }),
         );
-        const input = screen.getByRole("textbox", { name: "Edit todo text" });
+        const input = screen.getByRole("textbox", {
+          name: "Edit todo title",
+        });
         await user.clear(input);
-        await user.type(input, "a".repeat(MAX_TODO_TEXT_LENGTH + 1));
+        await user.type(input, "a".repeat(MAX_TODO_TITLE_LENGTH + 1));
+        await user.tab();
         await user.keyboard("{Enter}");
 
         expect(
           screen.getByText(
-            `Todo text must be between 1 and ${MAX_TODO_TEXT_LENGTH} characters.`,
+            `Title must be between 1 and ${MAX_TODO_TITLE_LENGTH} characters.`,
           ),
         ).toBeInTheDocument();
         expect(input).toBeInTheDocument();
@@ -206,39 +307,51 @@ describe("TodoItem", () => {
   });
 
   describe("save failure", () => {
-    it("keeps edit mode open with typed text preserved", async () => {
+    it("keeps edit mode open with typed values preserved", async () => {
       const user = userEvent.setup();
       const onUpdate = vi.fn().mockResolvedValue(false);
       renderTodoItem({ onUpdate });
 
       await user.click(
-        screen.getByRole("button", { name: incompleteTodo.text }),
+        screen.getByRole("button", { name: incompleteTodo.title }),
       );
-      const input = screen.getByRole("textbox", { name: "Edit todo text" });
-      await user.clear(input);
-      await user.type(input, "Failed save{Enter}");
+      const titleInput = screen.getByRole("textbox", {
+        name: "Edit todo title",
+      });
+      await user.clear(titleInput);
+      await user.type(titleInput, "Failed save");
+      await user.tab();
+      await user.keyboard("{Enter}");
 
       await waitFor(() => {
         expect(onUpdate).toHaveBeenCalled();
       });
 
       expect(
-        screen.getByRole("textbox", { name: "Edit todo text" }),
+        screen.getByRole("textbox", { name: "Edit todo title" }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("textbox", { name: "Edit todo text" }),
+        screen.getByRole("textbox", { name: "Edit todo title" }),
       ).toHaveValue("Failed save");
     });
   });
 
   describe("completed todo", () => {
-    it("renders text as non-clickable span", () => {
+    it("renders title as non-clickable span", () => {
       renderTodoItem({ todo: completedTodo });
 
       expect(
-        screen.queryByRole("button", { name: completedTodo.text }),
+        screen.queryByRole("button", { name: completedTodo.title }),
       ).not.toBeInTheDocument();
-      expect(screen.getByText(completedTodo.text)).toBeInTheDocument();
+      expect(screen.getByText(completedTodo.title)).toBeInTheDocument();
+    });
+
+    it("renders description when present", () => {
+      renderTodoItem({ todo: completedTodo });
+
+      expect(
+        screen.getByText(completedTodo.text as string),
+      ).toBeInTheDocument();
     });
 
     it("renders with checked checkbox", () => {
@@ -268,7 +381,7 @@ describe("TodoItem", () => {
       renderTodoItem();
 
       const button = screen.getByRole("button", {
-        name: `Delete ${incompleteTodo.text}`,
+        name: `Delete ${incompleteTodo.title}`,
       });
       expect(button).toBeInTheDocument();
       expect(button).toBeEnabled();
@@ -280,7 +393,9 @@ describe("TodoItem", () => {
       renderTodoItem({ onDelete });
 
       await user.click(
-        screen.getByRole("button", { name: `Delete ${incompleteTodo.text}` }),
+        screen.getByRole("button", {
+          name: `Delete ${incompleteTodo.title}`,
+        }),
       );
 
       expect(onDelete).toHaveBeenCalledWith(incompleteTodo.id);

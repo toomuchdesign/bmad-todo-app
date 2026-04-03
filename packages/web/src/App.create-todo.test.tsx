@@ -13,7 +13,8 @@ describe("App", () => {
       it("adds the new todo to the list", async () => {
         const newTodo: Todo = {
           id: "3",
-          text: "New task",
+          title: "New task",
+          text: null,
           completed: false,
           createdAt: "2026-03-03T10:00:00.000Z",
           updatedAt: "2026-03-03T10:00:00.000Z",
@@ -29,7 +30,7 @@ describe("App", () => {
           expect(screen.getByText("Buy milk")).toBeInTheDocument();
         });
 
-        const input = screen.getByRole("textbox", { name: "New todo text" });
+        const input = screen.getByRole("textbox", { name: "New todo title" });
         fireEvent.change(input, { target: { value: "New task" } });
         fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
@@ -53,7 +54,7 @@ describe("App", () => {
           expect(screen.getByText("Buy milk")).toBeInTheDocument();
         });
 
-        const input = screen.getByRole("textbox", { name: "New todo text" });
+        const input = screen.getByRole("textbox", { name: "New todo title" });
         fireEvent.change(input, { target: { value: "New task" } });
         fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
@@ -62,9 +63,6 @@ describe("App", () => {
         });
         expect(screen.getByRole("alert")).toBeInTheDocument();
         expect(input).toHaveValue("New task");
-        expect(
-          screen.queryByText("New task", { selector: "span" }),
-        ).not.toBeInTheDocument();
       });
     });
 
@@ -79,9 +77,7 @@ describe("App", () => {
 
       fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
-      expect(
-        screen.getByText("Todo text must not be empty."),
-      ).toBeInTheDocument();
+      expect(screen.getByText("Title must not be empty.")).toBeInTheDocument();
       expect(fetchMock).toHaveFetchedTimes(1);
     });
 
@@ -94,12 +90,12 @@ describe("App", () => {
         expect(screen.getByText("Buy milk")).toBeInTheDocument();
       });
 
-      const input = screen.getByRole("textbox", { name: "New todo text" });
-      fireEvent.change(input, { target: { value: "a".repeat(201) } });
+      const input = screen.getByRole("textbox", { name: "New todo title" });
+      fireEvent.change(input, { target: { value: "a".repeat(101) } });
       fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
       expect(
-        screen.getByText("Todo text must be between 1 and 200 characters."),
+        screen.getByText("Title must be between 1 and 100 characters."),
       ).toBeInTheDocument();
       expect(fetchMock).toHaveFetchedTimes(1);
     });

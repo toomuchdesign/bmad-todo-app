@@ -2,6 +2,7 @@ import type { FromSchema, JSONSchema } from "json-schema-to-ts";
 import {
   apiErrorResponseSchema,
   MAX_TODO_TEXT_LENGTH,
+  MAX_TODO_TITLE_LENGTH,
   todoSchema,
 } from "shared";
 
@@ -71,9 +72,15 @@ export const postTodosRouteSchema = {
   headers: requestHeadersSchema,
   body: {
     type: "object",
-    required: ["text"],
+    required: ["title"],
     additionalProperties: false,
     properties: {
+      title: {
+        type: "string",
+        minLength: 1,
+        maxLength: MAX_TODO_TITLE_LENGTH,
+        pattern: ".*\\S.*",
+      },
       text: {
         type: "string",
         minLength: 1,
@@ -111,6 +118,12 @@ export const patchTodosRouteSchema = {
     type: "object",
     additionalProperties: false,
     properties: {
+      title: {
+        type: "string",
+        minLength: 1,
+        maxLength: MAX_TODO_TITLE_LENGTH,
+        pattern: ".*\\S.*",
+      },
       text: {
         type: "string",
         minLength: 1,

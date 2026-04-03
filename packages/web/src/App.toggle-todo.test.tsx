@@ -14,7 +14,8 @@ describe("App", () => {
       const user = userEvent.setup();
       const toggledTodo: Todo = {
         id: "1",
-        text: "Buy milk",
+        title: "Buy milk",
+        text: null,
         completed: true,
         createdAt: "2026-03-01T10:00:00.000Z",
         updatedAt: "2026-03-30T10:00:00.000Z",

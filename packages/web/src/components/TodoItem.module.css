@@ -1,7 +1,9 @@
 .item {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
   align-items: center;
-  gap: 12px;
   padding: 12px 16px;
   border-bottom: 1px solid var(--s-border);
 }
@@ -11,10 +13,11 @@
 }
 
 .checkbox {
+  grid-column: 1;
+  grid-row: 1;
   padding: 8px;
   margin: -8px 0;
   cursor: pointer;
-  flex-shrink: 0;
 }
 
 .checkbox:disabled {
@@ -22,20 +25,24 @@
 }
 
 .text {
-  flex: 1;
+  grid-column: 2;
+  grid-row: 1;
   text-align: left;
   color: var(--s-text-heading);
   font-size: 16px;
+  min-width: 0;
 }
 
 .textButton {
   all: unset;
-  flex: 1;
+  grid-column: 2;
+  grid-row: 1;
   text-align: left;
   color: var(--s-text-heading);
   font-size: 16px;
   cursor: pointer;
   border-radius: 4px;
+  min-width: 0;
 }
 
 .textButton:focus-visible {
@@ -48,6 +55,14 @@
   opacity: 0.6;
 }
 
+.actions {
+  grid-column: 3;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .timestamp {
   font-size: 12px;
   color: var(--s-text);
@@ -55,13 +70,23 @@
   white-space: nowrap;
 }
 
+.description {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  font-size: 0.875rem;
+  color: var(--s-text);
+  opacity: 0.7;
+  margin-top: 2px;
+  text-align: left;
+}
+
 .editWrapper {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+  grid-column: 2;
+  grid-row: 1;
 }
 
 .editInput {
+  width: 100%;
   padding: 6px 8px;
   font-size: 16px;
   border: 1px solid var(--s-border-focus);
@@ -69,6 +94,7 @@
   background: var(--s-bg);
   color: var(--s-text-heading);
   outline: none;
+  box-sizing: border-box;
 }
 
 .editInput:focus {
@@ -77,6 +103,32 @@
 
 .editInput.invalid {
   border-color: var(--s-border-error);
+}
+
+.editDescriptionRow {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+}
+
+.editTextarea {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 14px;
+  font-family: inherit;
+  border: 1px solid var(--s-border-focus);
+  border-radius: 4px;
+  background: var(--s-bg);
+  color: var(--s-text);
+  outline: none;
+  resize: vertical;
+  margin-top: 4px;
+  box-sizing: border-box;
+}
+
+.editTextarea:focus {
+  box-shadow: 0 0 0 2px var(--s-focus-ring);
 }
 
 .validationError {
@@ -93,7 +145,6 @@
   background: var(--s-bg);
   color: var(--s-text);
   cursor: pointer;
-  flex-shrink: 0;
 }
 
 .deleteButton:hover:not(:disabled) {

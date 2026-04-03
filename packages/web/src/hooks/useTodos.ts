@@ -4,14 +4,14 @@ import type { ApiResponses } from "../contracts";
 import { type TODO_BY_ID_API_PATH, TODOS_API_PATH } from "../contracts";
 import { HttpError, httpClient } from "../utils";
 
-type TodoUpdatableFields = Partial<Pick<Todo, "text" | "completed">>;
+type TodoUpdatableFields = Partial<Pick<Todo, "title" | "text" | "completed">>;
 
 type UseTodosResult = {
   todos: Todo[];
   loading: boolean;
   error: string | null;
   retry: () => void;
-  createTodo: (text: string) => Promise<boolean>;
+  createTodo: (data: { title: string; text?: string }) => Promise<boolean>;
   updateTodo: (id: string, fields: TodoUpdatableFields) => Promise<boolean>;
   deleteTodo: (id: string) => Promise<boolean>;
 };
@@ -85,13 +85,19 @@ function useTodos(): UseTodosResult {
   }
 
   /** Creates a new todo via POST. Returns true on success, false on failure. */
-  async function createTodo(text: string): Promise<boolean> {
+  async function createTodo({
+    title,
+    text,
+  }: {
+    title: string;
+    text?: string;
+  }): Promise<boolean> {
     setError(null);
 
     try {
       const created = await httpClient.post<
         ApiResponses<typeof TODOS_API_PATH, "post">["201"]
-      >(TODOS_API_PATH, { body: { text } });
+      >(TODOS_API_PATH, { body: { title, ...(text && { text }) } });
       setTodos((prev) => [created, ...prev]);
       return true;
     } catch (err) {

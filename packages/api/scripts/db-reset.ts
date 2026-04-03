@@ -6,5 +6,4 @@
  * so that it can safely target any environment (dev, test, CI).
  */
 const { cleanupTestDatabase } = await import("../test/test-utils/index.js");
-
 await cleanupTestDatabase();

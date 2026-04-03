@@ -8,6 +8,13 @@
       "when": 1774646719942,
       "tag": "0000_omniscient_eternals",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1743638400000,
+      "tag": "0001_rename_text_to_title_add_text",
+      "breakpoints": true
     }
   ]
 }

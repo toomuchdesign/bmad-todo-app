@@ -1,4 +1,4 @@
-export { MAX_TODO_TEXT_LENGTH } from "./constants.js";
+export { MAX_TODO_TEXT_LENGTH, MAX_TODO_TITLE_LENGTH } from "./constants.js";
 export {
   type ApiErrorResponse,
   apiErrorResponseSchema,

@@ -23,20 +23,20 @@ describe("GET /todos", () => {
     // Arrange
     const olderActive = makeSeedTodo({
       id: "11111111-1111-1111-1111-111111111111",
-      text: "older active",
+      title: "older active",
       createdAt: "2026-03-01T10:00:00.000Z",
       updatedAt: "2026-03-01T10:00:00.000Z",
     });
     const deletedTodo = makeSeedTodo({
       id: "22222222-2222-2222-2222-222222222222",
-      text: "deleted should be excluded",
+      title: "deleted should be excluded",
       createdAt: "2026-03-02T10:00:00.000Z",
       updatedAt: "2026-03-02T10:00:00.000Z",
       deletedAt: "2026-03-03T10:00:00.000Z",
     });
     const newerActive = makeSeedTodo({
       id: "33333333-3333-3333-3333-333333333333",
-      text: "newer active",
+      title: "newer active",
       completed: true,
       createdAt: "2026-03-04T10:00:00.000Z",
       updatedAt: "2026-03-04T10:00:00.000Z",
@@ -62,7 +62,8 @@ describe("GET /todos", () => {
       todos: [
         {
           id: "33333333-3333-3333-3333-333333333333",
-          text: "newer active",
+          title: "newer active",
+          text: null,
           completed: true,
           createdAt: "2026-03-04T10:00:00.000Z",
           updatedAt: "2026-03-04T10:00:00.000Z",
@@ -70,7 +71,8 @@ describe("GET /todos", () => {
         },
         {
           id: "11111111-1111-1111-1111-111111111111",
-          text: "older active",
+          title: "older active",
+          text: null,
           completed: false,
           createdAt: "2026-03-01T10:00:00.000Z",
           updatedAt: "2026-03-01T10:00:00.000Z",

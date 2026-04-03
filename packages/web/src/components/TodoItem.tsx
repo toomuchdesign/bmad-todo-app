@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Todo } from "shared";
-import { MAX_TODO_TEXT_LENGTH } from "../contracts";
+import { MAX_TODO_TEXT_LENGTH, MAX_TODO_TITLE_LENGTH } from "../contracts";
 import type { TodoUpdatableFields } from "../hooks/useTodos";
 import styles from "./TodoItem.module.css";
 
@@ -13,17 +13,19 @@ type TodoItemProps = {
 /** Renders a single todo item with inline edit support. */
 function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
   const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
   const [editText, setEditText] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
   const [shouldFocus, setShouldFocus] = useState(false);
   const savingRef = useRef(false);
   const cancelledRef = useRef(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (shouldFocus && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
+    if (shouldFocus && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
       setShouldFocus(false);
     }
   }, [shouldFocus]);
@@ -32,7 +34,8 @@ function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
     if (todo.completed) return;
     cancelledRef.current = false;
     setEditing(true);
-    setEditText(todo.text);
+    setEditTitle(todo.title);
+    setEditText(todo.text ?? "");
     setValidationError(null);
     setShouldFocus(true);
   }
@@ -40,35 +43,53 @@ function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
   function cancelEdit(): void {
     cancelledRef.current = true;
     setEditing(false);
-    setEditText(todo.text);
+    setEditTitle(todo.title);
+    setEditText(todo.text ?? "");
     setValidationError(null);
   }
 
   async function saveEdit(): Promise<void> {
     if (savingRef.current) return;
 
-    const trimmed = editText.trim();
+    const trimmedTitle = editTitle.trim();
+    const trimmedText = editText.trim();
 
-    if (trimmed.length === 0) {
-      setValidationError("Todo text must not be empty.");
+    if (trimmedTitle.length === 0) {
+      setValidationError("Title must not be empty.");
       return;
     }
 
-    if (trimmed.length > MAX_TODO_TEXT_LENGTH) {
+    if (trimmedTitle.length > MAX_TODO_TITLE_LENGTH) {
       setValidationError(
-        `Todo text must be between 1 and ${MAX_TODO_TEXT_LENGTH} characters.`,
+        `Title must be between 1 and ${MAX_TODO_TITLE_LENGTH} characters.`,
       );
       return;
     }
 
-    if (trimmed === todo.text) {
+    if (trimmedText.length > MAX_TODO_TEXT_LENGTH) {
+      setValidationError(
+        `Description must be ${MAX_TODO_TEXT_LENGTH} characters or fewer.`,
+      );
+      return;
+    }
+
+    const newText = trimmedText || null;
+    if (trimmedTitle === todo.title && newText === (todo.text ?? null)) {
       setEditing(false);
       return;
     }
 
     savingRef.current = true;
     try {
-      const success = await onUpdate(todo.id, { text: trimmed });
+      const fields: TodoUpdatableFields = {};
+      if (trimmedTitle !== todo.title) {
+        fields.title = trimmedTitle;
+      }
+      if (newText !== null && newText !== (todo.text ?? null)) {
+        fields.text = newText;
+      }
+
+      const success = await onUpdate(todo.id, fields);
 
       if (success) {
         setEditing(false);
@@ -79,34 +100,73 @@ function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
     }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
+  function handleTitleKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
     if (e.key === "Enter") {
+      e.preventDefault();
+      textareaRef.current?.focus();
+    } else if (e.key === "Escape") {
+      cancelEdit();
+    }
+  }
+
+  function handleTextareaKeyDown(
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+  ): void {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      const { selectionStart, selectionEnd } = e.currentTarget;
+      const before = editText.slice(0, selectionStart);
+      const after = editText.slice(selectionEnd);
+      const newCursor = selectionStart + 1;
+      setEditText(`${before}\n${after}`);
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.selectionStart = newCursor;
+          textareaRef.current.selectionEnd = newCursor;
+        }
+      }, 0);
+      return;
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
       saveEdit();
     } else if (e.key === "Escape") {
       cancelEdit();
     }
   }
 
-  function handleBlur(): void {
+  function handleBlur(e: React.FocusEvent<HTMLElement>): void {
     if (cancelledRef.current) {
       cancelledRef.current = false;
+      return;
+    }
+    // Only save if focus moves away from both edit inputs
+    const target = e.relatedTarget;
+    if (target === titleInputRef.current || target === textareaRef.current) {
       return;
     }
     saveEdit();
   }
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>): void {
+  function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>): void {
+    setEditTitle(e.target.value);
+    if (validationError) {
+      setValidationError(null);
+    }
+  }
+
+  function handleTextChange(e: React.ChangeEvent<HTMLTextAreaElement>): void {
     setEditText(e.target.value);
     if (validationError) {
       setValidationError(null);
     }
   }
 
-  const textClassName = todo.completed
+  const titleClassName = todo.completed
     ? `${styles.text} ${styles.completed}`
     : styles.text;
 
-  const editInputClassName = validationError
+  const editTitleClassName = validationError
     ? `${styles.editInput} ${styles.invalid}`
     : styles.editInput;
 
@@ -117,49 +177,71 @@ function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
         className={styles.checkbox}
         checked={todo.completed}
         onChange={() => onUpdate(todo.id, { completed: !todo.completed })}
-        aria-label={`${todo.text} – ${todo.completed ? "completed" : "not completed"}`}
+        aria-label={`${todo.title} – ${todo.completed ? "completed" : "not completed"}`}
       />
       {editing ? (
-        <div className={styles.editWrapper}>
-          <input
-            ref={inputRef}
-            type="text"
-            className={editInputClassName}
-            value={editText}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            onBlur={handleBlur}
-            aria-label="Edit todo text"
-            aria-invalid={!!validationError}
-          />
-          {validationError && (
-            <p className={styles.validationError} aria-live="polite">
-              {validationError}
-            </p>
-          )}
-        </div>
-      ) : todo.completed ? (
-        <span className={textClassName}>{todo.text}</span>
+        <>
+          <div className={styles.editWrapper}>
+            <input
+              ref={titleInputRef}
+              type="text"
+              className={editTitleClassName}
+              value={editTitle}
+              onChange={handleTitleChange}
+              onKeyDown={handleTitleKeyDown}
+              onBlur={handleBlur}
+              aria-label="Edit todo title"
+              aria-invalid={!!validationError}
+            />
+          </div>
+          <div className={styles.editDescriptionRow}>
+            <textarea
+              ref={textareaRef}
+              className={styles.editTextarea}
+              value={editText}
+              onChange={handleTextChange}
+              onKeyDown={handleTextareaKeyDown}
+              onBlur={handleBlur}
+              aria-label="Edit todo description"
+              placeholder="Add details... (optional)"
+              rows={2}
+            />
+            {validationError && (
+              <p className={styles.validationError} aria-live="polite">
+                {validationError}
+              </p>
+            )}
+          </div>
+        </>
       ) : (
+        <>
+          {todo.completed ? (
+            <span className={titleClassName}>{todo.title}</span>
+          ) : (
+            <button
+              type="button"
+              className={`${styles.textButton} ${titleClassName}`}
+              onClick={enterEditMode}
+            >
+              {todo.title}
+            </button>
+          )}
+          {todo.text && <span className={styles.description}>{todo.text}</span>}
+        </>
+      )}
+      <div className={styles.actions}>
+        <time className={styles.timestamp} dateTime={todo.createdAt}>
+          {new Date(todo.createdAt).toLocaleDateString()}
+        </time>
         <button
           type="button"
-          className={`${styles.textButton} ${textClassName}`}
-          onClick={enterEditMode}
+          className={styles.deleteButton}
+          onClick={() => onDelete(todo.id)}
+          aria-label={`Delete ${todo.title}`}
         >
-          {todo.text}
+          Delete
         </button>
-      )}
-      <time className={styles.timestamp} dateTime={todo.createdAt}>
-        {new Date(todo.createdAt).toLocaleDateString()}
-      </time>
-      <button
-        type="button"
-        className={styles.deleteButton}
-        onClick={() => onDelete(todo.id)}
-        aria-label={`Delete ${todo.text}`}
-      >
-        Delete
-      </button>
+      </div>
     </li>
   );
 }

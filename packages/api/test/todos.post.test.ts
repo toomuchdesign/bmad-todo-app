@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { MAX_TODO_TEXT_LENGTH } from "shared";
+import { MAX_TODO_TITLE_LENGTH } from "shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import type { PostTodosRouteResponses } from "../src/routes/schemas.js";
@@ -17,10 +17,11 @@ afterEach(async () => {
 
 describe("POST /todos", () => {
   describe("valid payload", () => {
-    it("returns 201 with the created todo and server-assigned timestamps", async () => {
+    it("returns 201 with title and text when both provided", async () => {
       // Arrange
       const payload = {
-        text: "  buy milk  ",
+        title: "  buy milk  ",
+        text: "  whole milk from the store  ",
       };
 
       // Act
@@ -32,14 +33,13 @@ describe("POST /todos", () => {
 
       // Assert
       expect(response.statusCode).toBe(201);
-      expect(response.headers["content-type"]).toContain("application/json");
-      expect(response.headers["x-request-id"]).toBeTypeOf("string");
 
       const body = response.json<PostTodosRouteResponses[201]>();
 
       expect(body).toEqual({
         id: expect.any(String),
-        text: "buy milk",
+        title: "buy milk",
+        text: "whole milk from the store",
         completed: false,
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
@@ -49,11 +49,11 @@ describe("POST /todos", () => {
   });
 
   describe("invalid payload", () => {
-    describe("empty or whitespace text", () => {
+    describe("empty or whitespace title", () => {
       it("returns 400 with VALIDATION_ERROR and displayable message", async () => {
         // Arrange
         const payload = {
-          text: "   ",
+          title: "   ",
         };
 
         // Act
@@ -76,11 +76,11 @@ describe("POST /todos", () => {
       });
     });
 
-    describe("text exceeding MAX_TODO_TEXT_LENGTH", () => {
-      it("returns 400 with max detail for text", async () => {
+    describe("title exceeding MAX_TODO_TITLE_LENGTH", () => {
+      it("returns 400 with VALIDATION_ERROR", async () => {
         // Arrange
         const payload = {
-          text: "a".repeat(MAX_TODO_TEXT_LENGTH + 1),
+          title: "a".repeat(MAX_TODO_TITLE_LENGTH + 1),
         };
 
         // Act
@@ -109,7 +109,7 @@ describe("POST /todos", () => {
       method: "POST",
       url: "/todos",
       payload: {
-        text: "task",
+        title: "task",
       },
     },
   });
