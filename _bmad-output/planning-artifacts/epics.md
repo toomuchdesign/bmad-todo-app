@@ -481,13 +481,57 @@ So that rapid interactions don't cause race conditions or corrupt state.
 
 ## Epic 3: Shippable Quality Bar (Tests + Accessibility)
 
-Deliver the required automated coverage of MVP flows (success and failure), plus baseline accessibility/operability and deterministic dev/test ergonomics.
+Deliver the required automated coverage of MVP flows (success and failure), plus baseline accessibility/operability and deterministic dev/test ergonomics. Begins with a data model enhancement (title + text fields) before test coverage stories.
+
+### Story 3.0: Add title field to todos with text as optional description
+
+As a user,
+I want each todo to have a distinct title and optional description text,
+So that I can quickly scan my todo list by title and add details when needed.
+
+**Acceptance Criteria:**
+
+**Given** the existing todos table with a `text` column
+**When** the migration runs
+**Then** the `text` column is renamed to `title` and a nullable `text` column is added
+
+**Given** a user creates a todo via a single input form consisting of a text field (title ≤100 chars) and a text area (tetx ≤500 chars)
+**When** they type title and content and submit
+**Then** the todo gets saved and rendered in the todo list
+
+**Given** a todo is displayed in the list
+**When** it has both title and text
+**Then** the title is rendered with primary visual weight and the text below it with secondary (smaller, muted) styling
+
+**Given** a user edits a todo inline
+**When** the todo input form opens
+**Then** it is pre-populated with title and text, and Ctrl+Enter/Cmd+Enter saves while Enter inserts newlines
+
+**Given** the API contract
+**When** POST /todos is called
+**Then** the body accepts `{ title: string, text?: string }` with title required (1-100 chars) and text optional (1-500 chars)
+
+**Given** the API contract
+**When** PATCH /todos/:id is called
+**Then** the body accepts optional `{ title?, text?, completed? }` with the same length constraints
+
+**Given** the shared Todo type
+**When** any package references it
+**Then** `title` is a required string and `text` is `string | null`
+
+**Technical notes:**
+
+- DB migration: `ALTER TABLE todos RENAME COLUMN "text" TO "title"; ALTER TABLE todos ADD COLUMN "text" text;`
+- Constants: `MAX_TODO_TITLE_LENGTH = 100`, `MAX_TODO_TEXT_LENGTH = 500`
+- Title and text stored as plain string — no constraints blocking future markdown/formatting support
+- All existing tests updated to reflect the new schema
 
 ### Story 3.1: API integration tests for todos endpoints (success + failure)
 
 As a maintainer,
 I want fast API integration tests against a deterministic database,
 So that API behavior stays correct as the UI evolves.
+Make sure we integrate tests with existing ones. Most of this story requirements might be already implemented.
 
 **Acceptance Criteria:**
 
@@ -505,6 +549,7 @@ So that API behavior stays correct as the UI evolves.
 As a maintainer,
 I want web tests for the core screen states and interactions,
 So that regressions in UX and failure handling are caught early.
+Make sure we integrate tests with existing ones. Most of this story requirements might be already implemented.
 
 **Acceptance Criteria:**
 
