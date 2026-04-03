@@ -228,8 +228,12 @@ Notes:
 - `test`: Vitest API integration tests using `fastify.inject()`.
 - `test:ci`: Vitest API integration tests using `fastify.inject()` (non-watch, CI-friendly).
 - `type:check`: `tsc --noEmit` (workspace-local typecheck).
-- `db:generate`: generate a new migration from Drizzle schema changes.
-- `db:migrate`: apply migrations to the configured database.
+- `db:generate`: generate a new migration from Drizzle schema changes (expects `DATABASE_URL` in env — CI/deploy).
+- `db:migrate`: apply migrations (expects `DATABASE_URL` in env — CI/deploy).
+- `db:generate:local`: generate migration against the dev database (loads `.env`, starts Docker).
+- `db:generate:test`: generate migration against the test database (loads `.env.test`, starts Docker).
+- `db:migrate:local`: apply migrations to the dev database (loads `.env`, starts Docker).
+- `db:migrate:test`: apply migrations to the test database (loads `.env.test`, starts Docker).
 - `db:reset`: truncate `todos` in the configured database (wraps `scripts/db-reset.ts`, which reuses `cleanupTestDatabase` from test-utils).
 
 **Shared workspace (`packages/shared/package.json`)**

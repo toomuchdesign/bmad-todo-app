@@ -69,10 +69,10 @@ Environment variables:
 
 All environment variables live in **root-level** `.env` files (no per-package env files):
 
-- `.env` — development settings (`DATABASE_URL` pointing to the dev database, `API_PORT`, `API_HOST`). Copy from `.env.example` and adjust as needed. Git-ignored.
-- `.env.test` — test settings (`DATABASE_URL` pointing to the test database). Committed to the repo so CI and all contributors share the same test config.
+- `.env` — development settings (`WEB_PORT`, `API_PORT`, `API_HOST`, `DATABASE_URL`). Copy from `.env.example` and adjust as needed. Git-ignored.
+- `.env.test` — test settings (separate ports and test database). Committed to the repo so CI and all contributors share the same test config.
 
-The API dev server and DB scripts auto-load `.env`; Vitest and Playwright auto-load `.env.test`.
+The API dev server and Vite auto-load `.env`; Vitest and Playwright auto-load `.env.test`. Dev (5173/3001) and test (5174/3002) use separate ports so they can run simultaneously.
 
 ## Tests (recommended)
 
@@ -89,6 +89,16 @@ npm run type:check
 npm run biome:check
 npm run biome:fix
 npm run source:check
+```
+
+## Database
+
+```bash
+npm -w api run db:migrate:local   # apply migrations to dev DB (loads .env)
+npm -w api run db:migrate:test    # apply migrations to test DB (loads .env.test)
+npm -w api run db:generate:local  # generate migration from schema changes (loads .env)
+npm -w api run db:migrate         # apply migrations (expects DATABASE_URL in env — CI/deploy)
+npm -w api run db:reset           # truncate all tables (expects DATABASE_URL in env)
 ```
 
 ## API contract artifacts (OpenAPI → frontend types)

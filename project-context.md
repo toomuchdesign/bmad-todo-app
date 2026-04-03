@@ -235,10 +235,11 @@ Use this section for persistent test rules that should apply to every future tas
 When asked to visually check the app or take a screenshot:
 
 1. **Start dev servers:** `npm run dev` (runs web + API concurrently in background)
-2. **Web:** Vite at `http://localhost:5173` (proxies `/todos` to API at `:3001`)
-3. **API:** Fastify at `http://localhost:3001`
+2. **Web:** Vite at `http://localhost:${WEB_PORT}` (default 5173, proxies `/todos` to API)
+3. **API:** Fastify at `http://localhost:${API_PORT}` (default 3001)
 4. **Wait ~5s**, then verify readiness: `curl -s -o /dev/null -w "%{http_code}" http://localhost:5173`
 5. **Navigate** browser to `http://localhost:5173`
+6. **Ports are configurable** via `.env` (dev) and `.env.test` (E2E) — test suite uses separate ports (5174/3002) to avoid conflicts with running dev servers
 6. **Take screenshot** (full page) and save to `.debug/` folder
 
 This is a frequent workflow — proceed promptly without extra confirmation.
