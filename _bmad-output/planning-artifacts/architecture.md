@@ -294,9 +294,10 @@ To keep quality high while moving quickly, every story/task is considered **done
   - Default list excludes soft-deleted rows (`deleted_at is null`)
   - Default ordering is newest first (`created_at desc`)
 - **Text constraints:**
-  - `MAX_TODO_TEXT_LENGTH = 200`
+  - `MAX_TODO_TITLE_LENGTH = 100` (title field)
+  - `MAX_TODO_TEXT_LENGTH = 500` (optional description field)
   - Validation trims input and rejects empty/whitespace-only values
-- **Shared constants location (monorepo):** create a small shared workspace at `packages/shared/` and export `MAX_TODO_TEXT_LENGTH` from `packages/shared/src/constants.ts` so both `packages/web` and `packages/api` consume the same value.
+- **Shared constants location (monorepo):** `packages/shared/src/constants.ts` exports `MAX_TODO_TITLE_LENGTH` and `MAX_TODO_TEXT_LENGTH` so both `packages/web` and `packages/api` consume the same values.
 
 ### Authentication & Security
 
@@ -393,7 +394,9 @@ To keep quality high while moving quickly, every story/task is considered **done
 - **Environment variables:**
   - All env files live at the **project root** (`.env`, `.env.test`, `.env.example`) — no per-package env files
   - Commit `.env.example` and `.env.test`, never commit real `.env`
+  - `.env` defines dev ports (`WEB_PORT=5173`, `API_PORT=3001`) and dev database; `.env.test` defines isolated test ports (`WEB_PORT=5174`, `API_PORT=3002`) and test database
   - API env access is centralized in `packages/api/src/config.ts` and validated via `env-schema` (loads root `.env`)
+  - Vite loads root `.env` only when `WEB_PORT` is not already set (so Playwright-spawned servers inherit `.env.test` values)
   - Vitest and Playwright load root `.env.test` explicitly via `loadEnvFile`
   - The rest of the API codebase must not read `process.env` directly; it consumes the exported config object instead
 - **Migrations:** Drizzle Kit runs against `DATABASE_URL` (same URL used by API runtime)
@@ -469,7 +472,7 @@ bmad-todo/
 │   │   ├── package.json
 │   │   ├── tsconfig.json
 │   │   └── src/
-│   │       ├── constants.ts                # exports MAX_TODO_TEXT_LENGTH = 200
+│   │       ├── constants.ts                # exports MAX_TODO_TITLE_LENGTH = 100, MAX_TODO_TEXT_LENGTH = 500
 │   │       ├── definitions/
 │   │       │   ├── todo.ts                 # canonical Todo JSON schema + inferred type
 │   │       │   ├── api-error-response.ts   # canonical ApiErrorResponse JSON schema + inferred type
@@ -704,7 +707,7 @@ bmad-todo/
 
 - Initialize the monorepo using the recorded starter commands, then wire:
   - root `docker-compose.yml` (Postgres)
-  - `packages/shared` exports (`MAX_TODO_TEXT_LENGTH`, `Todo`, `ApiErrorResponse`)
+  - `packages/shared` exports (`MAX_TODO_TITLE_LENGTH`, `MAX_TODO_TEXT_LENGTH`, `Todo`, `ApiErrorResponse`)
   - API `x-request-id` plugin + error handler plugin
 
 ## Architecture Completion & Handoff
