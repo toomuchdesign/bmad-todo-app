@@ -154,6 +154,34 @@ describe("AddTodoForm", () => {
     });
   });
 
+  describe("Ctrl/Cmd+Enter in description textarea", () => {
+    it.each([
+      { mod: "ctrlKey", label: "Ctrl+Enter" },
+      { mod: "metaKey", label: "Cmd+Enter" },
+    ])("submits the form on $label", async ({ mod }) => {
+      const onSubmit = vi.fn().mockResolvedValue(true);
+      render(<AddTodoForm onSubmit={onSubmit} />);
+
+      const titleInput = screen.getByRole("textbox", {
+        name: "New todo title",
+      });
+      const textInput = screen.getByRole("textbox", {
+        name: "New todo description",
+      });
+
+      fireEvent.change(titleInput, { target: { value: "Quick add" } });
+      fireEvent.change(textInput, { target: { value: "Some details" } });
+      fireEvent.keyDown(textInput, { key: "Enter", [mod]: true });
+
+      await waitFor(() => {
+        expect(onSubmit).toHaveBeenCalledWith({
+          title: "Quick add",
+          text: "Some details",
+        });
+      });
+    });
+  });
+
   describe("validation clearing", () => {
     it("clears inline validation on next title input change", () => {
       const onSubmit = vi.fn();

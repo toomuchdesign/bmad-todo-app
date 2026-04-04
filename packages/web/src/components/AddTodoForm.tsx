@@ -80,6 +80,15 @@ function AddTodoForm({ onSubmit }: AddTodoFormProps) {
     }
   }
 
+  function handleTextKeyDown(
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+  ): void {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      e.currentTarget.form?.requestSubmit();
+    }
+  }
+
   const titleClassName = validationError
     ? `${styles.input} ${styles.invalid}`
     : styles.input;
@@ -102,6 +111,7 @@ function AddTodoForm({ onSubmit }: AddTodoFormProps) {
           className={styles.textarea}
           value={text}
           onChange={handleTextChange}
+          onKeyDown={handleTextKeyDown}
           placeholder="Add details... (optional)"
           aria-label="New todo description"
           disabled={submitting}

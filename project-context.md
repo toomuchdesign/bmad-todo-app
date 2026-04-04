@@ -38,6 +38,15 @@ Example: `feat/oauth-login`, `fix/null-payment-response`
 
 ## Code Style
 
+### Reduce Cognitive Load
+
+- Code must be boring, obvious and predictable. Favor clarity over cleverness.
+- Don't hesitate to add a short comment whenever a piece of code is not immediately self-explanatory.
+
+### General
+
+- Prefer `undefined` (or omit optional props) over `null` unless explicitly required
+
 ### Functions
 
 - Named functions → always use `function` declarations
@@ -54,26 +63,22 @@ Example: `feat/oauth-login`, `fix/null-payment-response`
 
 - Complex and exported functions must have a brief JSDoc comment stating intent
 
-### Modules & Exports
+### Modules, Imports & Exports
 
 - Only export what has an importer — no speculative exports
 - Named exports only — no default exports
 - No `* imports/exports` — always use explicit named bindings
 - `utils` and `test-utils` are domain modules with a barrel `index.ts`
+- Order imports in three groups, separated by a blank line:
+  1. External packages
+  2. Internal absolute paths
+  3. Relative paths
 
 ### File Naming
 
 - Files and folders: `kebab-case`
 - Classes and types: `PascalCase`
 - Constants: `SCREAMING_SNAKE_CASE`
-
-### Imports
-
-Order imports in three groups, separated by a blank line:
-
-1. External packages
-2. Internal absolute paths
-3. Relative paths
 
 ### Constants
 
@@ -86,10 +91,6 @@ const MAX_RETRY_ATTEMPTS = 3;
 // ❌
 if (attempts > 3) { ... }
 ```
-
-### Miscellaneous
-
-- Prefer `undefined` (or non defined optional props) over `null`.
 
 ---
 
@@ -141,6 +142,7 @@ Keep tested scenarios to a reasonable minimum. Avoid exhaustive or redundant tes
 - `it`: the expected outcome ("returns 401 with error message")
 - If an `it` contains a condition like "when", "if", "for", ":", or "on" — that condition belongs in a `describe` block
 - Prefer `.each` test loops when implementing 2+ structurally identical tests
+- Prepend assertions that are not self-explanatory with a brief 1 line comment
 
 ### AAA Pattern
 

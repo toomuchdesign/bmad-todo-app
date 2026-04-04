@@ -61,7 +61,7 @@ The core loop is:
 ### Effortless Interactions
 
 - **Capture:** Typing + submit is always visible and always works the same way.
-- **Edit:** Tap the text to edit in place; Enter saves; Escape cancels.
+- **Edit:** Tap the text to edit in place; Enter in title moves to description; Ctrl/Cmd+Enter in description saves; Escape cancels.
 - **Complete:** One tap on checkbox toggles state; feedback is instant.
 - **Delete:** One tap on delete affordance; confirmation is _not_ required in MVP (to keep flow fast), but failures must not remove items silently.
 
@@ -209,11 +209,13 @@ A consistent global error surface used for:
 
 **Edit mode UI**
 
-- Replace label with input prefilled with current text.
+- Replace label with title input and description textarea, prefilled with current values.
 - Controls:
-  - Save on Enter
-  - Cancel on Escape
-  - Save on blur (optional; if implemented, must still support Escape to cancel before blur save)
+  - Enter in title input moves focus to description textarea
+  - Ctrl/Cmd+Enter in description textarea saves
+  - Enter in description textarea inserts a newline
+  - Escape in either field cancels edit and restores original values
+  - Blur (focus leaving the edit area) auto-saves if no validation error
 
 **Pending + failure**
 
@@ -252,9 +254,16 @@ A consistent global error surface used for:
 ### Keyboard Support
 
 - `Tab` navigates: Global error actions → Add input → Add button → list items (toggle, edit, delete).
-- In edit mode:
-  - `Enter` saves
-  - `Escape` cancels
+- In add form:
+  - `Enter` in title input submits the form (HTML default)
+  - `Ctrl/Cmd+Enter` in description textarea submits the form
+  - `Enter` in description textarea inserts a newline
+  - `Tab` from description reaches the Add button
+- In inline edit mode:
+  - `Enter` in title input moves focus to description textarea
+  - `Ctrl/Cmd+Enter` in description textarea saves
+  - `Enter` in description textarea inserts a newline
+  - `Escape` in either field cancels edit
 
 ### Focus Management
 
