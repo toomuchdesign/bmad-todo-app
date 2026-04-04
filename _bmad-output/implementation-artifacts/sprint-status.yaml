@@ -64,7 +64,7 @@ development_status:
 
   epic-3: in-progress
   3-0-add-title-field-to-todos-with-text-as-optional-description: done
-  3-1-api-integration-tests-for-todos-endpoints-success-failure: backlog
+  3-1-api-integration-tests-for-todos-endpoints-success-failure: done
   3-2-web-unit-component-tests-for-load-create-and-error-handling: backlog
   3-3-end-to-end-tests-covering-all-prd-mvp-flows-success-and-failure: backlog
   3-4-accessibility-and-focus-behavior-baseline: backlog

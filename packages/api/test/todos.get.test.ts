@@ -19,6 +19,22 @@ afterEach(async () => {
 });
 
 describe("GET /todos", () => {
+  it("returns 200 with empty array when no todos exist", async () => {
+    // Act
+    const response = await app.inject({
+      method: "GET",
+      url: "/todos",
+    });
+
+    // Assert
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["content-type"]).toContain("application/json");
+
+    const body = response.json<GetTodosRouteResponses[200]>();
+
+    expect(body).toEqual({ todos: [] });
+  });
+
   it("returns 200 with active todos ordered newest-first and includes x-request-id", async () => {
     // Arrange
     const olderActive = makeSeedTodo({

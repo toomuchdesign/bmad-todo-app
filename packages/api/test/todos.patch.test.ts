@@ -135,58 +135,18 @@ describe("PATCH /todos/:id", () => {
     });
   });
 
-  describe("empty or whitespace title", () => {
-    it("returns 400 with VALIDATION_ERROR", async () => {
-      // Arrange
-      const seed = makeSeedTodo();
-      await seedTodo(seed);
-
-      // Act
-      const response = await app.inject({
-        method: "PATCH",
-        url: `/todos/${seed.id}`,
-        payload: { title: "   " },
-      });
-
-      // Assert
-      expect(response.statusCode).toBe(400);
-
-      const body = response.json<PatchTodosRouteResponses[400]>();
-
-      expect(body).toEqual({
-        code: "VALIDATION_ERROR",
-        message: expect.any(String),
-      });
-    });
-  });
-
-  describe("title exceeding MAX_TODO_TITLE_LENGTH", () => {
-    it("returns 400 with VALIDATION_ERROR", async () => {
-      // Arrange
-      const seed = makeSeedTodo();
-      await seedTodo(seed);
-
-      // Act
-      const response = await app.inject({
-        method: "PATCH",
-        url: `/todos/${seed.id}`,
+  describe("validation errors", () => {
+    it.each([
+      { name: "empty title", payload: { title: "   " } },
+      {
+        name: "title exceeding MAX_TODO_TITLE_LENGTH",
         payload: { title: "a".repeat(MAX_TODO_TITLE_LENGTH + 1) },
-      });
-
-      // Assert
-      expect(response.statusCode).toBe(400);
-
-      const body = response.json<PatchTodosRouteResponses[400]>();
-
-      expect(body).toEqual({
-        code: "VALIDATION_ERROR",
-        message: expect.any(String),
-      });
-    });
-  });
-
-  describe("text exceeding MAX_TODO_TEXT_LENGTH", () => {
-    it("returns 400 with VALIDATION_ERROR", async () => {
+      },
+      {
+        name: "text exceeding MAX_TODO_TEXT_LENGTH",
+        payload: { text: "a".repeat(MAX_TODO_TEXT_LENGTH + 1) },
+      },
+    ])("returns 400 with VALIDATION_ERROR for $name", async ({ payload }) => {
       // Arrange
       const seed = makeSeedTodo();
       await seedTodo(seed);
@@ -195,7 +155,7 @@ describe("PATCH /todos/:id", () => {
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${seed.id}`,
-        payload: { text: "a".repeat(MAX_TODO_TEXT_LENGTH + 1) },
+        payload,
       });
 
       // Assert
@@ -257,6 +217,27 @@ describe("PATCH /todos/:id", () => {
       expect(body).toEqual({
         code: "NOT_FOUND",
         message: "Todo not found",
+      });
+    });
+  });
+
+  describe("invalid UUID format", () => {
+    it("returns 400 with VALIDATION_ERROR", async () => {
+      // Act
+      const response = await app.inject({
+        method: "PATCH",
+        url: "/todos/not-a-uuid",
+        payload: { title: "whatever" },
+      });
+
+      // Assert
+      expect(response.statusCode).toBe(400);
+
+      const body = response.json<PatchTodosRouteResponses[400]>();
+
+      expect(body).toEqual({
+        code: "VALIDATION_ERROR",
+        message: expect.any(String),
       });
     });
   });

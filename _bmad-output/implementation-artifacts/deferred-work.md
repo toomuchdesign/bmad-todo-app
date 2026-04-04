@@ -41,3 +41,8 @@
 - Duplicate validation logic between AddTodoForm and TodoItem — identical trim+validate code. No shared validator. Pre-existing.
 - Ctrl+Enter newline uses stale closure state — rapid typing + Ctrl+Enter could read stale `editText`. Low probability, pre-existing React pattern.
 - handleBlur during in-flight save exits early silently — `savingRef` guard returns without retry. Benign, pre-existing.
+
+## Deferred from: code review of story 3.1 (2026-04-04)
+
+- PATCH with empty body `{}` silently bumps `updatedAt` — no test for this edge case. Pre-existing (also noted in Story 3.0 review).
+- `mapTodoRowToApiTodo` conditionally includes `deletedAt` when present on a row — no test verifies Fastify response serialization strips it. Pre-existing mapper behavior.

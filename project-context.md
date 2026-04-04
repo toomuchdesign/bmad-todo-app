@@ -129,6 +129,10 @@ if (attempts > 3) { ... }
 
 ## Testing
 
+Always write tests alongside the code, in the same step — never defer them to a later stage. Code and tests must stay in sync at all times.
+
+Keep tested scenarios to a reasonable minimum. Avoid exhaustive or redundant test coverage by default. Only introduce specific corner case or edge case tests when there is a concrete reason to suspect the current implementation may contain bugs, ambiguity, or areas of uncertainty — such as complex branching logic, boundary conditions, or recently changed behavior. Do not add tests speculatively.
+
 ### Structure
 
 - Every implementation change must include or update tests for the affected behavior
@@ -136,6 +140,7 @@ if (attempts > 3) { ... }
 - `describe`: the subject or condition being tested (imperative: "given an expired token")
 - `it`: the expected outcome ("returns 401 with error message")
 - If an `it` contains a condition like "when", "if", "for", ":", or "on" — that condition belongs in a `describe` block
+- Prefer `.each` test loops when implementing 2+ structurally identical tests
 
 ### AAA Pattern
 

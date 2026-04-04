@@ -44,6 +44,7 @@ describe("POST /todos", () => {
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
       });
+      expect(body).not.toHaveProperty("deletedAt");
     });
 
     it("returns 201 with empty text when only title provided", async () => {
@@ -74,83 +75,36 @@ describe("POST /todos", () => {
   });
 
   describe("invalid payload", () => {
-    describe("empty or whitespace title", () => {
-      it("returns 400 with VALIDATION_ERROR and displayable message", async () => {
-        // Arrange
-        const payload = {
-          title: "   ",
-        };
-
-        // Act
-        const response = await app.inject({
-          method: "POST",
-          url: "/todos",
-          payload,
-        });
-
-        // Assert
-        expect(response.statusCode).toBe(400);
-        expect(response.headers["x-request-id"]).toBeTypeOf("string");
-
-        const body = response.json<PostTodosRouteResponses[400]>();
-
-        expect(body).toEqual({
-          code: "VALIDATION_ERROR",
-          message: expect.any(String),
-        });
-      });
-    });
-
-    describe("title exceeding MAX_TODO_TITLE_LENGTH", () => {
-      it("returns 400 with VALIDATION_ERROR", async () => {
-        // Arrange
-        const payload = {
-          title: "a".repeat(MAX_TODO_TITLE_LENGTH + 1),
-        };
-
-        // Act
-        const response = await app.inject({
-          method: "POST",
-          url: "/todos",
-          payload,
-        });
-
-        // Assert
-        expect(response.statusCode).toBe(400);
-
-        const body = response.json<PostTodosRouteResponses[400]>();
-
-        expect(body).toEqual({
-          code: "VALIDATION_ERROR",
-          message: expect.any(String),
-        });
-      });
-    });
-
-    describe("text exceeding MAX_TODO_TEXT_LENGTH", () => {
-      it("returns 400 with VALIDATION_ERROR", async () => {
-        // Arrange
-        const payload = {
+    it.each([
+      { name: "empty title", payload: { title: "   " } },
+      {
+        name: "title exceeding MAX_TODO_TITLE_LENGTH",
+        payload: { title: "a".repeat(MAX_TODO_TITLE_LENGTH + 1) },
+      },
+      {
+        name: "text exceeding MAX_TODO_TEXT_LENGTH",
+        payload: {
           title: "valid title",
           text: "a".repeat(MAX_TODO_TEXT_LENGTH + 1),
-        };
+        },
+      },
+    ])("returns 400 with VALIDATION_ERROR for $name", async ({ payload }) => {
+      // Act
+      const response = await app.inject({
+        method: "POST",
+        url: "/todos",
+        payload,
+      });
 
-        // Act
-        const response = await app.inject({
-          method: "POST",
-          url: "/todos",
-          payload,
-        });
+      // Assert
+      expect(response.statusCode).toBe(400);
+      expect(response.headers["x-request-id"]).toBeTypeOf("string");
 
-        // Assert
-        expect(response.statusCode).toBe(400);
+      const body = response.json<PostTodosRouteResponses[400]>();
 
-        const body = response.json<PostTodosRouteResponses[400]>();
-
-        expect(body).toEqual({
-          code: "VALIDATION_ERROR",
-          message: expect.any(String),
-        });
+      expect(body).toEqual({
+        code: "VALIDATION_ERROR",
+        message: expect.any(String),
       });
     });
   });

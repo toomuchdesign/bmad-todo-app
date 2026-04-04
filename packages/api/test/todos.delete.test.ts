@@ -5,6 +5,7 @@ import { buildApp } from "../src/app.js";
 import type { GetTodosRouteResponses } from "../src/routes/schemas.js";
 import {
   makeSeedTodo,
+  runQuery,
   runRequestIdHeaderTests,
   seedTodo,
 } from "./test-utils/index.js";
@@ -40,6 +41,29 @@ describe("DELETE /todos/:id", () => {
   });
 
   describe("after deleting a todo", () => {
+    it("sets deletedAt in the database", async () => {
+      // Arrange
+      const seed = makeSeedTodo();
+      await seedTodo(seed);
+
+      // Act
+      const response = await app.inject({
+        method: "DELETE",
+        url: `/todos/${seed.id}`,
+      });
+
+      // Assert
+      expect(response.statusCode).toBe(204);
+
+      const result = await runQuery(
+        "SELECT deleted_at FROM todos WHERE id = $1::uuid",
+        [seed.id],
+      );
+
+      expect(result.rows).toHaveLength(1);
+      expect(result.rows[0].deleted_at).not.toBeNull();
+    });
+
     it("excludes the deleted todo from GET /todos", async () => {
       // Arrange
       const seed = makeSeedTodo();
