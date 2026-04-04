@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26 19:38:27
-last_updated: 2026-04-04
+last_updated: 2026-04-04T17:55:00
 project: bmad-todo
 project_key: NOKEY
 tracking_system: file-system
@@ -65,7 +65,7 @@ development_status:
   epic-3: in-progress
   3-0-add-title-field-to-todos-with-text-as-optional-description: done
   3-1-api-integration-tests-for-todos-endpoints-success-failure: done
-  3-2-web-unit-component-tests-for-load-create-and-error-handling: backlog
+  3-2-web-unit-component-tests-for-load-create-and-error-handling: review
   3-3-end-to-end-tests-covering-all-prd-mvp-flows-success-and-failure: backlog
   3-4-accessibility-and-focus-behavior-baseline: backlog
   epic-3-retrospective: optional
