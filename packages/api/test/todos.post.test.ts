@@ -43,7 +43,6 @@ describe("POST /todos", () => {
         completed: false,
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
-        deletedAt: null,
       });
     });
 
@@ -70,7 +69,6 @@ describe("POST /todos", () => {
         completed: false,
         createdAt: expect.any(String),
         updatedAt: expect.any(String),
-        deletedAt: null,
       });
     });
   });

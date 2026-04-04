@@ -2,9 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Todo } from "shared";
 import { runQuery } from "./db.js";
 
-export type SeedTodoInput = Omit<Todo, "deletedAt"> & {
-  deletedAt: Exclude<Todo["deletedAt"], undefined>;
-};
+export type SeedTodoInput = Todo;
 
 /**
  * Builds a SeedTodoInput with sensible defaults, overridable per-field.
@@ -19,7 +17,6 @@ export function makeSeedTodo(
     completed: false,
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
-    deletedAt: null,
     ...overrides,
   };
 }
@@ -45,7 +42,7 @@ export async function seedTodo(input: SeedTodoInput): Promise<void> {
       input.completed,
       input.createdAt,
       input.updatedAt,
-      input.deletedAt,
+      input.deletedAt ?? null,
     ],
   );
 }

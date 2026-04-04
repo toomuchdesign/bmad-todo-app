@@ -43,7 +43,8 @@ export interface paths {
                                 createdAt: string;
                                 /** Format: date-time */
                                 updatedAt: string;
-                                deletedAt?: string | null;
+                                /** Format: date-time */
+                                deletedAt?: string;
                             }[];
                         };
                     };
@@ -103,7 +104,8 @@ export interface paths {
                             createdAt: string;
                             /** Format: date-time */
                             updatedAt: string;
-                            deletedAt?: string | null;
+                            /** Format: date-time */
+                            deletedAt?: string;
                         };
                     };
                 };
@@ -264,7 +266,8 @@ export interface paths {
                             createdAt: string;
                             /** Format: date-time */
                             updatedAt: string;
-                            deletedAt?: string | null;
+                            /** Format: date-time */
+                            deletedAt?: string;
                         };
                     };
                 };

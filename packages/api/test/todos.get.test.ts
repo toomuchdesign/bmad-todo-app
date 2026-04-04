@@ -67,7 +67,6 @@ describe("GET /todos", () => {
           completed: true,
           createdAt: "2026-03-04T10:00:00.000Z",
           updatedAt: "2026-03-04T10:00:00.000Z",
-          deletedAt: null,
         },
         {
           id: "11111111-1111-1111-1111-111111111111",
@@ -76,7 +75,6 @@ describe("GET /todos", () => {
           completed: false,
           createdAt: "2026-03-01T10:00:00.000Z",
           updatedAt: "2026-03-01T10:00:00.000Z",
-          deletedAt: null,
         },
       ],
     });

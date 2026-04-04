@@ -30,6 +30,10 @@ Each commit must be atomic — one logical change.
 Mirror commit types: `feat/`, `fix/`, `chore/`, `docs/` prefixes.
 Example: `feat/oauth-login`, `fix/null-payment-response`
 
+### Workflow
+
+- Always start new work/tasks on a new branch with proper name, unless specified.
+
 ---
 
 ## Code Style
@@ -73,8 +77,7 @@ Order imports in three groups, separated by a blank line:
 
 ### Constants
 
-No magic numbers or strings inline in logic. Extract to named constants
-that describe intent, not value.
+No magic numbers or strings inline in logic. Extract to named constants that describe intent, not value.
 
 ```ts
 // ✅
@@ -83,6 +86,10 @@ const MAX_RETRY_ATTEMPTS = 3;
 // ❌
 if (attempts > 3) { ... }
 ```
+
+### Miscellaneous
+
+- Prefer `undefined` (or non defined optional props) over `null`.
 
 ---
 

@@ -14,9 +14,7 @@ export const todoSchema = {
     completed: { type: "boolean" },
     createdAt: { type: "string", format: "date-time" },
     updatedAt: { type: "string", format: "date-time" },
-    deletedAt: {
-      anyOf: [{ type: "string", format: "date-time" }, { type: "null" }],
-    },
+    deletedAt: { type: "string", format: "date-time" },
   },
 } as const;
 

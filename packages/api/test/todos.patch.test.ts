@@ -53,7 +53,6 @@ describe("PATCH /todos/:id", () => {
         completed: false,
         createdAt: seed.createdAt,
         updatedAt: expect.any(String),
-        deletedAt: null,
       });
 
       expect(body.updatedAt > "2026-01-01T00:00:00.000Z").toBe(true);
@@ -92,7 +91,6 @@ describe("PATCH /todos/:id", () => {
         completed: true,
         createdAt: seed.createdAt,
         updatedAt: expect.any(String),
-        deletedAt: null,
       });
     });
   });
@@ -122,7 +120,6 @@ describe("PATCH /todos/:id", () => {
         completed: true,
         createdAt: seed.createdAt,
         updatedAt: expect.any(String),
-        deletedAt: null,
       });
 
       const getResponse = await app.inject({ method: "GET", url: "/todos" });

@@ -18,7 +18,9 @@ function mapTodoRowToApiTodo(row: TodoRow): Todo {
     completed: row.completed,
     createdAt: toIsoDateTimeString(row.createdAt),
     updatedAt: toIsoDateTimeString(row.updatedAt),
-    deletedAt: row.deletedAt ? toIsoDateTimeString(row.deletedAt) : null,
+    ...(row.deletedAt && {
+      deletedAt: toIsoDateTimeString(row.deletedAt),
+    }),
   };
 }
 
@@ -56,7 +58,6 @@ export async function createTodoInDatabase({
       completed: false,
       createdAt: now,
       updatedAt: now,
-      deletedAt: null,
     })
     .returning();
 

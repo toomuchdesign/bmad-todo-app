@@ -80,15 +80,8 @@
                             "format": "date-time"
                           },
                           "deletedAt": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "format": "date-time"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
+                            "type": "string",
+                            "format": "date-time"
                           }
                         }
                       }
@@ -220,15 +213,8 @@
                       "format": "date-time"
                     },
                     "deletedAt": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
+                      "type": "string",
+                      "format": "date-time"
                     }
                   }
                 }
@@ -399,15 +385,8 @@
                       "format": "date-time"
                     },
                     "deletedAt": {
-                      "anyOf": [
-                        {
-                          "type": "string",
-                          "format": "date-time"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
+                      "type": "string",
+                      "format": "date-time"
                     }
                   }
                 }
