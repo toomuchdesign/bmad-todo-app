@@ -38,7 +38,7 @@ export async function seedTodo(input: SeedTodoInput): Promise<void> {
     [
       input.id,
       input.title,
-      input.text || null,
+      input.text,
       input.completed,
       input.createdAt,
       input.updatedAt,

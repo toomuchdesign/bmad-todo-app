@@ -7,7 +7,7 @@ import { todos } from "./schema.js";
 type TodoRow = typeof todos.$inferSelect;
 
 function toIsoDateTimeString(value: Date): Todo["createdAt"] {
-  return value.toISOString() as Todo["createdAt"];
+  return value.toISOString();
 }
 
 function mapTodoRowToApiTodo(row: TodoRow): Todo {
@@ -54,7 +54,7 @@ export async function createTodoInDatabase({
     .values({
       id: randomUUID(),
       title,
-      text: text || null,
+      text,
       completed: false,
       createdAt: now,
       updatedAt: now,
@@ -83,24 +83,14 @@ export async function updateTodoInDatabase({
   completed?: boolean;
 }): Promise<Todo | null> {
   const db = getDb();
-
-  const setClause: Partial<TodoRow> = {
-    updatedAt: new Date(),
-  };
-
-  if (title !== undefined) {
-    setClause.title = title;
-  }
-  if (text !== undefined) {
-    setClause.text = text || null;
-  }
-  if (completed !== undefined) {
-    setClause.completed = completed;
-  }
-
   const [row] = await db
     .update(todos)
-    .set(setClause)
+    .set({
+      updatedAt: new Date(),
+      title,
+      text,
+      completed,
+    })
     .where(and(eq(todos.id, id), isNull(todos.deletedAt)))
     .returning();
 
