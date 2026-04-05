@@ -2,26 +2,48 @@ import { expect, test } from "@playwright/test";
 import { createDeferred } from "./test-utils";
 
 test.describe("Todo flows", () => {
-  test.describe("page load", () => {
-    test("renders the Todos heading and add form", async ({ page }) => {
+  test.describe("initial load", () => {
+    test("renders heading, form, and empty state", async ({ page }) => {
       await page.goto("/");
 
       await expect(page.getByRole("heading", { name: "Todos" })).toBeVisible();
       await expect(page.getByLabel("New todo title")).toBeVisible();
       await expect(page.getByLabel("New todo description")).toBeVisible();
-    });
-  });
-
-  test.describe("empty state", () => {
-    test("shows empty state message when no todos exist", async ({ page }) => {
-      await page.goto("/");
-
       await expect(page.getByText("No todos yet.")).toBeVisible();
       await expect(page.getByText("Add your first one above.")).toBeVisible();
     });
+
+    test("shows error banner with retry button on load failure", async ({
+      page,
+    }) => {
+      await page.route("**/todos", (route) => {
+        route.fulfill({
+          status: 500,
+          contentType: "application/json",
+          body: JSON.stringify({ message: "Internal Server Error" }),
+        });
+      });
+
+      await page.goto("/");
+
+      const alert = page.getByRole("alert");
+      await expect(alert).toBeVisible();
+
+      const retryButton = page.getByRole("button", { name: "Retry" });
+      await expect(retryButton).toBeVisible();
+
+      // Remove the route intercept so retry succeeds
+      await page.unroute("**/todos");
+
+      await retryButton.click();
+
+      // After retry, the error banner should disappear and page loads normally
+      await expect(alert).not.toBeVisible();
+      await expect(page.getByText("No todos yet.")).toBeVisible();
+    });
   });
 
-  test.describe("create todo flow", () => {
+  test.describe("create todo", () => {
     test("adds a new todo to the list and returns focus to title input", async ({
       page,
     }) => {
@@ -68,43 +90,132 @@ test.describe("Todo flows", () => {
       await expect(items.first()).toContainText("Second todo");
       await expect(items.nth(1)).toContainText("Detailed todo");
     });
-  });
 
-  test.describe("inline validation", () => {
-    test("shows inline validation for empty and whitespace input", async ({
+    test.describe("validation", () => {
+      test("shows inline validation for empty and whitespace input", async ({
+        page,
+      }) => {
+        await page.goto("/");
+
+        const addButton = page.getByRole("button", { name: "Add" });
+
+        // Submit empty input
+        await addButton.click();
+        await expect(page.getByText("Title must not be empty.")).toBeVisible();
+
+        // Submit whitespace-only input
+        const titleInput = page.getByLabel("New todo title");
+        await titleInput.fill("   ");
+        await addButton.click();
+        await expect(page.getByText("Title must not be empty.")).toBeVisible();
+      });
+
+      test("shows inline validation for too-long input", async ({ page }) => {
+        await page.goto("/");
+
+        const titleInput = page.getByLabel("New todo title");
+        const addButton = page.getByRole("button", { name: "Add" });
+
+        await titleInput.fill("a".repeat(101));
+        await addButton.click();
+
+        await expect(
+          page.getByText("Title must be between 1 and 100 characters."),
+        ).toBeVisible();
+      });
+    });
+
+    test("shows error banner and preserves input when create fails", async ({
       page,
     }) => {
       await page.goto("/");
 
+      const titleInput = page.getByLabel("New todo title");
+      const textInput = page.getByLabel("New todo description");
       const addButton = page.getByRole("button", { name: "Add" });
 
-      // Submit empty input
-      await addButton.click();
-      await expect(page.getByText("Title must not be empty.")).toBeVisible();
+      await titleInput.fill("Fail create");
+      await textInput.fill("Some details");
 
-      // Submit whitespace-only input
-      const titleInput = page.getByLabel("New todo title");
-      await titleInput.fill("   ");
+      const itemCountBefore = await page.getByRole("listitem").count();
+
+      // Intercept POST with failure
+      const deferred = createDeferred<void>();
+      await page.route("**/todos", (route) => {
+        if (route.request().method() === "POST") {
+          deferred.promise.then(() => {
+            route.fulfill({
+              status: 500,
+              contentType: "application/json",
+              body: JSON.stringify({
+                code: "INTERNAL_ERROR",
+                message: "Server error",
+              }),
+            });
+          });
+        } else {
+          route.continue();
+        }
+      });
+
       await addButton.click();
-      await expect(page.getByText("Title must not be empty.")).toBeVisible();
+      deferred.resolve();
+
+      // Error banner appears
+      await expect(page.getByRole("alert")).toBeVisible();
+
+      // No ghost todo added to the list
+      await expect(page.getByRole("listitem")).toHaveCount(itemCountBefore);
+
+      // Input is preserved — user can retry without retyping
+      await expect(titleInput).toHaveValue("Fail create");
+      await expect(textInput).toHaveValue("Some details");
     });
 
-    test("shows inline validation for too-long input", async ({ page }) => {
-      await page.goto("/");
+    test.describe("keyboard-only", () => {
+      test("creates a todo using only keyboard", async ({ page }) => {
+        await page.goto("/");
 
-      const titleInput = page.getByLabel("New todo title");
-      const addButton = page.getByRole("button", { name: "Add" });
+        // Tab to title input (may already be focused or need one Tab from body)
+        const titleInput = page.getByLabel("New todo title");
+        await titleInput.focus();
+        await page.keyboard.type("Keyboard todo");
 
-      await titleInput.fill("a".repeat(101));
-      await addButton.click();
+        // Tab to description
+        await page.keyboard.press("Tab");
+        await expect(page.getByLabel("New todo description")).toBeFocused();
+        await page.keyboard.type("Keyboard desc");
 
-      await expect(
-        page.getByText("Title must be between 1 and 100 characters."),
-      ).toBeVisible();
+        // Tab to Add button and press Enter
+        await page.keyboard.press("Tab");
+        await expect(page.getByRole("button", { name: "Add" })).toBeFocused();
+        await page.keyboard.press("Enter");
+
+        // Verify todo was created
+        await expect(page.getByText("Keyboard todo")).toBeVisible();
+        await expect(page.getByText("Keyboard desc")).toBeVisible();
+      });
+
+      test("submits add form with Ctrl+Enter from description textarea", async ({
+        page,
+      }) => {
+        await page.goto("/");
+
+        const titleInput = page.getByLabel("New todo title");
+        await titleInput.fill("Ctrl enter todo");
+        const textInput = page.getByLabel("New todo description");
+        await textInput.fill("Ctrl enter desc");
+
+        // Ctrl+Enter in textarea submits the form
+        await textInput.press("Control+Enter");
+
+        await expect(page.getByText("Ctrl enter todo")).toBeVisible();
+        await expect(page.getByText("Ctrl enter desc")).toBeVisible();
+      });
     });
   });
 
-  test.describe("inline edit flow", () => {
+  test.describe("inline edit", () => {
     test("edits a todo title and saves with Ctrl+Enter in textarea", async ({
       page,
     }) => {
@@ -257,12 +368,105 @@ test.describe("Todo flows", () => {
       await expect(page.getByText("Title with desc")).toBeVisible();
       await expect(page.getByText("The description text")).toBeVisible();
     });
+
+    test("shows error banner when edit PATCH fails", async ({ page }) => {
+      await page.goto("/");
+
+      // Create a todo to edit
+      const titleInput = page.getByLabel("New todo title");
+      const addButton = page.getByRole("button", { name: "Add" });
+      await titleInput.fill("Edit fail test");
+      await addButton.click();
+      await expect(
+        page.getByRole("button", { name: "Edit fail test", exact: true }),
+      ).toBeVisible();
+
+      // Enter edit mode
+      await page
+        .getByRole("button", { name: "Edit fail test", exact: true })
+        .click();
+      const editTitleInput = page.getByLabel("Edit todo title");
+      await expect(editTitleInput).toBeVisible();
+
+      // Intercept PATCH with failure
+      const deferred = createDeferred<void>();
+      await page.route("**/todos/*", (route) => {
+        if (route.request().method() === "PATCH") {
+          deferred.promise.then(() => {
+            route.fulfill({
+              status: 500,
+              contentType: "application/json",
+              body: JSON.stringify({
+                code: "INTERNAL_ERROR",
+                message: "Server error",
+              }),
+            });
+          });
+        } else {
+          route.continue();
+        }
+      });
+
+      // Edit and save
+      await editTitleInput.clear();
+      await editTitleInput.fill("Changed title");
+      await editTitleInput.press("Enter");
+      const editTextInput = page.getByLabel("Edit todo description");
+      await editTextInput.press("Control+Enter");
+
+      deferred.resolve();
+
+      // Error banner appears
+      await expect(page.getByRole("alert")).toBeVisible();
+
+      // Todo still exists in the list (not lost)
+      await expect(
+        page.getByRole("checkbox", { name: /Edit fail test/ }),
+      ).toBeVisible();
+    });
+
+    test.describe("keyboard-only", () => {
+      test("edits a todo using only keyboard", async ({ page }) => {
+        await page.goto("/");
+
+        // Create a todo first
+        const titleInput = page.getByLabel("New todo title");
+        const addButton = page.getByRole("button", { name: "Add" });
+        await titleInput.fill("Keyboard edit");
+        await addButton.click();
+        await expect(
+          page.getByRole("button", { name: "Keyboard edit", exact: true }),
+        ).toBeVisible();
+
+        // Focus the todo title button and press Enter to enter edit mode
+        const todoButton = page.getByRole("button", {
+          name: "Keyboard edit",
+          exact: true,
+        });
+        await todoButton.focus();
+        await page.keyboard.press("Enter");
+
+        // Edit the title
+        const editTitleInput = page.getByLabel("Edit todo title");
+        await expect(editTitleInput).toBeFocused();
+        await editTitleInput.clear();
+        await editTitleInput.fill("Keyboard edited");
+
+        // Enter moves to description, Ctrl+Enter saves
+        await page.keyboard.press("Enter");
+        await expect(page.getByLabel("Edit todo description")).toBeFocused();
+        await page.keyboard.press("Control+Enter");
+
+        // Verify edit saved
+        await expect(
+          page.getByRole("button", { name: "Keyboard edited", exact: true }),
+        ).toBeVisible();
+      });
+    });
   });
 
-  test.describe("toggle completion flow", () => {
-    test("marks an incomplete todo as completed via checkbox", async ({
-      page,
-    }) => {
+  test.describe("toggle completion", () => {
+    test("toggles completion on and off via checkbox", async ({ page }) => {
       await page.goto("/");
 
       // Create a todo to toggle
@@ -274,32 +478,13 @@ test.describe("Todo flows", () => {
         page.getByRole("button", { name: "Toggle me", exact: true }),
       ).toBeVisible();
 
-      // Toggle completion
+      // Toggle completion on
       const checkbox = page.getByRole("checkbox", { name: /Toggle me/ });
       await expect(checkbox).not.toBeChecked();
       await checkbox.click();
-
-      // Verify checkbox is now checked and text shows completed style
-      await expect(checkbox).toBeChecked();
-    });
-
-    test("unchecks a completed todo via checkbox", async ({ page }) => {
-      await page.goto("/");
-
-      // Create and complete a todo
-      const titleInput = page.getByLabel("New todo title");
-      const addButton = page.getByRole("button", { name: "Add" });
-      await titleInput.fill("Uncomplete me");
-      await addButton.click();
-      await expect(
-        page.getByRole("button", { name: "Uncomplete me", exact: true }),
-      ).toBeVisible();
-
-      const checkbox = page.getByRole("checkbox", { name: /Uncomplete me/ });
-      await checkbox.click();
       await expect(checkbox).toBeChecked();
 
-      // Toggle back to incomplete
+      // Toggle completion off
       await checkbox.click();
       await expect(checkbox).not.toBeChecked();
     });
@@ -350,9 +535,35 @@ test.describe("Todo flows", () => {
       await expect(checkbox).not.toBeChecked();
       await expect(page.getByRole("alert")).toBeVisible();
     });
+
+    test.describe("keyboard-only", () => {
+      test("toggles a todo using only keyboard", async ({ page }) => {
+        await page.goto("/");
+
+        // Create a todo first
+        const titleInput = page.getByLabel("New todo title");
+        const addButton = page.getByRole("button", { name: "Add" });
+        await titleInput.fill("Keyboard toggle");
+        await addButton.click();
+        await expect(page.getByText("Keyboard toggle")).toBeVisible();
+
+        // Tab from title input through the todo item controls to reach the checkbox
+        await titleInput.focus();
+        await page.keyboard.press("Tab"); // description
+        await page.keyboard.press("Tab"); // Add button
+        await page.keyboard.press("Tab"); // checkbox
+        const checkbox = page.getByRole("checkbox", {
+          name: /Keyboard toggle/,
+        });
+        await expect(checkbox).toBeFocused();
+        await page.keyboard.press("Space");
+
+        await expect(checkbox).toBeChecked();
+      });
+    });
   });
 
-  test.describe("delete todo flow", () => {
+  test.describe("delete todo", () => {
     test("clicking Delete removes the todo from the list", async ({ page }) => {
       await page.goto("/");
 
@@ -413,143 +624,28 @@ test.describe("Todo flows", () => {
       await expect(page.getByRole("alert")).toBeVisible();
       await expect(page.getByText("Fail delete")).toBeVisible();
     });
-  });
 
-  test.describe("error state", () => {
-    test("shows error banner with retry button on load failure", async ({
-      page,
-    }) => {
-      await page.route("**/todos", (route) => {
-        route.fulfill({
-          status: 500,
-          contentType: "application/json",
-          body: JSON.stringify({ message: "Internal Server Error" }),
+    test.describe("keyboard-only", () => {
+      test("deletes a todo using only keyboard", async ({ page }) => {
+        await page.goto("/");
+
+        // Create a todo first
+        const titleInput = page.getByLabel("New todo title");
+        const addButton = page.getByRole("button", { name: "Add" });
+        await titleInput.fill("Keyboard delete");
+        await addButton.click();
+        await expect(page.getByText("Keyboard delete")).toBeVisible();
+
+        // Focus the delete button and press Enter
+        const deleteButton = page.getByRole("button", {
+          name: "Delete Keyboard delete",
         });
+        await deleteButton.focus();
+        await page.keyboard.press("Enter");
+
+        // Verify todo is removed
+        await expect(page.getByText("Keyboard delete")).not.toBeVisible();
       });
-
-      await page.goto("/");
-
-      const alert = page.getByRole("alert");
-      await expect(alert).toBeVisible();
-
-      const retryButton = page.getByRole("button", { name: "Retry" });
-      await expect(retryButton).toBeVisible();
-
-      // Remove the route intercept so retry succeeds
-      await page.unroute("**/todos");
-
-      await retryButton.click();
-
-      // After retry, the error banner should disappear and list should load
-      await expect(alert).not.toBeVisible();
-      await expect(page.getByRole("list")).toBeVisible();
-    });
-  });
-
-  test.describe("create failure", () => {
-    test("shows error banner and preserves input when create fails", async ({
-      page,
-    }) => {
-      await page.goto("/");
-
-      const titleInput = page.getByLabel("New todo title");
-      const textInput = page.getByLabel("New todo description");
-      const addButton = page.getByRole("button", { name: "Add" });
-
-      await titleInput.fill("Fail create");
-      await textInput.fill("Some details");
-
-      const itemCountBefore = await page.getByRole("listitem").count();
-
-      // Intercept POST with failure
-      const deferred = createDeferred<void>();
-      await page.route("**/todos", (route) => {
-        if (route.request().method() === "POST") {
-          deferred.promise.then(() => {
-            route.fulfill({
-              status: 500,
-              contentType: "application/json",
-              body: JSON.stringify({
-                code: "INTERNAL_ERROR",
-                message: "Server error",
-              }),
-            });
-          });
-        } else {
-          route.continue();
-        }
-      });
-
-      await addButton.click();
-      deferred.resolve();
-
-      // Error banner appears
-      await expect(page.getByRole("alert")).toBeVisible();
-
-      // No ghost todo added to the list
-      await expect(page.getByRole("listitem")).toHaveCount(itemCountBefore);
-
-      // Input is preserved — user can retry without retyping
-      await expect(titleInput).toHaveValue("Fail create");
-      await expect(textInput).toHaveValue("Some details");
-    });
-  });
-
-  test.describe("edit failure", () => {
-    test("shows error banner when edit PATCH fails", async ({ page }) => {
-      await page.goto("/");
-
-      // Create a todo to edit
-      const titleInput = page.getByLabel("New todo title");
-      const addButton = page.getByRole("button", { name: "Add" });
-      await titleInput.fill("Edit fail test");
-      await addButton.click();
-      await expect(
-        page.getByRole("button", { name: "Edit fail test", exact: true }),
-      ).toBeVisible();
-
-      // Enter edit mode
-      await page
-        .getByRole("button", { name: "Edit fail test", exact: true })
-        .click();
-      const editTitleInput = page.getByLabel("Edit todo title");
-      await expect(editTitleInput).toBeVisible();
-
-      // Intercept PATCH with failure
-      const deferred = createDeferred<void>();
-      await page.route("**/todos/*", (route) => {
-        if (route.request().method() === "PATCH") {
-          deferred.promise.then(() => {
-            route.fulfill({
-              status: 500,
-              contentType: "application/json",
-              body: JSON.stringify({
-                code: "INTERNAL_ERROR",
-                message: "Server error",
-              }),
-            });
-          });
-        } else {
-          route.continue();
-        }
-      });
-
-      // Edit and save
-      await editTitleInput.clear();
-      await editTitleInput.fill("Changed title");
-      await editTitleInput.press("Enter");
-      const editTextInput = page.getByLabel("Edit todo description");
-      await editTextInput.press("Control+Enter");
-
-      deferred.resolve();
-
-      // Error banner appears
-      await expect(page.getByRole("alert")).toBeVisible();
-
-      // Todo still exists in the list (not lost)
-      await expect(
-        page.getByRole("checkbox", { name: /Edit fail test/ }),
-      ).toBeVisible();
     });
   });
 
@@ -569,130 +665,6 @@ test.describe("Todo flows", () => {
 
       // Todo should still be present
       await expect(page.getByText("Persist me")).toBeVisible();
-    });
-  });
-
-  test.describe("keyboard-only flows", () => {
-    test("creates a todo using only keyboard", async ({ page }) => {
-      await page.goto("/");
-
-      // Tab to title input (may already be focused or need one Tab from body)
-      const titleInput = page.getByLabel("New todo title");
-      await titleInput.focus();
-      await page.keyboard.type("Keyboard todo");
-
-      // Tab to description
-      await page.keyboard.press("Tab");
-      await expect(page.getByLabel("New todo description")).toBeFocused();
-      await page.keyboard.type("Keyboard desc");
-
-      // Tab to Add button and press Enter
-      await page.keyboard.press("Tab");
-      await expect(page.getByRole("button", { name: "Add" })).toBeFocused();
-      await page.keyboard.press("Enter");
-
-      // Verify todo was created
-      await expect(page.getByText("Keyboard todo")).toBeVisible();
-      await expect(page.getByText("Keyboard desc")).toBeVisible();
-    });
-
-    test("submits add form with Ctrl+Enter from description textarea", async ({
-      page,
-    }) => {
-      await page.goto("/");
-
-      const titleInput = page.getByLabel("New todo title");
-      await titleInput.fill("Ctrl enter todo");
-      const textInput = page.getByLabel("New todo description");
-      await textInput.fill("Ctrl enter desc");
-
-      // Ctrl+Enter in textarea submits the form
-      await textInput.press("Control+Enter");
-
-      await expect(page.getByText("Ctrl enter todo")).toBeVisible();
-      await expect(page.getByText("Ctrl enter desc")).toBeVisible();
-    });
-
-    test("edits a todo using only keyboard", async ({ page }) => {
-      await page.goto("/");
-
-      // Create a todo first
-      const titleInput = page.getByLabel("New todo title");
-      const addButton = page.getByRole("button", { name: "Add" });
-      await titleInput.fill("Keyboard edit");
-      await addButton.click();
-      await expect(
-        page.getByRole("button", { name: "Keyboard edit", exact: true }),
-      ).toBeVisible();
-
-      // Focus the todo title button and press Enter to enter edit mode
-      const todoButton = page.getByRole("button", {
-        name: "Keyboard edit",
-        exact: true,
-      });
-      await todoButton.focus();
-      await page.keyboard.press("Enter");
-
-      // Edit the title
-      const editTitleInput = page.getByLabel("Edit todo title");
-      await expect(editTitleInput).toBeFocused();
-      await editTitleInput.clear();
-      await editTitleInput.fill("Keyboard edited");
-
-      // Enter moves to description, Ctrl+Enter saves
-      await page.keyboard.press("Enter");
-      await expect(page.getByLabel("Edit todo description")).toBeFocused();
-      await page.keyboard.press("Control+Enter");
-
-      // Verify edit saved
-      await expect(
-        page.getByRole("button", { name: "Keyboard edited", exact: true }),
-      ).toBeVisible();
-    });
-
-    test("toggles a todo using only keyboard", async ({ page }) => {
-      await page.goto("/");
-
-      // Create a todo first
-      const titleInput = page.getByLabel("New todo title");
-      const addButton = page.getByRole("button", { name: "Add" });
-      await titleInput.fill("Keyboard toggle");
-      await addButton.click();
-      await expect(page.getByText("Keyboard toggle")).toBeVisible();
-
-      // Tab from title input through the todo item controls to reach the checkbox
-      await titleInput.focus();
-      await page.keyboard.press("Tab"); // description
-      await page.keyboard.press("Tab"); // Add button
-      await page.keyboard.press("Tab"); // checkbox
-      const checkbox = page.getByRole("checkbox", {
-        name: /Keyboard toggle/,
-      });
-      await expect(checkbox).toBeFocused();
-      await page.keyboard.press("Space");
-
-      await expect(checkbox).toBeChecked();
-    });
-
-    test("deletes a todo using only keyboard", async ({ page }) => {
-      await page.goto("/");
-
-      // Create a todo first
-      const titleInput = page.getByLabel("New todo title");
-      const addButton = page.getByRole("button", { name: "Add" });
-      await titleInput.fill("Keyboard delete");
-      await addButton.click();
-      await expect(page.getByText("Keyboard delete")).toBeVisible();
-
-      // Focus the delete button and press Enter
-      const deleteButton = page.getByRole("button", {
-        name: "Delete Keyboard delete",
-      });
-      await deleteButton.focus();
-      await page.keyboard.press("Enter");
-
-      // Verify todo is removed
-      await expect(page.getByText("Keyboard delete")).not.toBeVisible();
     });
   });
 });
