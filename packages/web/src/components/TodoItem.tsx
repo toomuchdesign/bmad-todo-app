@@ -11,29 +11,49 @@ type TodoItemProps = {
   focusCheckbox?: boolean;
 };
 
+type TodoEditState = {
+  isEditing: boolean;
+  title: string;
+  text: string;
+  validationError: string | null;
+};
+
+const IDLE_EDIT_STATE: TodoEditState = {
+  isEditing: false,
+  title: "",
+  text: "",
+  validationError: null,
+};
+
 /** Renders a single todo item with inline edit support. */
 function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
-  const [editing, setEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState("");
-  const [editText, setEditText] = useState("");
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [focusTitleInput, setFocusTitleInput] = useState(false);
-  const savingRef = useRef(false);
-  const cancelledRef = useRef(false);
+  const [todoEdit, setTodoEdit] = useState<TodoEditState>(IDLE_EDIT_STATE);
+  const isSavingRef = useRef(false);
+  const isCancelledEditRef = useRef(false);
   const itemRef = useRef<HTMLLIElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const checkboxRef = useRef<HTMLInputElement>(null);
   const textButtonRef = useRef<HTMLButtonElement>(null);
-  const prevEditingRef = useRef(false);
+  const wasEditingRef = useRef(false);
 
+  // Manage focus when entering/exiting edit mode
   useEffect(() => {
-    if (focusTitleInput) {
+    const wasEditing = wasEditingRef.current;
+    wasEditingRef.current = todoEdit.isEditing;
+
+    if (todoEdit.isEditing && !wasEditing) {
       titleInputRef.current?.focus();
       titleInputRef.current?.select();
-      setFocusTitleInput(false);
+    } else if (!todoEdit.isEditing && wasEditing) {
+      // Return focus to title button, or checkbox if completed (completed todos render a span, not a button)
+      if (textButtonRef.current) {
+        textButtonRef.current.focus();
+      } else {
+        checkboxRef.current?.focus();
+      }
     }
-  }, [focusTitleInput]);
+  }, [todoEdit.isEditing]);
 
   // Focus checkbox when signalled by parent (e.g. after sibling delete)
   useEffect(() => {
@@ -42,67 +62,58 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
     }
   }, [focusCheckbox]);
 
-  // Return focus to the title button when exiting edit mode (only if it exists — completed todos render a span, not a button)
-  useEffect(() => {
-    if (prevEditingRef.current && !editing) {
-      if (textButtonRef.current) {
-        textButtonRef.current.focus();
-      } else {
-        checkboxRef.current?.focus();
-      }
-    }
-    prevEditingRef.current = editing;
-  }, [editing]);
-
   function enterEditMode(): void {
     if (todo.completed) return;
-    cancelledRef.current = false;
-    setEditing(true);
-    setEditTitle(todo.title);
-    setEditText(todo.text);
-    setValidationError(null);
-    setFocusTitleInput(true);
+    isCancelledEditRef.current = false;
+    setTodoEdit({
+      isEditing: true,
+      title: todo.title,
+      text: todo.text,
+      validationError: null,
+    });
   }
 
   function cancelEdit(): void {
-    cancelledRef.current = true;
-    setEditing(false);
-    setEditTitle(todo.title);
-    setEditText(todo.text);
-    setValidationError(null);
+    isCancelledEditRef.current = true;
+    setTodoEdit(IDLE_EDIT_STATE);
   }
 
   async function saveEdit(): Promise<void> {
-    if (savingRef.current) return;
+    if (isSavingRef.current || !todoEdit.isEditing) return;
 
-    const trimmedTitle = editTitle.trim();
-    const trimmedText = editText.trim();
+    const trimmedTitle = todoEdit.title.trim();
+    const trimmedText = todoEdit.text.trim();
 
     if (trimmedTitle.length === 0) {
-      setValidationError("Title must not be empty.");
+      setTodoEdit((prev) => ({
+        ...prev,
+        validationError: "Title must not be empty.",
+      }));
       return;
     }
 
     if (trimmedTitle.length > MAX_TODO_TITLE_LENGTH) {
-      setValidationError(
-        `Title must be between 1 and ${MAX_TODO_TITLE_LENGTH} characters.`,
-      );
+      setTodoEdit((prev) => ({
+        ...prev,
+        validationError: `Title must be between 1 and ${MAX_TODO_TITLE_LENGTH} characters.`,
+      }));
       return;
     }
 
     if (trimmedText.length > MAX_TODO_TEXT_LENGTH) {
-      setValidationError(
-        `Description must be ${MAX_TODO_TEXT_LENGTH} characters or fewer.`,
-      );
+      setTodoEdit((prev) => ({
+        ...prev,
+        validationError: `Description must be ${MAX_TODO_TEXT_LENGTH} characters or fewer.`,
+      }));
       return;
     }
 
     if (trimmedTitle === todo.title && trimmedText === todo.text) {
-      setEditing(false);
+      setTodoEdit(IDLE_EDIT_STATE);
       return;
     }
 
-    savingRef.current = true;
+    isSavingRef.current = true;
     try {
       const fields: TodoUpdatableFields = {};
       if (trimmedTitle !== todo.title) {
@@ -115,11 +126,10 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
       const success = await onUpdate(todo.id, fields);
 
       if (success) {
-        setEditing(false);
-        setValidationError(null);
+        setTodoEdit(IDLE_EDIT_STATE);
       }
     } finally {
-      savingRef.current = false;
+      isSavingRef.current = false;
     }
   }
 
@@ -144,8 +154,8 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
   }
 
   function handleBlur(e: React.FocusEvent<HTMLElement>): void {
-    if (cancelledRef.current) {
-      cancelledRef.current = false;
+    if (isCancelledEditRef.current) {
+      isCancelledEditRef.current = false;
       return;
     }
     // Only save if focus leaves the entire item
@@ -157,24 +167,26 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
   }
 
   function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    setEditTitle(e.target.value);
-    if (validationError) {
-      setValidationError(null);
-    }
+    setTodoEdit((prev) => ({
+      ...prev,
+      title: e.target.value,
+      validationError: null,
+    }));
   }
 
   function handleTextChange(e: React.ChangeEvent<HTMLTextAreaElement>): void {
-    setEditText(e.target.value);
-    if (validationError) {
-      setValidationError(null);
-    }
+    setTodoEdit((prev) => ({
+      ...prev,
+      text: e.target.value,
+      validationError: null,
+    }));
   }
 
   const titleClassName = todo.completed
     ? `${styles.text} ${styles.completed}`
     : styles.text;
 
-  const editTitleClassName = validationError
+  const editTitleClassName = todoEdit.validationError
     ? `${styles.editInput} ${styles.invalid}`
     : styles.editInput;
 
@@ -188,26 +200,26 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
         onChange={() => onUpdate(todo.id, { completed: !todo.completed })}
         aria-label={`${todo.title} – ${todo.completed ? "completed" : "not completed"}`}
       />
-      {editing ? (
+      {todoEdit.isEditing ? (
         <>
           <div className={styles.editWrapper}>
             <input
               ref={titleInputRef}
               type="text"
               className={editTitleClassName}
-              value={editTitle}
+              value={todoEdit.title}
               onChange={handleTitleChange}
               onKeyDown={handleTitleKeyDown}
               onBlur={handleBlur}
               aria-label="Edit todo title"
-              aria-invalid={!!validationError}
+              aria-invalid={!!todoEdit.validationError}
             />
           </div>
           <div className={styles.editDescriptionRow}>
             <textarea
               ref={textareaRef}
               className={styles.editTextarea}
-              value={editText}
+              value={todoEdit.text}
               onChange={handleTextChange}
               onKeyDown={handleTextareaKeyDown}
               onBlur={handleBlur}
@@ -215,9 +227,9 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
               placeholder="Add details... (optional)"
               rows={2}
             />
-            {validationError && (
+            {todoEdit.validationError && (
               <p className={styles.validationError} aria-live="polite">
-                {validationError}
+                {todoEdit.validationError}
               </p>
             )}
           </div>
