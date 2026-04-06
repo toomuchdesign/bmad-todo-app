@@ -61,7 +61,7 @@ Example: `feat/oauth-login`, `fix/null-payment-response`
   function createUser(id: string, name: string, role: string) {}
   ```
 
-- Complex and exported functions must have a brief JSDoc comment stating intent
+- Complex and exported functions must have a brief JSDoc comment stating intent on multiple lines
 
 ### Modules, Imports & Exports
 
