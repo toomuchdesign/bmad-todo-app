@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { Todo } from "shared";
+import { useTodoEdit } from "../hooks/useTodoEdit";
 import type { TodoUpdatableFields } from "../hooks/useTodos";
-import { validateTodoFields } from "../utils";
 import styles from "./TodoItem.module.css";
 
 type TodoItemProps = {
@@ -11,31 +11,26 @@ type TodoItemProps = {
   focusCheckbox?: boolean;
 };
 
-type TodoEditState = {
-  isEditing: boolean;
-  title: string;
-  text: string;
-  validationError: string | null;
-};
-
-const IDLE_EDIT_STATE: TodoEditState = {
-  isEditing: false,
-  title: "",
-  text: "",
-  validationError: null,
-};
-
 /** Renders a single todo item with inline edit support. */
 function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
-  const [todoEdit, setTodoEdit] = useState<TodoEditState>(IDLE_EDIT_STATE);
-  const isSavingRef = useRef(false);
-  const isCancelledEditRef = useRef(false);
   const itemRef = useRef<HTMLLIElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const checkboxRef = useRef<HTMLInputElement>(null);
   const textButtonRef = useRef<HTMLButtonElement>(null);
   const wasEditingRef = useRef(false);
+
+  const {
+    todoEdit,
+    startEdit,
+    toggleCompleted,
+    deleteTodo,
+    handleTitleKeyDown,
+    handleTextareaKeyDown,
+    handleBlur,
+    handleTitleChange,
+    handleTextChange,
+  } = useTodoEdit({ todo, onUpdate, onDelete, itemRef, textareaRef });
 
   // Manage focus when entering/exiting edit mode
   useEffect(() => {
@@ -62,111 +57,6 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
     }
   }, [focusCheckbox]);
 
-  function enterEditMode(): void {
-    if (todo.completed) return;
-    isCancelledEditRef.current = false;
-    setTodoEdit({
-      isEditing: true,
-      title: todo.title,
-      text: todo.text,
-      validationError: null,
-    });
-  }
-
-  function cancelEdit(): void {
-    isCancelledEditRef.current = true;
-    setTodoEdit(IDLE_EDIT_STATE);
-  }
-
-  async function saveEdit(): Promise<void> {
-    if (isSavingRef.current || !todoEdit.isEditing) return;
-
-    const trimmedTitle = todoEdit.title.trim();
-    const trimmedText = todoEdit.text.trim();
-
-    const validationError = validateTodoFields({
-      title: trimmedTitle,
-      text: trimmedText,
-    });
-    if (validationError) {
-      setTodoEdit((prev) => ({ ...prev, validationError }));
-      return;
-    }
-
-    if (trimmedTitle === todo.title && trimmedText === todo.text) {
-      setTodoEdit(IDLE_EDIT_STATE);
-      return;
-    }
-
-    isSavingRef.current = true;
-    try {
-      const fields: TodoUpdatableFields = {};
-      if (trimmedTitle !== todo.title) {
-        fields.title = trimmedTitle;
-      }
-      if (trimmedText !== todo.text) {
-        fields.text = trimmedText;
-      }
-
-      const success = await onUpdate(todo.id, fields);
-
-      if (success) {
-        setTodoEdit(IDLE_EDIT_STATE);
-      }
-    } finally {
-      isSavingRef.current = false;
-    }
-  }
-
-  function handleTitleKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      textareaRef.current?.focus();
-    } else if (e.key === "Escape") {
-      cancelEdit();
-    }
-  }
-
-  function handleTextareaKeyDown(
-    e: React.KeyboardEvent<HTMLTextAreaElement>,
-  ): void {
-    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      saveEdit();
-    } else if (e.key === "Escape") {
-      cancelEdit();
-    }
-  }
-
-  function handleBlur(e: React.FocusEvent<HTMLElement>): void {
-    if (isCancelledEditRef.current) {
-      isCancelledEditRef.current = false;
-      return;
-    }
-    // Only save if focus leaves the entire item
-    const target = e.relatedTarget;
-    if (target && itemRef.current?.contains(target as Node)) {
-      return;
-    }
-    saveEdit();
-  }
-
-  function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    setTodoEdit((prev) => ({
-      ...prev,
-      title: e.target.value,
-      validationError: null,
-    }));
-  }
-
-  function handleTextChange(e: React.ChangeEvent<HTMLTextAreaElement>): void {
-    setTodoEdit((prev) => ({
-      ...prev,
-      text: e.target.value,
-      validationError: null,
-    }));
-  }
-
   const titleClassName = todo.completed
     ? `${styles.text} ${styles.completed}`
     : styles.text;
@@ -182,7 +72,7 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
         type="checkbox"
         className={styles.checkbox}
         checked={todo.completed}
-        onChange={() => onUpdate(todo.id, { completed: !todo.completed })}
+        onChange={toggleCompleted}
         aria-label={`${todo.title} – ${todo.completed ? "completed" : "not completed"}`}
       />
       {todoEdit.isEditing ? (
@@ -228,7 +118,7 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
               ref={textButtonRef}
               type="button"
               className={`${styles.textButton} ${titleClassName}`}
-              onClick={enterEditMode}
+              onClick={startEdit}
             >
               {todo.title}
             </button>
@@ -243,7 +133,7 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
         <button
           type="button"
           className={styles.deleteButton}
-          onClick={() => onDelete(todo.id)}
+          onClick={deleteTodo}
           aria-label={`Delete ${todo.title}`}
         >
           Delete
