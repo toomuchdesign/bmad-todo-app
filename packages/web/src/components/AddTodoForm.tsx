@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { MAX_TODO_TEXT_LENGTH, MAX_TODO_TITLE_LENGTH } from "../contracts";
+import { validateTodoFields } from "../utils";
 import styles from "./AddTodoForm.module.css";
 
 type AddTodoFormProps = {
@@ -34,22 +34,12 @@ function AddTodoForm({ onSubmit, titleInputRef }: AddTodoFormProps) {
     const trimmedTitle = title.trim();
     const trimmedText = text.trim();
 
-    if (trimmedTitle.length === 0) {
-      setValidationError("Title must not be empty.");
-      return;
-    }
-
-    if (trimmedTitle.length > MAX_TODO_TITLE_LENGTH) {
-      setValidationError(
-        `Title must be between 1 and ${MAX_TODO_TITLE_LENGTH} characters.`,
-      );
-      return;
-    }
-
-    if (trimmedText.length > MAX_TODO_TEXT_LENGTH) {
-      setValidationError(
-        `Description must be ${MAX_TODO_TEXT_LENGTH} characters or fewer.`,
-      );
+    const error = validateTodoFields({
+      title: trimmedTitle,
+      text: trimmedText,
+    });
+    if (error) {
+      setValidationError(error);
       return;
     }
 

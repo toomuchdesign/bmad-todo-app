@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Todo } from "shared";
-import { MAX_TODO_TEXT_LENGTH, MAX_TODO_TITLE_LENGTH } from "../contracts";
 import type { TodoUpdatableFields } from "../hooks/useTodos";
+import { validateTodoFields } from "../utils";
 import styles from "./TodoItem.module.css";
 
 type TodoItemProps = {
@@ -84,27 +84,12 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
     const trimmedTitle = todoEdit.title.trim();
     const trimmedText = todoEdit.text.trim();
 
-    if (trimmedTitle.length === 0) {
-      setTodoEdit((prev) => ({
-        ...prev,
-        validationError: "Title must not be empty.",
-      }));
-      return;
-    }
-
-    if (trimmedTitle.length > MAX_TODO_TITLE_LENGTH) {
-      setTodoEdit((prev) => ({
-        ...prev,
-        validationError: `Title must be between 1 and ${MAX_TODO_TITLE_LENGTH} characters.`,
-      }));
-      return;
-    }
-
-    if (trimmedText.length > MAX_TODO_TEXT_LENGTH) {
-      setTodoEdit((prev) => ({
-        ...prev,
-        validationError: `Description must be ${MAX_TODO_TEXT_LENGTH} characters or fewer.`,
-      }));
+    const validationError = validateTodoFields({
+      title: trimmedTitle,
+      text: trimmedText,
+    });
+    if (validationError) {
+      setTodoEdit((prev) => ({ ...prev, validationError }));
       return;
     }
 
