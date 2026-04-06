@@ -16,6 +16,14 @@ describe("App", () => {
         screen.getByRole("heading", { name: "Todos" }),
       ).toBeInTheDocument();
     });
+
+    it("wraps content in a main landmark", () => {
+      fetchMock.get("/todos", new Promise(() => {}));
+
+      render(<App />);
+
+      expect(screen.getByRole("main")).toBeInTheDocument();
+    });
   });
 
   describe("loading state", () => {

@@ -1,6 +1,6 @@
 # Story 3.2: Web unit/component tests for load, create, and error handling
 
-Status: review
+Status: done
 
 ## Story
 
@@ -50,17 +50,17 @@ The existing web test suite already has extensive coverage. **Start by auditing 
 
 ### Existing Test Files (9 files)
 
-| File | Scope |
-|------|-------|
-| `packages/web/src/App.test.tsx` | Load states: loading, empty, list, error banner + retry |
-| `packages/web/src/App.create-todo.test.tsx` | Create flow: success, failure, validation |
-| `packages/web/src/App.delete-todo.test.tsx` | Delete flow: pending, success, failure |
-| `packages/web/src/App.edit-todo.test.tsx` | Edit flow: Ctrl+Enter save, Escape cancel |
-| `packages/web/src/App.toggle-todo.test.tsx` | Toggle completion: optimistic + rollback |
-| `packages/web/src/App.mutation-concurrency.test.tsx` | Concurrent mutations |
-| `packages/web/src/components/AddTodoForm.test.tsx` | Form component: validation, submission |
-| `packages/web/src/components/TodoItem.test.tsx` | Item component: edit, toggle, delete |
-| `packages/web/src/utils/http-client.test.ts` | HTTP client: GET/POST/PATCH/DELETE, error handling |
+| File                                                 | Scope                                                   |
+| ---------------------------------------------------- | ------------------------------------------------------- |
+| `packages/web/src/App.test.tsx`                      | Load states: loading, empty, list, error banner + retry |
+| `packages/web/src/App.create-todo.test.tsx`          | Create flow: success, failure, validation               |
+| `packages/web/src/App.delete-todo.test.tsx`          | Delete flow: pending, success, failure                  |
+| `packages/web/src/App.edit-todo.test.tsx`            | Edit flow: Ctrl+Enter save, Escape cancel               |
+| `packages/web/src/App.toggle-todo.test.tsx`          | Toggle completion: optimistic + rollback                |
+| `packages/web/src/App.mutation-concurrency.test.tsx` | Concurrent mutations                                    |
+| `packages/web/src/components/AddTodoForm.test.tsx`   | Form component: validation, submission                  |
+| `packages/web/src/components/TodoItem.test.tsx`      | Item component: edit, toggle, delete                    |
+| `packages/web/src/utils/http-client.test.ts`         | HTTP client: GET/POST/PATCH/DELETE, error handling      |
 
 ### Test Infrastructure
 
@@ -74,6 +74,7 @@ The existing web test suite already has extensive coverage. **Start by auditing 
 ### Test Utilities Barrel
 
 All test utilities imported from `packages/web/src/test-utils/index.ts`:
+
 - `TODO_FIXTURES` — array of 2 sample todos (from `fetch-mocks.ts`)
 - `createDeferred<T>()` — creates controllable promise for async test timing (from `deferred.ts`)
 
@@ -103,15 +104,15 @@ jsdom: 26.0.0
 
 This mapping should be verified during Task 1 audit:
 
-| AC Requirement | Likely Covered In |
-|---------------|-------------------|
-| Initial load success | `App.test.tsx` — renders todo list |
-| Initial load failure + Retry | `App.test.tsx` — error banner + retry |
-| Empty state | `App.test.tsx` — empty state message |
-| Create validation (empty) | `App.create-todo.test.tsx` and/or `AddTodoForm.test.tsx` |
-| Create validation (too long) | `AddTodoForm.test.tsx` |
-| Create success | `App.create-todo.test.tsx` — new todo appears |
-| Create failure + global error | `App.create-todo.test.tsx` — error banner |
+| AC Requirement                | Likely Covered In                                        |
+| ----------------------------- | -------------------------------------------------------- |
+| Initial load success          | `App.test.tsx` — renders todo list                       |
+| Initial load failure + Retry  | `App.test.tsx` — error banner + retry                    |
+| Empty state                   | `App.test.tsx` — empty state message                     |
+| Create validation (empty)     | `App.create-todo.test.tsx` and/or `AddTodoForm.test.tsx` |
+| Create validation (too long)  | `AddTodoForm.test.tsx`                                   |
+| Create success                | `App.create-todo.test.tsx` — new todo appears            |
+| Create failure + global error | `App.create-todo.test.tsx` — error banner                |
 
 Most or all AC items appear to be covered. The audit will confirm and identify any gaps.
 
@@ -135,6 +136,7 @@ Most or all AC items appear to be covered. The audit will confirm and identify a
 ### Git Intelligence
 
 Recent commits show:
+
 - `a00b800 refactor: story 3.1` — latest, just completed API test audit
 - `75cbc3d refactor: remove unnecessary null coercions in DB layer`
 - `be26144 refactor: replace deletedAt null with undefined across the stack`
@@ -145,6 +147,7 @@ The `deletedAt: null → undefined` refactor and title/text schema change are al
 ### Data Model Context
 
 The Todo model has:
+
 - `id: string` (UUID)
 - `title: string` (required, 1-100 chars via `MAX_TODO_TITLE_LENGTH`)
 - `text: string` (optional description, 1-500 chars via `MAX_TODO_TEXT_LENGTH`)

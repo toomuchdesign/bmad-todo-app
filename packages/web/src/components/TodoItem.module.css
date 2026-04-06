@@ -20,6 +20,11 @@
   cursor: pointer;
 }
 
+.checkbox:focus-visible {
+  outline: 2px solid var(--s-border-focus);
+  outline-offset: 2px;
+}
+
 .checkbox:disabled {
   cursor: default;
 }
@@ -46,7 +51,7 @@
 }
 
 .textButton:focus-visible {
-  outline: 2px solid var(--s-focus-ring);
+  outline: 2px solid var(--s-border-focus);
   outline-offset: 2px;
 }
 
@@ -97,8 +102,9 @@
   box-sizing: border-box;
 }
 
-.editInput:focus {
-  box-shadow: 0 0 0 2px var(--s-focus-ring);
+.editInput:focus-visible {
+  outline: 2px solid var(--s-border-focus);
+  outline-offset: -1px;
 }
 
 .editInput.invalid {
@@ -127,8 +133,9 @@
   box-sizing: border-box;
 }
 
-.editTextarea:focus {
-  box-shadow: 0 0 0 2px var(--s-focus-ring);
+.editTextarea:focus-visible {
+  outline: 2px solid var(--s-border-focus);
+  outline-offset: -1px;
 }
 
 .validationError {
@@ -145,6 +152,11 @@
   background: var(--s-bg);
   color: var(--s-text);
   cursor: pointer;
+}
+
+.deleteButton:focus-visible {
+  outline: 2px solid var(--s-border-focus);
+  outline-offset: 2px;
 }
 
 .deleteButton:hover:not(:disabled) {

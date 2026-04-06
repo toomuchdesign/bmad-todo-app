@@ -61,6 +61,59 @@ describe("App", () => {
         // Other todo is still present
         expect(screen.getByText("Walk the dog")).toBeInTheDocument();
       });
+
+      it("moves focus to the next todo's checkbox after delete", async () => {
+        const user = userEvent.setup();
+
+        fetchMock
+          .get("/todos", { todos: TODO_FIXTURES })
+          .delete("express:/todos/:id", 204);
+
+        render(<App />);
+
+        await waitFor(() => {
+          expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        });
+
+        await user.click(
+          screen.getByRole("button", { name: "Delete Buy milk" }),
+        );
+
+        await waitFor(() => {
+          expect(screen.queryByText("Buy milk")).not.toBeInTheDocument();
+        });
+
+        // Focus moves to the remaining todo's checkbox
+        expect(screen.getByRole("checkbox")).toHaveFocus();
+      });
+
+      it("moves focus to the add input when list becomes empty", async () => {
+        const user = userEvent.setup();
+        const singleTodo = [TODO_FIXTURES[0]];
+
+        fetchMock
+          .get("/todos", { todos: singleTodo })
+          .delete("express:/todos/:id", 204);
+
+        render(<App />);
+
+        await waitFor(() => {
+          expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        });
+
+        await user.click(
+          screen.getByRole("button", { name: "Delete Buy milk" }),
+        );
+
+        await waitFor(() => {
+          expect(screen.queryByText("Buy milk")).not.toBeInTheDocument();
+        });
+
+        // Focus returns to the add title input
+        expect(
+          screen.getByRole("textbox", { name: "New todo title" }),
+        ).toHaveFocus();
+      });
     });
 
     describe("on API failure", () => {

@@ -29,6 +29,11 @@
   transition: background 0.2s;
 }
 
+.retryButton:focus-visible {
+  outline: 2px solid var(--s-border-focus);
+  outline-offset: 2px;
+}
+
 .retryButton:hover {
   background: var(--s-bg-error);
 }

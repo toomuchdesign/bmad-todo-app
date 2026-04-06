@@ -255,6 +255,30 @@ test.describe("Todo flows", () => {
       await expect(page.getByLabel("Edit todo title")).not.toBeVisible();
     });
 
+    test("returns focus to title button after Escape cancel", async ({
+      page,
+    }) => {
+      await page.goto("/");
+
+      const titleInput = page.getByLabel("New todo title");
+      const addButton = page.getByRole("button", { name: "Add" });
+      await titleInput.fill("Focus test todo");
+      await addButton.click();
+
+      const todoButton = page.getByRole("button", {
+        name: "Focus test todo",
+        exact: true,
+      });
+      await expect(todoButton).toBeVisible();
+
+      await todoButton.click();
+      const editTitleInput = page.getByLabel("Edit todo title");
+      await expect(editTitleInput).toBeVisible();
+      await editTitleInput.press("Escape");
+
+      await expect(todoButton).toBeFocused();
+    });
+
     test("cancels edit with Escape and restores original title", async ({
       page,
     }) => {
@@ -623,6 +647,31 @@ test.describe("Todo flows", () => {
       // Error banner appears and todo remains
       await expect(page.getByRole("alert")).toBeVisible();
       await expect(page.getByText("Fail delete")).toBeVisible();
+    });
+
+    test("moves focus to a checkbox after delete when items remain", async ({
+      page,
+    }) => {
+      await page.goto("/");
+
+      const titleInput = page.getByLabel("New todo title");
+      const addButton = page.getByRole("button", { name: "Add" });
+
+      // Create two todos so at least one remains after delete
+      await titleInput.fill("Focus del A");
+      await addButton.click();
+      await expect(page.getByText("Focus del A")).toBeVisible();
+      await titleInput.fill("Focus del B");
+      await addButton.click();
+      await expect(page.getByText("Focus del B")).toBeVisible();
+
+      // Delete one
+      await page.getByRole("button", { name: "Delete Focus del B" }).click();
+      await expect(page.getByText("Focus del B")).not.toBeVisible();
+
+      // Focus moves to a checkbox (the next item in the list)
+      const focused = page.locator("input[type=checkbox]:focus");
+      await expect(focused).toHaveCount(1);
     });
 
     test.describe("keyboard-only", () => {

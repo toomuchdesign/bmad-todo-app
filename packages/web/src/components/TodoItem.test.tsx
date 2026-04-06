@@ -138,6 +138,20 @@ describe("TodoItem", () => {
         screen.getByRole("button", { name: incompleteTodo.title }),
       ).toBeInTheDocument();
     });
+
+    it("returns focus to the title button", async () => {
+      const user = userEvent.setup();
+      renderTodoItem();
+
+      await user.click(
+        screen.getByRole("button", { name: incompleteTodo.title }),
+      );
+      await user.keyboard("{Escape}");
+
+      expect(
+        screen.getByRole("button", { name: incompleteTodo.title }),
+      ).toHaveFocus();
+    });
   });
 
   describe("saving with Ctrl+Enter in textarea", () => {

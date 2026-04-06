@@ -51,3 +51,9 @@
 
 - Keyboard E2E tests assume specific Tab order (title → description → Add button). If any DOM element is inserted between them, tests break with confusing assertions. Pre-existing pattern risk, not introduced by this diff.
 - E2E test suite has repeated action patterns (create todo, enter edit mode, intercept route with failure). Extract `createTodo(page, title, description?)` and `interceptWithFailure(page, method, urlPattern)` helpers into `e2e/test-utils/` when the suite grows or locators need updating in multiple places.
+
+## Deferred from: code review of story 3-4 (2026-04-06)
+
+- `focusTodoId` state in App.tsx is never cleared after focus is applied — stale value persists across re-renders. Could cause unexpected refocus if TodoList unmounts/remounts. Accepted as best-effort MVP a11y.
+- `handleDelete` in App.tsx captures `todos` via closure before async `deleteTodo` — rapid sequential deletes can compute focus targets from a stale snapshot, pointing at a removed DOM element. Accepted as best-effort MVP a11y.
+- `AddTodoForm.module.css` `.input:focus-visible` and `.textarea:focus-visible` use `box-shadow` with `--s-focus-ring` while other elements use `outline` with `--s-border-focus`. Visually acceptable, cosmetic inconsistency.

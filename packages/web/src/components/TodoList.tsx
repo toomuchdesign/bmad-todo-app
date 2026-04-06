@@ -8,13 +8,25 @@ type TodoListProps = {
   loading: boolean;
   onUpdate: (id: string, fields: TodoUpdatableFields) => Promise<boolean>;
   onDelete: (id: string) => Promise<boolean>;
+  focusTodoId?: string | undefined;
 };
 
 /** Renders loading, empty, or populated todo list states. */
-function TodoList({ todos, loading, onUpdate, onDelete }: TodoListProps) {
+function TodoList({
+  todos,
+  loading,
+  onUpdate,
+  onDelete,
+  focusTodoId,
+}: TodoListProps) {
   if (loading) {
     return (
-      <div className={styles.stateContainer} aria-busy="true">
+      <div
+        className={styles.stateContainer}
+        role="status"
+        aria-busy="true"
+        aria-label="Loading todos"
+      >
         <p className={styles.stateText}>Loading…</p>
       </div>
     );
@@ -37,6 +49,7 @@ function TodoList({ todos, loading, onUpdate, onDelete }: TodoListProps) {
           todo={todo}
           onUpdate={onUpdate}
           onDelete={onDelete}
+          focusCheckbox={todo.id === focusTodoId}
         />
       ))}
     </ul>

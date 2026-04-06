@@ -8,28 +8,51 @@ type TodoItemProps = {
   todo: Todo;
   onUpdate: (id: string, fields: TodoUpdatableFields) => Promise<boolean>;
   onDelete: (id: string) => Promise<boolean>;
+  focusCheckbox?: boolean;
 };
 
 /** Renders a single todo item with inline edit support. */
-function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
+function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editText, setEditText] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [shouldFocus, setShouldFocus] = useState(false);
+  const [focusTitleInput, setFocusTitleInput] = useState(false);
   const savingRef = useRef(false);
   const cancelledRef = useRef(false);
   const itemRef = useRef<HTMLLIElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const checkboxRef = useRef<HTMLInputElement>(null);
+  const textButtonRef = useRef<HTMLButtonElement>(null);
+  const prevEditingRef = useRef(false);
 
   useEffect(() => {
-    if (shouldFocus && titleInputRef.current) {
-      titleInputRef.current.focus();
-      titleInputRef.current.select();
-      setShouldFocus(false);
+    if (focusTitleInput) {
+      titleInputRef.current?.focus();
+      titleInputRef.current?.select();
+      setFocusTitleInput(false);
     }
-  }, [shouldFocus]);
+  }, [focusTitleInput]);
+
+  // Focus checkbox when signalled by parent (e.g. after sibling delete)
+  useEffect(() => {
+    if (focusCheckbox) {
+      checkboxRef.current?.focus();
+    }
+  }, [focusCheckbox]);
+
+  // Return focus to the title button when exiting edit mode (only if it exists — completed todos render a span, not a button)
+  useEffect(() => {
+    if (prevEditingRef.current && !editing) {
+      if (textButtonRef.current) {
+        textButtonRef.current.focus();
+      } else {
+        checkboxRef.current?.focus();
+      }
+    }
+    prevEditingRef.current = editing;
+  }, [editing]);
 
   function enterEditMode(): void {
     if (todo.completed) return;
@@ -38,7 +61,7 @@ function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
     setEditTitle(todo.title);
     setEditText(todo.text);
     setValidationError(null);
-    setShouldFocus(true);
+    setFocusTitleInput(true);
   }
 
   function cancelEdit(): void {
@@ -158,6 +181,7 @@ function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
   return (
     <li ref={itemRef} className={styles.item}>
       <input
+        ref={checkboxRef}
         type="checkbox"
         className={styles.checkbox}
         checked={todo.completed}
@@ -204,6 +228,7 @@ function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
             <span className={titleClassName}>{todo.title}</span>
           ) : (
             <button
+              ref={textButtonRef}
               type="button"
               className={`${styles.textButton} ${titleClassName}`}
               onClick={enterEditMode}

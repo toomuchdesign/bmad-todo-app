@@ -4,23 +4,27 @@ import styles from "./AddTodoForm.module.css";
 
 type AddTodoFormProps = {
   onSubmit: (data: { title: string; text?: string }) => Promise<boolean>;
+  titleInputRef?: React.RefObject<HTMLInputElement | null>;
 };
 
 /** Form for adding a new todo with title input and optional description textarea. */
-function AddTodoForm({ onSubmit }: AddTodoFormProps) {
+function AddTodoForm({ onSubmit, titleInputRef }: AddTodoFormProps) {
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [shouldFocus, setShouldFocus] = useState(false);
-  const titleInputRef = useRef<HTMLInputElement>(null);
+  const internalRef = useRef<HTMLInputElement>(null);
+
+  // Use external ref if provided, internal otherwise
+  const inputRef = titleInputRef ?? internalRef;
 
   useEffect(() => {
     if (shouldFocus) {
-      titleInputRef.current?.focus();
+      inputRef.current?.focus();
       setShouldFocus(false);
     }
-  }, [shouldFocus]);
+  }, [shouldFocus, inputRef]);
 
   async function handleSubmit(
     e: React.FormEvent<HTMLFormElement>,
@@ -97,7 +101,7 @@ function AddTodoForm({ onSubmit }: AddTodoFormProps) {
     <form className={styles.form} onSubmit={handleSubmit}>
       <div className={styles.inputWrapper}>
         <input
-          ref={titleInputRef}
+          ref={inputRef}
           type="text"
           className={titleClassName}
           value={title}
