@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Todo } from "shared";
+
 import type { ApiResponses, TodoUpdatableFields } from "../contracts";
 import { type TODO_BY_ID_API_PATH, TODOS_API_PATH } from "../contracts";
 import { HttpError, httpClient } from "../utils";
+import { useOptimisticUpdate } from "./useOptimisticUpdate";
 
 type UseTodosResult = {
   todos: Todo[];
@@ -28,34 +30,24 @@ function extractErrorMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
-/** Fetches todos on mount and exposes loading/error state with retry. */
+/** Fetches todos on mount and exposes CRUD with optimistic updates. */
 function useTodos(): UseTodosResult {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Accumulated dirty fields per todo ID, not yet confirmed by the server
-  const pendingFields = useRef<Map<string, TodoUpdatableFields>>(new Map());
-  // Last server-confirmed state per todo ID, used for rollback on failure
-  const snapshots = useRef<Map<string, Todo>>(new Map());
-  // In-flight mutation controller per todo ID, aborted when a newer mutation supersedes
-  const mutationControllers = useRef<Map<string, AbortController>>(new Map());
-
-  /** Aborts existing controller for `id`, creates and stores a new one. */
-  function abortAndReplace(id: string): AbortController {
-    const existing = mutationControllers.current.get(id);
-    if (existing) existing.abort();
-    const controller = new AbortController();
-    mutationControllers.current.set(id, controller);
-    return controller;
-  }
-
-  /** Removes the controller entry for `id` only if it still owns the slot (avoids deleting a superseding controller). */
-  function clearController(id: string, controller: AbortController): void {
-    if (mutationControllers.current.get(id) === controller) {
-      mutationControllers.current.delete(id);
-    }
-  }
+  const { mutate } = useOptimisticUpdate<Todo, TodoUpdatableFields>({
+    getEntity: (id) => todos.find((t) => t.id === id),
+    applyUpdate: (id, fields) => {
+      setTodos((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, ...fields } : t)),
+      );
+    },
+    mutationFn: (id, fields, signal) =>
+      httpClient.patch<
+        ApiResponses<typeof TODO_BY_ID_API_PATH, "patch">["200"]
+      >(`/todos/${id}`, { body: fields, signal }),
+  });
 
   const fetchTodos = useCallback(async () => {
     setLoading(true);
@@ -104,61 +96,18 @@ function useTodos(): UseTodosResult {
     }
   }
 
-  /** Updates a todo with optimistic update, abort-resend with merged fields, and rollback on failure. */
+  /** Updates a todo with optimistic update, abort-resend, and rollback. */
   async function updateTodo(
     id: string,
     fields: TodoUpdatableFields,
   ): Promise<boolean> {
     setError(null);
 
-    // Take snapshot before first optimistic update in a sequence
-    setTodos((prev) => {
-      const currentTodo = prev.find((t) => t.id === id);
-      if (currentTodo && !snapshots.current.has(id)) {
-        snapshots.current.set(id, { ...currentTodo });
-      }
-      return prev;
-    });
-
-    // Merge new fields into accumulated pending fields
-    const newPendingFields = { ...pendingFields.current.get(id), ...fields };
-    pendingFields.current.set(id, newPendingFields);
-
-    // Optimistic update
-    setTodos((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, ...newPendingFields } : t)),
-    );
-
-    // Abort previous in-flight request for same id, create new controller
-    const controller = abortAndReplace(id);
-
-    function rollback(message: string): void {
-      const snap = snapshots.current.get(id);
-      if (snap) {
-        setTodos((prev) => prev.map((t) => (t.id === id ? snap : t)));
-      }
-      pendingFields.current.delete(id);
-      snapshots.current.delete(id);
-      setError(message);
-    }
-
     try {
-      const updated = await httpClient.patch<
-        ApiResponses<typeof TODO_BY_ID_API_PATH, "patch">["200"]
-      >(`/todos/${id}`, { body: newPendingFields, signal: controller.signal });
-
-      setTodos((prev) => prev.map((t) => (t.id === id ? updated : t)));
-      pendingFields.current.delete(id);
-      snapshots.current.delete(id);
-      clearController(id, controller);
-      return true;
+      const { success } = await mutate(id, fields);
+      return success;
     } catch (err) {
-      if (controller.signal.aborted) {
-        // Superseding request owns state — exit silently
-        return false;
-      }
-      rollback(extractErrorMessage(err, GENERIC_MUTATION_ERROR_MESSAGE));
-      clearController(id, controller);
+      setError(extractErrorMessage(err, GENERIC_MUTATION_ERROR_MESSAGE));
       return false;
     }
   }
