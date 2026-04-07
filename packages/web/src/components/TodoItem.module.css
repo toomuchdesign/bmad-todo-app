@@ -1,3 +1,14 @@
+/*
+ * TodoItem grid layout (read mode):
+ *
+ *   col 1 (auto)  |  col 2 (1fr)  |  col 3 (auto)
+ *   ──────────────┼───────────────┼──────────────────
+ *   [checkbox]    |  Title        |  date  [Delete]     ← row 1
+ *   ──────────────┼───────────────┼──────────────────
+ *                 |  Description (spans col 2–3)        ← row 2
+ *
+ * Edit mode replaces Title with an <input> and Description with a <textarea>.
+ */
 .item {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -83,6 +94,20 @@
   opacity: 0.7;
   margin-top: 2px;
   text-align: left;
+}
+
+.descriptionButton {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.descriptionButton:focus-visible {
+  outline: 2px solid var(--s-border-focus);
+  outline-offset: 2px;
 }
 
 .editWrapper {

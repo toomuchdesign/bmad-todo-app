@@ -3,8 +3,11 @@ import type { Todo } from "shared";
 import type { TodoUpdatableFields } from "../contracts";
 import { validateTodoFields } from "../utils";
 
+type EditFocusTarget = "title" | "text";
+
 type TodoEditState = {
   isEditing: boolean;
+  focusTarget: EditFocusTarget;
   title: string;
   text: string;
   validationError: string | null;
@@ -12,6 +15,7 @@ type TodoEditState = {
 
 const IDLE_EDIT_STATE: TodoEditState = {
   isEditing: false,
+  focusTarget: "title",
   title: "",
   text: "",
   validationError: null,
@@ -31,11 +35,12 @@ function useTodoEdit({
   const isSavingRef = useRef(false);
   const isCancelledRef = useRef(false);
 
-  function startEdit(): void {
+  function startEdit({ focusTarget }: { focusTarget: EditFocusTarget }): void {
     if (todo.completed) return;
     isCancelledRef.current = false;
     setTodoEdit({
       isEditing: true,
+      focusTarget,
       title: todo.title,
       text: todo.text,
       validationError: null,
@@ -136,5 +141,5 @@ function useTodoEdit({
   };
 }
 
-export type { TodoEditState };
+export type { EditFocusTarget, TodoEditState };
 export { useTodoEdit };

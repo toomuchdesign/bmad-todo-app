@@ -38,8 +38,13 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
     wasEditingRef.current = todoEdit.isEditing;
 
     if (todoEdit.isEditing && !wasEditing) {
-      titleInputRef.current?.focus();
-      titleInputRef.current?.select();
+      // Focus the input matching the trigger that entered edit mode
+      if (todoEdit.focusTarget === "text") {
+        textareaRef.current?.focus();
+      } else {
+        titleInputRef.current?.focus();
+        titleInputRef.current?.select();
+      }
     } else if (!todoEdit.isEditing && wasEditing) {
       // Return focus to title button, or checkbox if completed (completed todos render a span, not a button)
       if (textButtonRef.current) {
@@ -48,7 +53,7 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
         checkboxRef.current?.focus();
       }
     }
-  }, [todoEdit.isEditing]);
+  }, [todoEdit.isEditing, todoEdit.focusTarget]);
 
   // Focus checkbox when signalled by parent (e.g. after sibling delete)
   useEffect(() => {
@@ -148,12 +153,23 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
               ref={textButtonRef}
               type="button"
               className={`${styles.textButton} ${titleClassName}`}
-              onClick={startEdit}
+              onClick={() => startEdit({ focusTarget: "title" })}
             >
               {todo.title}
             </button>
           )}
-          {todo.text && <span className={styles.description}>{todo.text}</span>}
+          {todo.text &&
+            (todo.completed ? (
+              <span className={styles.description}>{todo.text}</span>
+            ) : (
+              <button
+                type="button"
+                className={`${styles.descriptionButton} ${styles.description}`}
+                onClick={() => startEdit({ focusTarget: "text" })}
+              >
+                {todo.text}
+              </button>
+            ))}
         </>
       )}
       <div className={styles.actions}>

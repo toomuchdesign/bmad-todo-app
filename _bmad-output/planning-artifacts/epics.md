@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2, 3, 4]
+stepsCompleted: [1, 2, 3, 4, "epic4-step1", "epic4-step2", "epic4-step3", "epic4-step4"]
 lastStep: 4
 workflowType: "epics"
 inputDocuments:
@@ -42,6 +42,9 @@ FR21: The API does not return soft-deleted todos in GET /todos.
 FR22: API error responses include a stable machine-readable error code and a human-readable message suitable for display.
 FR23: API error responses can optionally include structured details for validation errors (e.g., field + limits) and a requestId for debugging.
 FR24: Automated tests cover all current MVP flows, including success and failure cases for load and CRUD actions.
+FR25: The system stores a `users` table with `id` (UUID), `name` (text), `created_at`, `updated_at`.
+FR26: A default user is seeded via migration, every todo belongs to a user via `user_id` FK, all todo queries and the web app are scoped by a required `x-user-id` header (web uses `DEFAULT_USER_ID`).
+FR30: The API exposes `POST /users` to create a new user (accepts `{ name }`, returns the created user).
 
 ### NonFunctional Requirements
 
@@ -54,6 +57,7 @@ NFR6: User-provided todo text is handled safely (no client-side injection issues
 NFR7: API communication uses TLS in any deployed environment.
 NFR8: Core actions are keyboard-operable and controls have accessible names.
 NFR9: No formal WCAG target is required for MVP, but regressions that block basic usage are bugs.
+NFR10: API test files run in parallel (`fileParallelism: true`) with each file using a distinct user for DB isolation.
 
 ### Additional Requirements
 
@@ -117,6 +121,10 @@ FR21: Epic 2 - Server excludes soft-deleted.
 FR22: Epic 1 - Stable error contract.
 FR23: Epic 1 - requestId propagation on error responses.
 FR24: Epic 3 - Automated test coverage (success/failure flows).
+FR25: Epic 4 - Users table with id, name, timestamps.
+FR26: Epic 4 - User-scoped todos (migration, FK, x-user-id header, query scoping, web default).
+FR30: Epic 4 - POST /users route for user creation.
+NFR10: Epic 4 - Parallel test execution via per-user isolation.
 
 ## Epic List
 
@@ -134,6 +142,11 @@ A user can maintain their list by editing text, marking todos complete/incomplet
 
 A maintainer can validate the MVP is shippable via automated tests for all required flows, plus baseline accessibility/operability checks.
 **FRs covered:** FR24 (and supports NFR1–NFR9)
+
+### Epic 4: User Ownership (Multi-User Foundation + Parallel Tests)
+
+A user's todos are scoped to their identity. The system supports multiple users at the DB/API level, with the web app using a hidden default user. API tests run in parallel with per-user isolation.
+**FRs covered:** FR25, FR26, FR30, NFR10
 
 ## Epic 1: First Usable Todo List (Load + Create)
 
@@ -576,3 +589,113 @@ So that I can complete the core loop without a mouse.
 **Given** an error banner appears
 **When** it is rendered
 **Then** it is announced without breaking user flow (e.g., via an aria-live region)
+
+## Epic 4: User Ownership (Multi-User Foundation + Parallel Tests)
+
+Deliver user scoping across the full stack: DB schema, API routes, web client, and test infrastructure. After this epic, every todo belongs to a user, the API requires user identification, and API tests run in parallel.
+
+### Story 4.1: User entity, default user seed, and creation route
+
+As a developer,
+I want a users table, a seeded default user, and a route to create new users,
+So that the system has user identities before scoping todos to them.
+
+**Acceptance Criteria:**
+
+**Given** the database has no `users` table
+**When** the Drizzle migration runs
+**Then** a `users` table exists with `id` (UUID PK), `name` (text, NOT NULL), `created_at` (timestamptz), `updated_at` (timestamptz)
+**And** a default user row is inserted with the fixed `DEFAULT_USER_ID`
+
+**Given** the `shared` package
+**When** any package imports `DEFAULT_USER_ID`
+**Then** it receives a fixed UUID string constant
+
+**Given** the API is running
+**When** I call `POST /users` with `{ name: "Alice" }`
+**Then** it returns `201` with the created user (`id`, `name`, `createdAt`, `updatedAt`)
+
+**Given** the API is running
+**When** I call `POST /users` with an empty or whitespace-only name
+**Then** it returns `400` with `code = VALIDATION_ERROR`
+
+**Given** the API receives a `POST /users` request
+**When** it responds (success or error)
+**Then** it includes an `x-request-id` response header
+
+**Technical notes:**
+
+- Destructive migration (no production data to preserve)
+- `DEFAULT_USER_ID` exported from `shared` alongside existing constants
+- No changes to todos table or routes in this story — existing tests must keep passing
+- API integration tests for `POST /users` (success + validation failure + request-id)
+
+### Story 4.2: Scope todos by user across API, web, and tests
+
+As a user,
+I want my todos to belong to me and be invisible to other users,
+So that the system supports isolated multi-user data.
+
+**Acceptance Criteria:**
+
+**Given** the Drizzle migration runs
+**When** the `todos` table is updated
+**Then** it has a `user_id` column (UUID, NOT NULL, FK → `users.id`)
+
+**Given** a valid `x-user-id` header is present
+**When** I call any `/todos` endpoint
+**Then** the request is scoped to that user's todos only
+
+**Given** the `x-user-id` header is missing or references a non-existent user
+**When** I call any `/todos` endpoint
+**Then** the API returns `401` with a clear error code and message
+
+**Given** user A creates a todo
+**When** user B calls `GET /todos`
+**Then** user A's todo is not in user B's response
+
+**Given** the web app makes any API request
+**When** the request is sent
+**Then** it includes the `x-user-id: DEFAULT_USER_ID` header
+
+**Given** the web component tests
+**When** they mock API calls
+**Then** they include the `x-user-id` header in assertions or mock setup
+
+**Given** E2E tests
+**When** they run
+**Then** they work with the user-scoped API (via the web app's default user header)
+
+**Technical notes:**
+
+- `x-user-id` validation via a shared Fastify preHandler hook on todo routes
+- Web: add the header in the existing fetch wrapper / API client
+- Consider `401 Unauthorized` for missing/invalid user ID (not `403` — there's no auth yet, this signals "identify yourself")
+- All existing API integration tests, web component tests, and E2E tests updated to pass with user-scoped routes
+
+### Story 4.3: Enable parallel API test execution with per-user isolation
+
+As a developer,
+I want API tests to run in parallel using per-file user isolation,
+So that the test suite runs faster without DB concurrency issues.
+
+**Acceptance Criteria:**
+
+**Given** each API test file
+**When** it sets up test data
+**Then** it creates its own user via `POST /users` and uses that user's ID for all requests
+**And** cleanup is scoped to `DELETE FROM todos WHERE user_id = $testUserId`
+
+**Given** the API vitest config
+**When** tests run
+**Then** `fileParallelism` is `true` and all test files pass concurrently
+
+**Given** any two test files running in parallel
+**When** both create and query todos
+**Then** neither file sees the other's data
+
+**Technical notes:**
+
+- Remove global `TRUNCATE TABLE todos` from `vitest.setup.ts`, replace with per-user cleanup
+- Each test file's `beforeAll` creates a user via the API; `beforeEach` deletes that user's todos
+- No product code changes — purely test infrastructure

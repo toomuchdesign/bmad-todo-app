@@ -79,13 +79,28 @@ describe("TodoItem", () => {
       ).toBeInTheDocument();
     });
 
-    it("renders description text when present", () => {
+    it("renders description as a clickable button for incomplete todos", () => {
       renderTodoItem({ todo: incompleteTodoWithDescription });
 
-      expect(screen.getByText("Whole milk from the store")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Whole milk from the store" }),
+      ).toBeInTheDocument();
     });
 
-    it("does not render description when text is null", () => {
+    it("renders description as a non-clickable span for completed todos", () => {
+      renderTodoItem({ todo: completedTodo });
+
+      expect(
+        screen.getByText(completedTodo.text as string),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", {
+          name: completedTodo.text as string,
+        }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("does not render description when text is empty", () => {
       renderTodoItem({ todo: incompleteTodo });
 
       expect(
@@ -95,7 +110,7 @@ describe("TodoItem", () => {
   });
 
   describe("entering edit mode", () => {
-    it("shows title input and description textarea with current values", async () => {
+    it("focuses title input when clicking the title button", async () => {
       const user = userEvent.setup();
       renderTodoItem({ todo: incompleteTodoWithDescription });
 
@@ -115,6 +130,22 @@ describe("TodoItem", () => {
       expect(titleInput).toHaveValue(incompleteTodoWithDescription.title);
       expect(titleInput).toHaveFocus();
       expect(textInput).toHaveValue(incompleteTodoWithDescription.text);
+    });
+
+    it("focuses textarea when clicking the description button", async () => {
+      const user = userEvent.setup();
+      renderTodoItem({ todo: incompleteTodoWithDescription });
+
+      await user.click(
+        screen.getByRole("button", {
+          name: incompleteTodoWithDescription.text,
+        }),
+      );
+
+      const textInput = screen.getByRole("textbox", {
+        name: "Edit todo description",
+      });
+      expect(textInput).toHaveFocus();
     });
   });
 
@@ -355,14 +386,6 @@ describe("TodoItem", () => {
         screen.queryByRole("button", { name: completedTodo.title }),
       ).not.toBeInTheDocument();
       expect(screen.getByText(completedTodo.title)).toBeInTheDocument();
-    });
-
-    it("renders description when present", () => {
-      renderTodoItem({ todo: completedTodo });
-
-      expect(
-        screen.getByText(completedTodo.text as string),
-      ).toBeInTheDocument();
     });
 
     it("renders with checked checkbox", () => {
