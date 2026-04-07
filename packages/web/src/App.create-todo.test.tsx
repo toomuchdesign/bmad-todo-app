@@ -4,7 +4,7 @@ import fetchMock from "@fetch-mock/vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { Todo } from "shared";
 import { describe, expect, it } from "vitest";
-import App from "./App";
+import { App } from "./App";
 import { TODO_FIXTURES } from "./test-utils";
 
 describe("App", () => {

@@ -26,4 +26,4 @@ const errorHandlerPlugin: FastifyPluginAsync = async (app) => {
   });
 };
 
-export default errorHandlerPlugin;
+export { errorHandlerPlugin };

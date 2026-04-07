@@ -23,4 +23,4 @@ const requestIdPlugin: FastifyPluginAsync = async (app) => {
   });
 };
 
-export default requestIdPlugin;
+export { requestIdPlugin };

@@ -1,4 +1,4 @@
-import buildApp from "./app.js";
+import { buildApp } from "./app.js";
 import { getConfig } from "./config.js";
 
 const app = await buildApp();

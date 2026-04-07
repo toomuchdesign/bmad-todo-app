@@ -91,4 +91,4 @@ const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
   );
 };
 
-export default todosRoutes;
+export { todosRoutes };

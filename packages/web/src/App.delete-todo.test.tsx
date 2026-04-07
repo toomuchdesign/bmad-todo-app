@@ -4,7 +4,7 @@ import fetchMock from "@fetch-mock/vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import App from "./App";
+import { App } from "./App";
 import { createDeferred, TODO_FIXTURES } from "./test-utils";
 
 describe("App", () => {
