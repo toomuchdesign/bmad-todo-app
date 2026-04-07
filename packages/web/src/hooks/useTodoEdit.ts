@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import type { Todo } from "shared";
+import type { TodoUpdatableFields } from "../contracts";
 import { validateTodoFields } from "../utils";
-import type { TodoUpdatableFields } from "./useTodos";
 
 type TodoEditState = {
   isEditing: boolean;

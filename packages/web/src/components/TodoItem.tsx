@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { Todo } from "shared";
+import type { TodoUpdatableFields } from "../contracts";
 import { useTodoEdit } from "../hooks/useTodoEdit";
-import type { TodoUpdatableFields } from "../hooks/useTodos";
 import styles from "./TodoItem.module.css";
 
 type TodoItemProps = {

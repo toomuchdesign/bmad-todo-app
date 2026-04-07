@@ -1,5 +1,5 @@
 import type { Todo } from "shared";
-import type { TodoUpdatableFields } from "../hooks/useTodos";
+import type { TodoUpdatableFields } from "../contracts";
 import { TodoItem } from "./TodoItem";
 import styles from "./TodoList.module.css";
 

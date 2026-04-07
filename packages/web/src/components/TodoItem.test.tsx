@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import type { Todo } from "shared";
 import { MAX_TODO_TITLE_LENGTH } from "shared";
 import { describe, expect, it, vi } from "vitest";
-import type { TodoUpdatableFields } from "../hooks/useTodos";
+import type { TodoUpdatableFields } from "../contracts";
 import { TodoItem } from "./TodoItem";
 
 const incompleteTodo: Todo = {

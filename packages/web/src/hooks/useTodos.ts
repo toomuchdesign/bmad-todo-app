@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Todo } from "shared";
-import type { ApiResponses } from "../contracts";
+import type { ApiResponses, TodoUpdatableFields } from "../contracts";
 import { type TODO_BY_ID_API_PATH, TODOS_API_PATH } from "../contracts";
 import { HttpError, httpClient } from "../utils";
-
-type TodoUpdatableFields = Partial<Pick<Todo, "title" | "text" | "completed">>;
 
 type UseTodosResult = {
   todos: Todo[];
@@ -190,5 +188,4 @@ function useTodos(): UseTodosResult {
   };
 }
 
-export type { TodoUpdatableFields };
 export { useTodos };

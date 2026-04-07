@@ -25,3 +25,13 @@ export type ApiResponses<
     responses: unknown;
   })["responses"]]: ApiResponseBody<P, M, S>;
 };
+
+/**
+ * Extract the JSON request body for a given path and method.
+ */
+export type ApiRequestBody<
+  P extends keyof paths,
+  M extends HttpMethod & keyof paths[P],
+> = (paths[P][M] & {
+  requestBody: { content: { "application/json": unknown } };
+})["requestBody"]["content"]["application/json"];
