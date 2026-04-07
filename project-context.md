@@ -42,6 +42,7 @@ Example: `feat/oauth-login`, `fix/null-payment-response`
 
 - Code must be boring, obvious and predictable. Favor clarity over cleverness.
 - Don't hesitate to add a short comment whenever a piece of code is not immediately self-explanatory.
+- Avoid single letter variable names or abbreviations, prefer self-descriptive names
 
 ### General
 
