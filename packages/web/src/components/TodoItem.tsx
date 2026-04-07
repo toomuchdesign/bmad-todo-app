@@ -23,14 +23,14 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
   const {
     todoEdit,
     startEdit,
+    saveEdit,
+    cancelEdit,
+    consumeCancelFlag,
     toggleCompleted,
     deleteTodo,
-    handleTitleKeyDown,
-    handleTextareaKeyDown,
-    handleBlur,
     handleTitleChange,
     handleTextChange,
-  } = useTodoEdit({ todo, onUpdate, onDelete, itemRef, textareaRef });
+  } = useTodoEdit({ todo, onUpdate, onDelete });
 
   // Manage focus when entering/exiting edit mode
   useEffect(() => {
@@ -56,6 +56,36 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
       checkboxRef.current?.focus();
     }
   }, [focusCheckbox]);
+
+  function handleTitleKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      textareaRef.current?.focus();
+    } else if (e.key === "Escape") {
+      cancelEdit();
+    }
+  }
+
+  function handleTextareaKeyDown(
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+  ): void {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      saveEdit();
+    } else if (e.key === "Escape") {
+      cancelEdit();
+    }
+  }
+
+  function handleBlur(e: React.FocusEvent<HTMLElement>): void {
+    if (consumeCancelFlag()) return;
+    // Only save if focus leaves the entire item
+    const target = e.relatedTarget;
+    if (target && itemRef.current?.contains(target as Node)) {
+      return;
+    }
+    saveEdit();
+  }
 
   const titleClassName = todo.completed
     ? `${styles.text} ${styles.completed}`

@@ -17,27 +17,23 @@ const IDLE_EDIT_STATE: TodoEditState = {
   validationError: null,
 };
 
-/** Manages edit state, validation, and event handlers for a single todo item. */
+/** Manages edit state, validation, and change handlers for a single todo item. */
 function useTodoEdit({
   todo,
   onUpdate,
   onDelete,
-  itemRef,
-  textareaRef,
 }: {
   todo: Todo;
   onUpdate: (id: string, fields: TodoUpdatableFields) => Promise<boolean>;
   onDelete: (id: string) => Promise<boolean>;
-  itemRef: React.RefObject<HTMLLIElement | null>;
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
 }) {
   const [todoEdit, setTodoEdit] = useState<TodoEditState>(IDLE_EDIT_STATE);
   const isSavingRef = useRef(false);
-  const isCancelledEditRef = useRef(false);
+  const isCancelledRef = useRef(false);
 
   function startEdit(): void {
     if (todo.completed) return;
-    isCancelledEditRef.current = false;
+    isCancelledRef.current = false;
     setTodoEdit({
       isEditing: true,
       title: todo.title,
@@ -47,8 +43,17 @@ function useTodoEdit({
   }
 
   function cancelEdit(): void {
-    isCancelledEditRef.current = true;
+    isCancelledRef.current = true;
     setTodoEdit(IDLE_EDIT_STATE);
+  }
+
+  /** Returns true if the cancel flag was set (and resets it). */
+  function consumeCancelFlag(): boolean {
+    if (isCancelledRef.current) {
+      isCancelledRef.current = false;
+      return true;
+    }
+    return false;
   }
 
   async function saveEdit(): Promise<void> {
@@ -91,39 +96,6 @@ function useTodoEdit({
     }
   }
 
-  function handleTitleKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      textareaRef.current?.focus();
-    } else if (e.key === "Escape") {
-      cancelEdit();
-    }
-  }
-
-  function handleTextareaKeyDown(
-    e: React.KeyboardEvent<HTMLTextAreaElement>,
-  ): void {
-    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      saveEdit();
-    } else if (e.key === "Escape") {
-      cancelEdit();
-    }
-  }
-
-  function handleBlur(e: React.FocusEvent<HTMLElement>): void {
-    if (isCancelledEditRef.current) {
-      isCancelledEditRef.current = false;
-      return;
-    }
-    // Only save if focus leaves the entire item
-    const target = e.relatedTarget;
-    if (target && itemRef.current?.contains(target as Node)) {
-      return;
-    }
-    saveEdit();
-  }
-
   function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>): void {
     setTodoEdit((prev) => ({
       ...prev,
@@ -155,12 +127,10 @@ function useTodoEdit({
     startEdit,
     saveEdit,
     cancelEdit,
+    consumeCancelFlag,
     toggleCompleted,
     deleteTodo,
-    // Event handlers (saveEdit is triggered by handleTextareaKeyDown and handleBlur)
-    handleTitleKeyDown,
-    handleTextareaKeyDown,
-    handleBlur,
+    // Change handlers
     handleTitleChange,
     handleTextChange,
   };
