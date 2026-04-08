@@ -116,6 +116,38 @@ describe("App", () => {
       });
     });
 
+    describe("on 404 response", () => {
+      it("removes the todo from the list without showing error banner", async () => {
+        const user = userEvent.setup();
+
+        fetchMock
+          .get("/todos", { todos: TODO_FIXTURES })
+          .delete("express:/todos/:id", {
+            status: 404,
+            body: { code: "NOT_FOUND", message: "Todo not found" },
+          });
+
+        render(<App />);
+
+        await waitFor(() => {
+          expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        });
+
+        await user.click(
+          screen.getByRole("button", { name: "Delete Buy milk" }),
+        );
+
+        await waitFor(() => {
+          expect(screen.queryByText("Buy milk")).not.toBeInTheDocument();
+        });
+
+        // No error banner shown
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+        // Other todo still present
+        expect(screen.getByText("Walk the dog")).toBeInTheDocument();
+      });
+    });
+
     describe("on API failure", () => {
       it("keeps the todo visible and shows error banner", async () => {
         const user = userEvent.setup();

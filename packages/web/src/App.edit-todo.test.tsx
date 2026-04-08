@@ -82,6 +82,41 @@ describe("App", () => {
       });
     });
 
+    describe("on 404 response", () => {
+      it("removes the todo from the list without showing error banner", async () => {
+        const user = userEvent.setup();
+        fetchMock
+          .get("/todos", { todos: TODO_FIXTURES })
+          .patch("express:/todos/:id", {
+            status: 404,
+            body: { code: "NOT_FOUND", message: "Todo not found" },
+          });
+
+        render(<App />);
+
+        await waitFor(() => {
+          expect(screen.getByText("Buy milk")).toBeInTheDocument();
+        });
+
+        await user.click(screen.getByRole("button", { name: "Buy milk" }));
+        const titleInput = screen.getByRole("textbox", {
+          name: "Edit todo title",
+        });
+        await user.clear(titleInput);
+        await user.type(titleInput, "Buy oat milk");
+        await user.tab();
+        await user.keyboard("{Control>}{Enter}{/Control}");
+
+        await waitFor(() => {
+          expect(screen.queryByText("Buy milk")).not.toBeInTheDocument();
+        });
+        expect(screen.queryByText("Buy oat milk")).not.toBeInTheDocument();
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+        // Other todo still present
+        expect(screen.getByText("Walk the dog")).toBeInTheDocument();
+      });
+    });
+
     describe("on save failure", () => {
       it("shows global error banner and preserves edit mode", async () => {
         const user = userEvent.setup();

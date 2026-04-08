@@ -114,6 +114,11 @@ function useTodos({ userId }: { userId: string }): UseTodosResult {
       const { success } = await mutate(id, fields);
       return success;
     } catch (err) {
+      // 404 means the item is already gone server-side — remove from list
+      if (err instanceof HttpError && err.status === 404) {
+        setTodos((prev) => prev.filter((t) => t.id !== id));
+        return true;
+      }
       setError(extractErrorMessage(err, GENERIC_MUTATION_ERROR_MESSAGE));
       return false;
     }
@@ -130,6 +135,11 @@ function useTodos({ userId }: { userId: string }): UseTodosResult {
       setTodos((prev) => prev.filter((t) => t.id !== id));
       return true;
     } catch (err) {
+      // 404 means the item is already gone server-side — treat as success
+      if (err instanceof HttpError && err.status === 404) {
+        setTodos((prev) => prev.filter((t) => t.id !== id));
+        return true;
+      }
       setError(extractErrorMessage(err, GENERIC_MUTATION_ERROR_MESSAGE));
       return false;
     }
