@@ -2,6 +2,7 @@ import type { FastifyPluginAsyncJsonSchemaToTs } from "@fastify/type-provider-js
 import {
   createTodoInDatabase,
   deleteTodoInDatabase,
+  getTodoFromDatabase,
   listTodosFromDatabase,
   updateTodoInDatabase,
 } from "../../db/todos.js";
@@ -54,6 +55,22 @@ const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
     async (request, reply) => {
       const { id } = request.params;
       const { title, text, completed } = request.body;
+
+      // No fields to update — return current state without writing to DB
+      const hasUpdates =
+        title !== undefined || text !== undefined || completed !== undefined;
+      if (!hasUpdates) {
+        const existing = await getTodoFromDatabase({
+          id,
+          userId: request.userId,
+        });
+        if (!existing) {
+          return reply
+            .code(404)
+            .send({ code: "NOT_FOUND", message: "Todo not found" });
+        }
+        return reply.code(200).send(existing);
+      }
 
       const todo = await updateTodoInDatabase({
         id,

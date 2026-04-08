@@ -145,6 +145,62 @@ describe("PATCH /todos/:id", () => {
     });
   });
 
+  describe("empty body", () => {
+    it("returns 200 with unchanged todo and no DB write", async () => {
+      // Arrange
+      const { app, testUserId, testHeaders } = getContext();
+      const seed = makeSeedTodo({ userId: testUserId });
+      await seedTodo(seed);
+
+      // Act
+      const response = await app.inject({
+        method: "PATCH",
+        url: `/todos/${seed.id}`,
+        headers: testHeaders,
+        payload: {},
+      });
+
+      // Assert
+      expect(response.statusCode).toBe(200);
+
+      const body = response.json<PatchTodosRouteResponses[200]>();
+
+      // updatedAt unchanged — proves no DB write occurred
+      expect(body).toEqual({
+        id: seed.id,
+        title: seed.title,
+        text: "",
+        completed: false,
+        userId: testUserId,
+        createdAt: seed.createdAt,
+        updatedAt: seed.updatedAt,
+      });
+    });
+
+    it("returns 404 for non-existent todo", async () => {
+      // Arrange
+      const { app, testHeaders } = getContext();
+
+      // Act
+      const response = await app.inject({
+        method: "PATCH",
+        url: `/todos/${randomUUID()}`,
+        headers: testHeaders,
+        payload: {},
+      });
+
+      // Assert
+      expect(response.statusCode).toBe(404);
+
+      const body = response.json<PatchTodosRouteResponses[404]>();
+
+      expect(body).toEqual({
+        code: "NOT_FOUND",
+        message: "Todo not found",
+      });
+    });
+  });
+
   describe("validation errors", () => {
     it.each([
       { name: "empty title", payload: { title: "   " } },

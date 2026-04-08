@@ -25,6 +25,25 @@ function mapTodoRowToApiTodo(row: TodoRow): Todo {
   };
 }
 
+export async function getTodoFromDatabase({
+  id,
+  userId,
+}: {
+  id: string;
+  userId: string;
+}): Promise<Todo | null> {
+  const db = getDb();
+
+  const [row] = await db
+    .select()
+    .from(todos)
+    .where(
+      and(eq(todos.id, id), eq(todos.userId, userId), isNull(todos.deletedAt)),
+    );
+
+  return row ? mapTodoRowToApiTodo(row) : null;
+}
+
 export async function listTodosFromDatabase({
   userId,
 }: {
