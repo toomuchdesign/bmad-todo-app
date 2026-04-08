@@ -199,17 +199,41 @@ it("returns the discounted price", () => {
 
 ---
 
-## Documentation Consistency
+## Documentation Sync (Always Required)
 
-Before marking any task complete, check whether these files need updating:
+Whenever you perform a refactor or make/implement an architectural decision, you MUST
+update all relevant documentation before considering the task complete.
 
-- `README.md` — setup steps, usage examples, environment variables
-- `ARCHITECTURE.md` — component responsibilities, data flow, system boundaries
-- `docs/` — any affected guides, API references, or ADRs
-- Inline JSDoc — updated to reflect changed signatures or behavior
+**Triggers:**
 
-If a change makes existing documentation misleading or incomplete, updating it
-is part of the task — not optional follow-up work.
+- Any refactor (file moves, renames, restructured modules, changed interfaces)
+- Any architectural decision (new patterns, removed dependencies, changed data flow)
+- Any change to how agents/tools/prompts are structured or invoked
+
+**What to check and update:**
+
+- `CLAUDE.md / constitution.md / project-context.md / architecture.md` — if workflows, commands, or project structure changed
+- `README.md` — if setup, usage, or architecture overview is affected
+- `docs/` — any affected design docs, ADRs, or diagrams
+- Other agent-specific files (e.g. `AGENTS.md`, `CONTEXT.md`, system prompts)
+
+**For architectural decisions specifically:**
+
+- Create or update an ADR in `docs/decisions/` before closing the task
+- Format: problem → options considered → decision → consequences
+
+**How to do it:**
+
+1. After completing the refactor/decision, pause and ask: "What did I change structurally or architecturally?"
+2. For each change, identify which docs are now stale
+3. Update them before marking the task done
+4. If unsure whether a doc needs updating, err on the side of updating it
+
+**Never:**
+
+- Close a task or end a refactor loop with stale documentation
+- Assume docs are someone else's responsibility
+- Skip this step because the change "seems small"
 
 ---
 

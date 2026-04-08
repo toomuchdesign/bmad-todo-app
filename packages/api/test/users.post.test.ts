@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { DEFAULT_USER_ID, MAX_USER_NAME_LENGTH } from "shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
-import type { PostUsersRouteResponses } from "../src/routes/schemas.js";
+import type { PostUsersRouteResponses } from "../src/routes/users/schemas.js";
 import {
   ANY_ISO_DATETIME,
   ANY_UUID,

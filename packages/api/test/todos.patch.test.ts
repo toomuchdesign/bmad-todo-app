@@ -10,7 +10,7 @@ import { buildApp } from "../src/app.js";
 import type {
   GetTodosRouteResponses,
   PatchTodosRouteResponses,
-} from "../src/routes/schemas.js";
+} from "../src/routes/todos/schemas.js";
 import {
   ANY_ISO_DATETIME,
   makeSeedTodo,

@@ -6,7 +6,7 @@ import {
 } from "shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
-import type { PostTodosRouteResponses } from "../src/routes/schemas.js";
+import type { PostTodosRouteResponses } from "../src/routes/todos/schemas.js";
 import {
   ANY_ISO_DATETIME,
   ANY_UUID,

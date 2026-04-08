@@ -1,5 +1,5 @@
 import type { FastifyPluginAsyncJsonSchemaToTs } from "@fastify/type-provider-json-schema-to-ts";
-import { createUserInDatabase } from "../db/users.js";
+import { createUserInDatabase } from "../../db/users.js";
 import { postUsersRouteSchema } from "./schemas.js";
 
 const usersRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {

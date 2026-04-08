@@ -4,8 +4,8 @@ import {
   deleteTodoInDatabase,
   listTodosFromDatabase,
   updateTodoInDatabase,
-} from "../db/todos.js";
-import { validateUserPlugin } from "../plugins/validate-user.js";
+} from "../../db/todos.js";
+import { validateUserPlugin } from "../../plugins/validate-user.js";
 import {
   deleteTodosRouteSchema,
   getTodosRouteSchema,

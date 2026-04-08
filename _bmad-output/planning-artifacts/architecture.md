@@ -500,8 +500,14 @@ bmad-todo/
 │   │   │   │   └── schema.ts               # drizzle schema (todos table)
 │   │   │   ├── routes/
 │   │   │   │   ├── README.md
-│   │   │   │   ├── schemas.ts              # route response schemas
-│   │   │   │   └── todos.ts                # GET /todos
+│   │   │   │   ├── shared/
+│   │   │   │   │   └── schemas.ts          # shared headers, error response, InferRouteResponses type
+│   │   │   │   ├── todos/
+│   │   │   │   │   ├── index.ts            # todo route handlers (GET/POST/PATCH/DELETE /todos)
+│   │   │   │   │   └── schemas.ts          # todo-specific route schemas & response types
+│   │   │   │   └── users/
+│   │   │   │       ├── index.ts            # user route handlers (POST /users)
+│   │   │   │       └── schemas.ts          # user-specific route schemas & response types
 │   │   ├── drizzle.config.ts               # drizzle-kit config
 │   │   ├── drizzle/
 │   │   │   └── migrations/                 # generated migrations
@@ -581,7 +587,7 @@ bmad-todo/
 
 ### Requirements → Structure Mapping
 
-- **FR1 list on load / retry on failure:** `packages/web/src/hooks/useTodos.ts` + `GlobalErrorBanner.tsx`; API `GET /todos` in `packages/api/src/routes/todos.ts`.
+- **FR1 list on load / retry on failure:** `packages/web/src/hooks/useTodos.ts` + `GlobalErrorBanner.tsx`; API `GET /todos` in `packages/api/src/routes/todos/index.ts`.
 - **FR2 create + validation:** `AddTodoForm.tsx` + shared `MAX_TODO_TEXT_LENGTH`; API `POST /todos`.
 - **FR3 edit:** `TodoItem.tsx` inline edit + API `PATCH /todos/:id`.
 - **FR4 toggle:** `TodoItem.tsx` + API `PATCH /todos/:id`.

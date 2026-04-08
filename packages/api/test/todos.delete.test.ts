@@ -3,7 +3,7 @@ import type { FastifyInstance } from "fastify";
 import { DEFAULT_USER_ID } from "shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
-import type { GetTodosRouteResponses } from "../src/routes/schemas.js";
+import type { GetTodosRouteResponses } from "../src/routes/todos/schemas.js";
 import {
   makeSeedTodo,
   runQuery,

@@ -8,8 +8,8 @@ import Fastify, {
 import { closeDb } from "./db/client.js";
 import { errorHandlerPlugin } from "./plugins/error-handler.js";
 import { requestIdPlugin } from "./plugins/request-id.js";
-import { todosRoutes } from "./routes/todos.js";
-import { usersRoutes } from "./routes/users.js";
+import { todosRoutes } from "./routes/todos/index.js";
+import { usersRoutes } from "./routes/users/index.js";
 
 export async function buildApp(
   options: FastifyServerOptions = {},
