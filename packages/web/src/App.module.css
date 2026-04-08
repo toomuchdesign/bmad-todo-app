@@ -1,18 +1,18 @@
 .app {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 32px 0 16px;
+  gap: var(--s-space-4);
+  padding: var(--s-space-8) 0 var(--s-space-4);
   flex-grow: 1;
 }
 
 .title {
-  font-size: 32px;
+  font-size: var(--s-font-size-2xl);
   letter-spacing: -0.5px;
-  margin: 0 16px 8px;
+  margin: 0 var(--s-space-4) var(--s-space-2);
 
   @media (max-width: 1024px) {
-    font-size: 28px;
-    margin: 0 16px 4px;
+    font-size: var(--s-font-size-xl);
+    margin: 0 var(--s-space-4) var(--s-space-1);
   }
 }

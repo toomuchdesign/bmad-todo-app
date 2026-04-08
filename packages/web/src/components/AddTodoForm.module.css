@@ -1,8 +1,8 @@
 .form {
   display: flex;
-  gap: 8px;
+  gap: var(--s-space-2);
   align-items: flex-start;
-  margin: 0 16px;
+  margin: 0 var(--s-space-4);
 }
 
 .inputWrapper {
@@ -12,10 +12,10 @@
 }
 
 .input {
-  padding: 10px 12px;
-  font-size: 14px;
+  padding: var(--s-space-2-5) var(--s-space-3);
+  font-size: var(--s-font-size-base);
   border: 1px solid var(--s-border);
-  border-radius: 6px;
+  border-radius: var(--s-radius-md);
   background: var(--s-bg);
   color: var(--s-text);
   outline: none;
@@ -32,16 +32,16 @@
 }
 
 .textarea {
-  padding: 10px 12px;
-  font-size: 14px;
+  padding: var(--s-space-2-5) var(--s-space-3);
+  font-size: var(--s-font-size-base);
   font-family: inherit;
   border: 1px solid var(--s-border);
-  border-radius: 6px;
+  border-radius: var(--s-radius-md);
   background: var(--s-bg);
   color: var(--s-text);
   outline: none;
   resize: vertical;
-  margin-top: 6px;
+  margin-top: var(--s-space-1-5);
   transition: border-color 0.2s;
 }
 
@@ -51,17 +51,17 @@
 }
 
 .validationError {
-  margin: 4px 0 0;
-  font-size: 13px;
+  margin: var(--s-space-1) 0 0;
+  font-size: var(--s-font-size-sm);
   color: var(--s-text-error);
 }
 
 .submitButton {
-  padding: 10px 20px;
-  font-size: 14px;
+  padding: var(--s-space-2-5) var(--s-space-5);
+  font-size: var(--s-font-size-base);
   font-weight: 500;
   border: 1px solid var(--s-border);
-  border-radius: 6px;
+  border-radius: var(--s-radius-md);
   background: var(--s-accent);
   color: #fff;
   cursor: pointer;

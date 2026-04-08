@@ -13,9 +13,9 @@
   display: grid;
   grid-template-columns: auto 1fr auto;
   grid-template-rows: auto auto;
-  column-gap: 12px;
+  column-gap: var(--s-space-3);
   align-items: center;
-  padding: 12px 16px;
+  padding: var(--s-space-3) var(--s-space-4);
   border-bottom: 1px solid var(--s-border);
 }
 
@@ -26,8 +26,8 @@
 .checkbox {
   grid-column: 1;
   grid-row: 1;
-  padding: 8px;
-  margin: -8px 0;
+  padding: var(--s-space-2);
+  margin: calc(-1 * var(--s-space-2)) 0;
   cursor: pointer;
 }
 
@@ -45,7 +45,7 @@
   grid-row: 1;
   text-align: left;
   color: var(--s-text-heading);
-  font-size: 16px;
+  font-size: var(--s-font-size-md);
   min-width: 0;
 }
 
@@ -55,9 +55,9 @@
   grid-row: 1;
   text-align: left;
   color: var(--s-text-heading);
-  font-size: 16px;
+  font-size: var(--s-font-size-md);
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--s-radius-sm);
   min-width: 0;
 }
 
@@ -76,11 +76,11 @@
   grid-row: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--s-space-2);
 }
 
 .timestamp {
-  font-size: 12px;
+  font-size: var(--s-font-size-xs);
   color: var(--s-text);
   opacity: 0.7;
   white-space: nowrap;
@@ -89,10 +89,10 @@
 .description {
   grid-column: 2 / -1;
   grid-row: 2;
-  font-size: 0.875rem;
+  font-size: var(--s-font-size-base);
   color: var(--s-text);
   opacity: 0.7;
-  margin-top: 2px;
+  margin-top: var(--s-space-0-5);
   text-align: left;
 }
 
@@ -102,7 +102,7 @@
   padding: 0;
   font: inherit;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--s-radius-sm);
 }
 
 .descriptionButton:focus-visible {
@@ -117,10 +117,10 @@
 
 .editInput {
   width: 100%;
-  padding: 6px 8px;
-  font-size: 16px;
+  padding: var(--s-space-1-5) var(--s-space-2);
+  font-size: var(--s-font-size-md);
   border: 1px solid var(--s-border-focus);
-  border-radius: 4px;
+  border-radius: var(--s-radius-sm);
   background: var(--s-bg);
   color: var(--s-text-heading);
   outline: none;
@@ -145,16 +145,16 @@
 
 .editTextarea {
   width: 100%;
-  padding: 6px 8px;
-  font-size: 14px;
+  padding: var(--s-space-1-5) var(--s-space-2);
+  font-size: var(--s-font-size-base);
   font-family: inherit;
   border: 1px solid var(--s-border-focus);
-  border-radius: 4px;
+  border-radius: var(--s-radius-sm);
   background: var(--s-bg);
   color: var(--s-text);
   outline: none;
   resize: vertical;
-  margin-top: 4px;
+  margin-top: var(--s-space-1);
   box-sizing: border-box;
 }
 
@@ -164,16 +164,16 @@
 }
 
 .validationError {
-  margin: 4px 0 0;
-  font-size: 13px;
+  margin: var(--s-space-1) 0 0;
+  font-size: var(--s-font-size-sm);
   color: var(--s-text-error);
 }
 
 .deleteButton {
-  padding: 4px 8px;
-  font-size: 13px;
+  padding: var(--s-space-1) var(--s-space-2);
+  font-size: var(--s-font-size-sm);
   border: 1px solid var(--s-border);
-  border-radius: 4px;
+  border-radius: var(--s-radius-sm);
   background: var(--s-bg);
   color: var(--s-text);
   cursor: pointer;

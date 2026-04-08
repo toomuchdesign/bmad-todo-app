@@ -21,6 +21,31 @@
   --s-accent-hover: var(--p-indigo-600);
   --s-focus-ring: rgba(99, 102, 241, 0.15);
 
+  /* Spacing */
+  --s-space-0-5: 2px;
+  --s-space-1: 4px;
+  --s-space-1-5: 6px;
+  --s-space-2: 8px;
+  --s-space-2-5: 10px;
+  --s-space-3: 12px;
+  --s-space-4: 16px;
+  --s-space-5: 20px;
+  --s-space-8: 32px;
+  --s-space-12: 48px;
+
+  /* Radii */
+  --s-radius-sm: 4px;
+  --s-radius-md: 6px;
+  --s-radius-lg: 8px;
+
+  /* Font sizes */
+  --s-font-size-xs: 12px;
+  --s-font-size-sm: 13px;
+  --s-font-size-base: 14px;
+  --s-font-size-md: 16px;
+  --s-font-size-xl: 28px;
+  --s-font-size-2xl: 32px;
+
   /* Fonts */
   --s-font-body: var(--p-font-sans);
   --s-font-heading: var(--p-font-sans);
