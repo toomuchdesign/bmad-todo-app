@@ -1,10 +1,8 @@
 import { randomUUID } from "node:crypto";
-import type { FastifyInstance } from "fastify";
-import { DEFAULT_USER_ID } from "shared";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { buildApp } from "../src/app.js";
+import { describe, expect, it } from "vitest";
 import type { GetTodosRouteResponses } from "../src/routes/todos/schemas.js";
 import {
+  createTestContext,
   makeSeedTodo,
   runQuery,
   runRequestIdHeaderTests,
@@ -12,30 +10,21 @@ import {
   seedTodo,
 } from "./test-utils/index.js";
 
-const DEFAULT_HEADERS = { "x-user-id": DEFAULT_USER_ID };
-
-let app: FastifyInstance;
-
-beforeEach(async () => {
-  app = await buildApp({ logger: false });
-});
-
-afterEach(async () => {
-  await app.close();
-});
+const getContext = createTestContext();
 
 describe("DELETE /todos/:id", () => {
   describe("existing todo", () => {
     it("returns 204 with no body", async () => {
       // Arrange
-      const seed = makeSeedTodo();
+      const { app, testUserId, testHeaders } = getContext();
+      const seed = makeSeedTodo({ userId: testUserId });
       await seedTodo(seed);
 
       // Act
       const response = await app.inject({
         method: "DELETE",
         url: `/todos/${seed.id}`,
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
       });
 
       // Assert
@@ -48,14 +37,15 @@ describe("DELETE /todos/:id", () => {
   describe("after deleting a todo", () => {
     it("sets deletedAt in the database", async () => {
       // Arrange
-      const seed = makeSeedTodo();
+      const { app, testUserId, testHeaders } = getContext();
+      const seed = makeSeedTodo({ userId: testUserId });
       await seedTodo(seed);
 
       // Act
       const response = await app.inject({
         method: "DELETE",
         url: `/todos/${seed.id}`,
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
       });
 
       // Assert
@@ -72,20 +62,21 @@ describe("DELETE /todos/:id", () => {
 
     it("excludes the deleted todo from GET /todos", async () => {
       // Arrange
-      const seed = makeSeedTodo();
+      const { app, testUserId, testHeaders } = getContext();
+      const seed = makeSeedTodo({ userId: testUserId });
       await seedTodo(seed);
 
       // Act
       await app.inject({
         method: "DELETE",
         url: `/todos/${seed.id}`,
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
       });
 
       const getResponse = await app.inject({
         method: "GET",
         url: "/todos",
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
       });
       const listed = getResponse.json<GetTodosRouteResponses[200]>();
 
@@ -98,13 +89,14 @@ describe("DELETE /todos/:id", () => {
   describe("non-existent UUID", () => {
     it("returns 404 with NOT_FOUND", async () => {
       // Arrange
+      const { app, testHeaders } = getContext();
       const fakeId = randomUUID();
 
       // Act
       const response = await app.inject({
         method: "DELETE",
         url: `/todos/${fakeId}`,
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
       });
 
       // Assert
@@ -122,7 +114,9 @@ describe("DELETE /todos/:id", () => {
   describe("already soft-deleted todo", () => {
     it("returns 404 with NOT_FOUND", async () => {
       // Arrange
+      const { app, testUserId, testHeaders } = getContext();
       const seed = makeSeedTodo({
+        userId: testUserId,
         deletedAt: "2026-01-02T00:00:00.000Z",
       });
       await seedTodo(seed);
@@ -131,7 +125,7 @@ describe("DELETE /todos/:id", () => {
       const response = await app.inject({
         method: "DELETE",
         url: `/todos/${seed.id}`,
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
       });
 
       // Assert
@@ -148,11 +142,14 @@ describe("DELETE /todos/:id", () => {
 
   describe("invalid UUID format", () => {
     it("returns 400 with VALIDATION_ERROR", async () => {
+      // Arrange
+      const { app, testHeaders } = getContext();
+
       // Act
       const response = await app.inject({
         method: "DELETE",
         url: "/todos/not-a-uuid",
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
       });
 
       // Assert
@@ -167,20 +164,27 @@ describe("DELETE /todos/:id", () => {
     });
   });
 
-  runRequestIdHeaderTests({
-    app: () => app,
-    injectInput: {
-      method: "DELETE",
-      url: `/todos/${randomUUID()}`,
-      headers: DEFAULT_HEADERS,
-    },
+  runRequestIdHeaderTests(() => {
+    const { app, testHeaders } = getContext();
+    return {
+      app,
+      injectInput: {
+        method: "DELETE",
+        url: `/todos/${randomUUID()}`,
+        headers: testHeaders,
+      },
+    };
   });
 
-  runUserScopingTests({
-    app: () => app,
-    injectInput: {
-      method: "DELETE",
-      url: `/todos/${randomUUID()}`,
-    },
+  runUserScopingTests(() => {
+    const { app, testHeaders } = getContext();
+    return {
+      app,
+      injectInput: {
+        method: "DELETE",
+        url: `/todos/${randomUUID()}`,
+        headers: testHeaders,
+      },
+    };
   });
 });

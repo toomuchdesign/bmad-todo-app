@@ -58,6 +58,14 @@
 - `handleDelete` in App.tsx captures `todos` via closure before async `deleteTodo` — rapid sequential deletes can compute focus targets from a stale snapshot, pointing at a removed DOM element. Accepted as best-effort MVP a11y.
 - `AddTodoForm.module.css` `.input:focus-visible` and `.textarea:focus-visible` use `box-shadow` with `--s-focus-ring` while other elements use `outline` with `--s-border-focus`. Visually acceptable, cosmetic inconsistency.
 
+## Deferred from: code review of 4-3-enable-parallel-api-test-execution-with-per-user-isolation (2026-04-08)
+
+- Pre-existing: `users.post.test.ts` seed test ("exists in the database after migration") lacks AAA structure. Not introduced by this story.
+- `runUserScopingTests` "valid user" test assumes `injectInput` always carries valid `x-user-id` headers — intentional design, no code guard needed.
+- `app.test.ts` has no `beforeEach` cleanup — acceptable because the file writes no DB state.
+- `cleanupUserTodos` surfaces hook failures with no `userId` context — minor observability gap under parallel execution.
+- `runUserScopingTests` "valid user" test conflates Arrange context into an Act-line comment — minor AAA style issue.
+
 ## Deferred from: code review of 4-2-scope-todos-by-user-across-api-web-and-tests (2026-04-08)
 
 - Migration backfill in `0003_odd_joystick.sql` assumes `DEFAULT_USER_ID` user row exists in `users` before the FK constraint is added — could fail in non-standard deployments without prior seeding. Acceptable for dev-only destructive migration.

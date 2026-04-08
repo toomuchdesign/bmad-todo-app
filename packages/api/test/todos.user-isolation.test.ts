@@ -1,45 +1,56 @@
 import type { FastifyInstance } from "fastify";
-import { DEFAULT_USER_ID } from "shared";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import type { GetTodosRouteResponses } from "../src/routes/todos/schemas.js";
 import {
+  cleanupUserTodos,
+  createTestUser,
   makeSeedTodo,
-  makeSeedUser,
+  runQuery,
   seedTodo,
-  seedUser,
 } from "./test-utils/index.js";
 
+// This file tests cross-user isolation and requires two independent users (A and B).
+// createTestContext() only creates one user, so setup is done manually here.
 let app: FastifyInstance;
+let userAId: string;
+let userAHeaders: Record<string, string>;
+let userBId: string;
+let userBHeaders: Record<string, string>;
 
-beforeEach(async () => {
+beforeAll(async () => {
   app = await buildApp({ logger: false });
+  ({ userId: userAId, headers: userAHeaders } = await createTestUser({ app }));
+  ({ userId: userBId, headers: userBHeaders } = await createTestUser({ app }));
 });
 
-afterEach(async () => {
-  await app.close();
+afterAll(async () => {
+  // Delete todos before users to satisfy the FK constraint (no CASCADE on the FK).
+  if (userAId)
+    await runQuery("DELETE FROM todos WHERE user_id = $1", [userAId]);
+  if (userBId)
+    await runQuery("DELETE FROM todos WHERE user_id = $1", [userBId]);
+  if (userAId) await runQuery("DELETE FROM users WHERE id = $1", [userAId]);
+  if (userBId) await runQuery("DELETE FROM users WHERE id = $1", [userBId]);
+  if (app) await app.close();
+});
+
+beforeEach(async () => {
+  await cleanupUserTodos({ userId: userAId });
+  await cleanupUserTodos({ userId: userBId });
 });
 
 describe("cross-user todo isolation", () => {
-  const userB = makeSeedUser({
-    id: "99999999-9999-4999-9999-999999999999",
-    name: "User B",
-  });
-
-  beforeEach(async () => {
-    await seedUser(userB);
-  });
-
   it("user B cannot see user A's todos via GET", async () => {
     // Arrange
-    const todoA = makeSeedTodo({ userId: DEFAULT_USER_ID });
+    const todoA = makeSeedTodo({ userId: userAId });
     await seedTodo(todoA);
 
     // Act
     const response = await app.inject({
       method: "GET",
       url: "/todos",
-      headers: { "x-user-id": userB.id },
+      headers: userBHeaders,
     });
 
     // Assert
@@ -49,14 +60,14 @@ describe("cross-user todo isolation", () => {
 
   it("user B cannot PATCH user A's todo (returns 404)", async () => {
     // Arrange
-    const todoA = makeSeedTodo({ userId: DEFAULT_USER_ID });
+    const todoA = makeSeedTodo({ userId: userAId });
     await seedTodo(todoA);
 
     // Act
     const response = await app.inject({
       method: "PATCH",
       url: `/todos/${todoA.id}`,
-      headers: { "x-user-id": userB.id },
+      headers: userBHeaders,
       payload: { title: "hijacked" },
     });
 
@@ -70,14 +81,14 @@ describe("cross-user todo isolation", () => {
 
   it("user B cannot DELETE user A's todo (returns 404)", async () => {
     // Arrange
-    const todoA = makeSeedTodo({ userId: DEFAULT_USER_ID });
+    const todoA = makeSeedTodo({ userId: userAId });
     await seedTodo(todoA);
 
     // Act
     const response = await app.inject({
       method: "DELETE",
       url: `/todos/${todoA.id}`,
-      headers: { "x-user-id": userB.id },
+      headers: userBHeaders,
     });
 
     // Assert
@@ -93,7 +104,7 @@ describe("cross-user todo isolation", () => {
     const createResponse = await app.inject({
       method: "POST",
       url: "/todos",
-      headers: { "x-user-id": userB.id },
+      headers: userBHeaders,
       payload: { title: "User B's todo" },
     });
 
@@ -103,7 +114,7 @@ describe("cross-user todo isolation", () => {
     const listB = await app.inject({
       method: "GET",
       url: "/todos",
-      headers: { "x-user-id": userB.id },
+      headers: userBHeaders,
     });
     expect(listB.json<GetTodosRouteResponses[200]>().todos).toHaveLength(1);
 
@@ -111,7 +122,7 @@ describe("cross-user todo isolation", () => {
     const listA = await app.inject({
       method: "GET",
       url: "/todos",
-      headers: { "x-user-id": DEFAULT_USER_ID },
+      headers: userAHeaders,
     });
     expect(listA.json<GetTodosRouteResponses[200]>().todos).toEqual([]);
   });

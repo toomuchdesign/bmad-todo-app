@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { DEFAULT_USER_ID, MAX_USER_NAME_LENGTH } from "shared";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import type { PostUsersRouteResponses } from "../src/routes/users/schemas.js";
 import {
@@ -10,13 +10,16 @@ import {
   runRequestIdHeaderTests,
 } from "./test-utils/index.js";
 
+// This file tests POST /users itself, so using createTestContext() would create
+// a circular dependency: setup would fail if the endpoint under test is broken.
+// A lightweight manual setup (app only, no user creation) is used instead.
 let app: FastifyInstance;
 
-beforeEach(async () => {
+beforeAll(async () => {
   app = await buildApp({ logger: false });
 });
 
-afterEach(async () => {
+afterAll(async () => {
   await app.close();
 });
 
@@ -91,6 +94,8 @@ describe("POST /users", () => {
         payload: { name: "a".repeat(MAX_USER_NAME_LENGTH + 1) },
       },
     ])("returns 400 with VALIDATION_ERROR for $name", async ({ payload }) => {
+      // Arrange — payload provided by it.each
+
       // Act
       const response = await app.inject({
         method: "POST",
@@ -111,12 +116,15 @@ describe("POST /users", () => {
     });
   });
 
-  runRequestIdHeaderTests({
-    app: () => app,
-    injectInput: {
-      method: "POST",
-      url: "/users",
-      payload: { name: "TestUser" },
-    },
+  runRequestIdHeaderTests(() => {
+    // app is the module-level instance from beforeAll
+    return {
+      app,
+      injectInput: {
+        method: "POST",
+        url: "/users",
+        payload: { name: "TestUser" },
+      },
+    };
   });
 });

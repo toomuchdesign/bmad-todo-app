@@ -155,7 +155,7 @@ Keep tested scenarios to a reasonable minimum. Avoid exhaustive or redundant tes
 - If an `it` contains a condition like "when", "if", "for", ":", or "on" — that condition belongs in a `describe` block
 - Prefer `.each` test loops when implementing 2+ structurally identical tests
 - Prepend assertions that are not self-explanatory with a brief 1 line comment
-- Test file-wide `beforeEach`/`afterAll` hooks go at the top level, outside the root `describe` block
+- Test file-wide `beforeEach`/`afterAll` hooks go at the top level, outside the root `describe` block. Exception: API test files use `createTestContext()` from `packages/api/test/test-utils/db.ts`, which registers these hooks as a deliberate side effect — this factory pattern is the canonical setup for API integration tests
 - Tests must be typed as strictly as source code — type errors in tests are expected to surface bugs before execution
 
 ### AAA Pattern
@@ -262,7 +262,7 @@ Use this section for persistent test rules that should apply to every future tas
 
 - API test style: prefer integration tests with `fastify.inject()` (no real HTTP network).
 - API test utilities must be imported from the shared barrel at `packages/api/test/test-utils/index.ts` for consistency.
-- API DB cleanup is centralized in `packages/api/vitest.setup.ts` via a global `beforeEach` (`cleanupTestDatabase`); avoid duplicating per-file DB reset hooks unless a test needs custom setup.
+- API DB cleanup is per-file: each test file creates its own user in `beforeAll` via `createTestUser` and cleans only that user's todos in `beforeEach` via `cleanupUserTodos`. Tests run in parallel (`fileParallelism: true`).
 - Web test style: use React Testing Library with `@testing-library/jest-dom` matchers.
 - Web integration tests for `App` are split by feature: `App.test.tsx` (load/structure), `App.create-todo.test.tsx` (create flow), etc. Each new feature gets its own `App.<feature>.test.tsx` file.
 - Web test utilities (fixtures, fetch mock helpers) must be imported from the shared barrel at `packages/web/src/test-utils/index.ts` for consistency.

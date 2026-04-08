@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26 19:38:27
-last_updated: 2026-04-08T15:30:00
+last_updated: 2026-04-08T17:40:00
 project: bmad-todo
 project_key: NOKEY
 tracking_system: file-system
@@ -73,5 +73,5 @@ development_status:
   epic-4: in-progress
   4-1-user-entity-default-user-seed-and-creation-route: done
   4-2-scope-todos-by-user-across-api-web-and-tests: done
-  4-3-enable-parallel-api-test-execution-with-per-user-isolation: backlog
+  4-3-enable-parallel-api-test-execution-with-per-user-isolation: done
   epic-4-retrospective: optional

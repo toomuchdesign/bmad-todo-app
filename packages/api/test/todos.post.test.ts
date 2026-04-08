@@ -1,35 +1,21 @@
-import type { FastifyInstance } from "fastify";
-import {
-  DEFAULT_USER_ID,
-  MAX_TODO_TEXT_LENGTH,
-  MAX_TODO_TITLE_LENGTH,
-} from "shared";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { buildApp } from "../src/app.js";
+import { MAX_TODO_TEXT_LENGTH, MAX_TODO_TITLE_LENGTH } from "shared";
+import { describe, expect, it } from "vitest";
 import type { PostTodosRouteResponses } from "../src/routes/todos/schemas.js";
 import {
   ANY_ISO_DATETIME,
   ANY_UUID,
+  createTestContext,
   runRequestIdHeaderTests,
   runUserScopingTests,
 } from "./test-utils/index.js";
 
-const DEFAULT_HEADERS = { "x-user-id": DEFAULT_USER_ID };
-
-let app: FastifyInstance;
-
-beforeEach(async () => {
-  app = await buildApp({ logger: false });
-});
-
-afterEach(async () => {
-  await app.close();
-});
+const getContext = createTestContext();
 
 describe("POST /todos", () => {
   describe("valid payload", () => {
     it("returns 201 with title and text when both provided", async () => {
       // Arrange
+      const { app, testUserId, testHeaders } = getContext();
       const payload = {
         title: "  buy milk  ",
         text: "  whole milk from the store  ",
@@ -39,7 +25,7 @@ describe("POST /todos", () => {
       const response = await app.inject({
         method: "POST",
         url: "/todos",
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
         payload,
       });
 
@@ -53,7 +39,7 @@ describe("POST /todos", () => {
         title: "buy milk",
         text: "whole milk from the store",
         completed: false,
-        userId: DEFAULT_USER_ID,
+        userId: testUserId,
         createdAt: ANY_ISO_DATETIME,
         updatedAt: ANY_ISO_DATETIME,
       });
@@ -62,13 +48,14 @@ describe("POST /todos", () => {
 
     it("returns 201 with empty text when only title provided", async () => {
       // Arrange
+      const { app, testUserId, testHeaders } = getContext();
       const payload = { title: "title only" };
 
       // Act
       const response = await app.inject({
         method: "POST",
         url: "/todos",
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
         payload,
       });
 
@@ -82,7 +69,7 @@ describe("POST /todos", () => {
         title: "title only",
         text: "",
         completed: false,
-        userId: DEFAULT_USER_ID,
+        userId: testUserId,
         createdAt: ANY_ISO_DATETIME,
         updatedAt: ANY_ISO_DATETIME,
       });
@@ -104,11 +91,14 @@ describe("POST /todos", () => {
         },
       },
     ])("returns 400 with VALIDATION_ERROR for $name", async ({ payload }) => {
+      // Arrange
+      const { app, testHeaders } = getContext();
+
       // Act
       const response = await app.inject({
         method: "POST",
         url: "/todos",
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
         payload,
       });
 
@@ -125,26 +115,29 @@ describe("POST /todos", () => {
     });
   });
 
-  runRequestIdHeaderTests({
-    app: () => app,
-    injectInput: {
-      method: "POST",
-      url: "/todos",
-      headers: DEFAULT_HEADERS,
-      payload: {
-        title: "task",
+  runRequestIdHeaderTests(() => {
+    const { app, testHeaders } = getContext();
+    return {
+      app,
+      injectInput: {
+        method: "POST",
+        url: "/todos",
+        headers: testHeaders,
+        payload: { title: "task" },
       },
-    },
+    };
   });
 
-  runUserScopingTests({
-    app: () => app,
-    injectInput: {
-      method: "POST",
-      url: "/todos",
-      payload: {
-        title: "task",
+  runUserScopingTests(() => {
+    const { app, testHeaders } = getContext();
+    return {
+      app,
+      injectInput: {
+        method: "POST",
+        url: "/todos",
+        headers: testHeaders,
+        payload: { title: "task" },
       },
-    },
+    };
   });
 });

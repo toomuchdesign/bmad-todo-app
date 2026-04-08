@@ -1,26 +1,27 @@
 import type { FastifyInstance, InjectOptions } from "fastify";
 import { describe, expect, it } from "vitest";
 
-type RequestIdHeaderTestsInput = {
-  app: () => FastifyInstance;
+type RequestIdHeaderTestsInput = () => {
+  app: FastifyInstance;
   injectInput: InjectOptions;
 };
 
 /**
  * Defines the standard `x-request-id header` tests for a route.
+ * Accepts a getter to support per-file dynamic user headers.
  */
-export function runRequestIdHeaderTests({
-  app,
-  injectInput,
-}: RequestIdHeaderTestsInput): void {
+export function runRequestIdHeaderTests(
+  getContext: RequestIdHeaderTestsInput,
+): void {
   describe("x-request-id header", () => {
     describe("provided inbound x-request-id", () => {
       it("returns provided request", async () => {
         // Arrange
         const requestId = "request-id-from-client";
+        const { app, injectInput } = getContext();
 
         // Act
-        const response = await app().inject({
+        const response = await app.inject({
           ...injectInput,
           headers: {
             ...injectInput.headers,
@@ -35,8 +36,11 @@ export function runRequestIdHeaderTests({
 
     describe("omitted inbound x-request-id", () => {
       it("generates and returns a request id in header", async () => {
+        // Arrange
+        const { app, injectInput } = getContext();
+
         // Act
-        const response = await app().inject(injectInput);
+        const response = await app.inject(injectInput);
 
         // Assert
         expect(response.headers["x-request-id"]).toBeTypeOf("string");

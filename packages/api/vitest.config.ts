@@ -7,7 +7,7 @@ loadEnvFile(resolve(import.meta.dirname, "../../.env.test"));
 export default defineProject({
   test: {
     include: ["test/**/*.test.ts?(x)"],
-    fileParallelism: false,
+    fileParallelism: true,
     restoreMocks: true,
     mockReset: true,
     setupFiles: ["./vitest.setup.ts"],

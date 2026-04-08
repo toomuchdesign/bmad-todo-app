@@ -1,6 +1,3 @@
-import { beforeEach } from "vitest";
-import { cleanupTestDatabase } from "./test/test-utils/index.js";
-
-beforeEach(async () => {
-  await cleanupTestDatabase();
-});
+// Per-file test isolation: each test file creates its own user and cleans
+// only that user's todos. No global cleanup is needed.
+export {};

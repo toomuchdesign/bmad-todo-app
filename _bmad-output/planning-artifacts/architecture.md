@@ -255,8 +255,7 @@ Notes:
 - **Tests:** reset state at the database level.
   - Use a dedicated test database via the root `.env.test` (`DATABASE_URL` pointing to the test DB) to prevent wiping dev data.
   - API Vitest and Playwright both load the root `.env.test` automatically.
-  - Before each test: run centralized cleanup from `packages/api/vitest.setup.ts` (`cleanupTestDatabase` from `packages/api/test/test-utils/db.ts`).
-  - Add new tables to the cleanup list in `packages/api/test/test-utils/db.ts` as the schema grows.
+  - Per-file isolation: each API test file creates its own user in `beforeAll` via `createTestUser` and cleans only that user's todos in `beforeEach` via `cleanupUserTodos`. API test files run in parallel (`fileParallelism: true`).
 - **Local usage:** provide a local script to clear todos in the dev database.
   - Implement as a Node/TS script in `packages/api/scripts/db-reset.ts` that reuses `cleanupTestDatabase` from test-utils. The script does not load any env file itself — the caller provides `DATABASE_URL` via `--env-file` or `loadEnvFile`.
   - Expose it via an npm script in the API workspace and (optionally) a root convenience script that runs the workspace script.

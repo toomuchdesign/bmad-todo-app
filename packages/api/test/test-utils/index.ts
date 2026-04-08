@@ -1,4 +1,12 @@
-export { cleanupTestDatabase, createDbClient, runQuery } from "./db.js";
+export type { TestContext } from "./db.js";
+export {
+  cleanupTestDatabase,
+  cleanupUserTodos,
+  createDbClient,
+  createTestContext,
+  createTestUser,
+  runQuery,
+} from "./db.js";
 export { ANY_ISO_DATETIME, ANY_UUID } from "./matchers.js";
 export { runRequestIdHeaderTests } from "./request-id-tests.js";
 export type { SeedTodoInput } from "./todos.js";

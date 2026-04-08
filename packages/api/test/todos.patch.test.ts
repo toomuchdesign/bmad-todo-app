@@ -1,48 +1,34 @@
 import { randomUUID } from "node:crypto";
-import type { FastifyInstance } from "fastify";
-import {
-  DEFAULT_USER_ID,
-  MAX_TODO_TEXT_LENGTH,
-  MAX_TODO_TITLE_LENGTH,
-} from "shared";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { buildApp } from "../src/app.js";
+import { MAX_TODO_TEXT_LENGTH, MAX_TODO_TITLE_LENGTH } from "shared";
+import { describe, expect, it } from "vitest";
 import type {
   GetTodosRouteResponses,
   PatchTodosRouteResponses,
 } from "../src/routes/todos/schemas.js";
 import {
   ANY_ISO_DATETIME,
+  createTestContext,
   makeSeedTodo,
   runRequestIdHeaderTests,
   runUserScopingTests,
   seedTodo,
 } from "./test-utils/index.js";
 
-const DEFAULT_HEADERS = { "x-user-id": DEFAULT_USER_ID };
-
-let app: FastifyInstance;
-
-beforeEach(async () => {
-  app = await buildApp({ logger: false });
-});
-
-afterEach(async () => {
-  await app.close();
-});
+const getContext = createTestContext();
 
 describe("PATCH /todos/:id", () => {
   describe("valid title and text update", () => {
     it("returns 200 with updated todo and advanced updatedAt", async () => {
       // Arrange
-      const seed = makeSeedTodo();
+      const { app, testUserId, testHeaders } = getContext();
+      const seed = makeSeedTodo({ userId: testUserId });
       await seedTodo(seed);
 
       // Act
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${seed.id}`,
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
         payload: {
           title: "  updated title  ",
           text: "  some details  ",
@@ -60,7 +46,7 @@ describe("PATCH /todos/:id", () => {
         title: "updated title",
         text: "some details",
         completed: false,
-        userId: DEFAULT_USER_ID,
+        userId: testUserId,
         createdAt: seed.createdAt,
         updatedAt: ANY_ISO_DATETIME,
       });
@@ -70,7 +56,7 @@ describe("PATCH /todos/:id", () => {
       const getResponse = await app.inject({
         method: "GET",
         url: "/todos",
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
       });
       const listed = getResponse.json<GetTodosRouteResponses[200]>();
 
@@ -83,14 +69,15 @@ describe("PATCH /todos/:id", () => {
   describe("valid completion update", () => {
     it("returns 200 with updated todo", async () => {
       // Arrange
-      const seed = makeSeedTodo();
+      const { app, testUserId, testHeaders } = getContext();
+      const seed = makeSeedTodo({ userId: testUserId });
       await seedTodo(seed);
 
       // Act
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${seed.id}`,
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
         payload: { completed: true },
       });
 
@@ -104,7 +91,7 @@ describe("PATCH /todos/:id", () => {
         title: seed.title,
         text: "",
         completed: true,
-        userId: DEFAULT_USER_ID,
+        userId: testUserId,
         createdAt: seed.createdAt,
         updatedAt: ANY_ISO_DATETIME,
       });
@@ -114,14 +101,15 @@ describe("PATCH /todos/:id", () => {
   describe("valid title and completion update", () => {
     it("returns 200 with both fields updated", async () => {
       // Arrange
-      const seed = makeSeedTodo();
+      const { app, testUserId, testHeaders } = getContext();
+      const seed = makeSeedTodo({ userId: testUserId });
       await seedTodo(seed);
 
       // Act
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${seed.id}`,
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
         payload: { title: "new title", completed: true },
       });
 
@@ -135,7 +123,7 @@ describe("PATCH /todos/:id", () => {
         title: "new title",
         text: "",
         completed: true,
-        userId: DEFAULT_USER_ID,
+        userId: testUserId,
         createdAt: seed.createdAt,
         updatedAt: ANY_ISO_DATETIME,
       });
@@ -143,7 +131,7 @@ describe("PATCH /todos/:id", () => {
       const getResponse = await app.inject({
         method: "GET",
         url: "/todos",
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
       });
       const listed = getResponse.json<GetTodosRouteResponses[200]>();
 
@@ -170,14 +158,15 @@ describe("PATCH /todos/:id", () => {
       },
     ])("returns 400 with VALIDATION_ERROR for $name", async ({ payload }) => {
       // Arrange
-      const seed = makeSeedTodo();
+      const { app, testUserId, testHeaders } = getContext();
+      const seed = makeSeedTodo({ userId: testUserId });
       await seedTodo(seed);
 
       // Act
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${seed.id}`,
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
         payload,
       });
 
@@ -196,13 +185,14 @@ describe("PATCH /todos/:id", () => {
   describe("non-existent ID", () => {
     it("returns 404 with NOT_FOUND", async () => {
       // Arrange
+      const { app, testHeaders } = getContext();
       const fakeId = randomUUID();
 
       // Act
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${fakeId}`,
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
         payload: { title: "whatever" },
       });
 
@@ -221,7 +211,9 @@ describe("PATCH /todos/:id", () => {
   describe("soft-deleted todo", () => {
     it("returns 404 with NOT_FOUND", async () => {
       // Arrange
+      const { app, testUserId, testHeaders } = getContext();
       const seed = makeSeedTodo({
+        userId: testUserId,
         deletedAt: "2026-01-02T00:00:00.000Z",
       });
       await seedTodo(seed);
@@ -230,7 +222,7 @@ describe("PATCH /todos/:id", () => {
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${seed.id}`,
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
         payload: { title: "should not work" },
       });
 
@@ -248,11 +240,14 @@ describe("PATCH /todos/:id", () => {
 
   describe("invalid UUID format", () => {
     it("returns 400 with VALIDATION_ERROR", async () => {
+      // Arrange
+      const { app, testHeaders } = getContext();
+
       // Act
       const response = await app.inject({
         method: "PATCH",
         url: "/todos/not-a-uuid",
-        headers: DEFAULT_HEADERS,
+        headers: testHeaders,
         payload: { title: "whatever" },
       });
 
@@ -268,22 +263,29 @@ describe("PATCH /todos/:id", () => {
     });
   });
 
-  runRequestIdHeaderTests({
-    app: () => app,
-    injectInput: {
-      method: "PATCH",
-      url: `/todos/${randomUUID()}`,
-      headers: DEFAULT_HEADERS,
-      payload: { title: "task" },
-    },
+  runRequestIdHeaderTests(() => {
+    const { app, testHeaders } = getContext();
+    return {
+      app,
+      injectInput: {
+        method: "PATCH",
+        url: `/todos/${randomUUID()}`,
+        headers: testHeaders,
+        payload: { title: "task" },
+      },
+    };
   });
 
-  runUserScopingTests({
-    app: () => app,
-    injectInput: {
-      method: "PATCH",
-      url: `/todos/${randomUUID()}`,
-      payload: { title: "task" },
-    },
+  runUserScopingTests(() => {
+    const { app, testHeaders } = getContext();
+    return {
+      app,
+      injectInput: {
+        method: "PATCH",
+        url: `/todos/${randomUUID()}`,
+        headers: testHeaders,
+        payload: { title: "task" },
+      },
+    };
   });
 });
