@@ -66,6 +66,11 @@
 - `cleanupUserTodos` surfaces hook failures with no `userId` context — minor observability gap under parallel execution.
 - `runUserScopingTests` "valid user" test conflates Arrange context into an Act-line comment — minor AAA style issue.
 
+## Deferred from: code review of 5-1-dockerize-the-api (2026-04-08)
+
+- `db:migrate` convenience npm script removed — the replacement scripts (`db:migrate:local`, `db:migrate:test`) both start Docker Compose, which may not be suitable for CI pipelines without Docker Compose access. Any CI step calling `npm run db:migrate` would break.
+- No DB connection retry in migration script (`packages/api/src/db/migrate.ts`) — if the database container is not ready at container startup, migration fails immediately. Retry logic or orchestration healthchecks (e.g. `depends_on: condition: service_healthy`) should be added at the Docker Compose / Kubernetes level in Story 5.3.
+
 ## Deferred from: code review of 4-2-scope-todos-by-user-across-api-web-and-tests (2026-04-08)
 
 - Migration backfill in `0003_odd_joystick.sql` assumes `DEFAULT_USER_ID` user row exists in `users` before the FK constraint is added — could fail in non-standard deployments without prior seeding. Acceptable for dev-only destructive migration.

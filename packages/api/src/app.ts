@@ -1,3 +1,4 @@
+import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import type { JsonSchemaToTsProvider } from "@fastify/type-provider-json-schema-to-ts";
@@ -5,6 +6,7 @@ import Fastify, {
   type FastifyInstance,
   type FastifyServerOptions,
 } from "fastify";
+import { getConfig } from "./config.js";
 import { closeDb } from "./db/client.js";
 import { errorHandlerPlugin } from "./plugins/error-handler.js";
 import { requestIdPlugin } from "./plugins/request-id.js";
@@ -18,6 +20,8 @@ export async function buildApp(
     logger: true,
     ...options,
   }).withTypeProvider<JsonSchemaToTsProvider>();
+
+  await app.register(cors, { origin: getConfig().WEB_ORIGIN });
 
   app.register(swagger, {
     openapi: {

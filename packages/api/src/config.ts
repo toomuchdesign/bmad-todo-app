@@ -5,11 +5,12 @@ export type ApiConfig = {
   API_HOST: string;
   API_PORT: number;
   DATABASE_URL: string;
+  WEB_ORIGIN: string;
 };
 
 const configSchema = {
   type: "object",
-  required: ["API_HOST", "API_PORT", "DATABASE_URL"],
+  required: ["API_HOST", "API_PORT", "DATABASE_URL", "WEB_ORIGIN"],
   properties: {
     API_HOST: {
       type: "string",
@@ -18,6 +19,9 @@ const configSchema = {
       type: "integer",
     },
     DATABASE_URL: {
+      type: "string",
+    },
+    WEB_ORIGIN: {
       type: "string",
     },
   },

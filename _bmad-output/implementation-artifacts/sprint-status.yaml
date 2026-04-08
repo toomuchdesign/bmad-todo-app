@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26 19:38:27
-last_updated: 2026-04-08T18:00:00
+last_updated: 2026-04-08
 project: bmad-todo
 project_key: NOKEY
 tracking_system: file-system
@@ -78,7 +78,7 @@ development_status:
 
   epic-5: in-progress
   5-0-pre-deployment-cleanup-resolve-deferred-action-points: in-progress
-  5-1-dockerize-the-api: backlog
+  5-1-dockerize-the-api: done
   5-2-dockerize-the-web-nginx-spa-api-proxy: backlog
   5-3-docker-compose-production-orchestration: backlog
   epic-5-retrospective: optional
