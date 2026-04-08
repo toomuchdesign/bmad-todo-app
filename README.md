@@ -74,6 +74,13 @@ All environment variables live in **root-level** `.env` files (no per-package en
 
 The API dev server and Vite auto-load `.env`; Vitest and Playwright auto-load `.env.test`. Dev (5173/3001) and test (5174/3002) use separate ports so they can run simultaneously.
 
+## Running the API with Docker
+
+Both the API and web workspaces ship Dockerfiles for containerized local runs:
+
+- **API:** [packages/api/README.md — Running with Docker](packages/api/README.md#running-with-docker)
+- **Web (Nginx SPA + API proxy):** [packages/web/README.md — Running with Docker](packages/web/README.md#running-with-docker)
+
 ## Tests (recommended)
 
 Run non-interactive tests across workspaces:

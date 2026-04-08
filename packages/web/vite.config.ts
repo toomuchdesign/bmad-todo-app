@@ -1,15 +1,17 @@
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadEnvFile } from "node:process";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 /**
- * Load root .env only if WEB_PORT is not already set.
+ * Load root .env only if WEB_PORT is not already set and the file exists.
  * When Playwright spawns the dev server, .env.test vars are already loaded
- * and should not be overwritten.
+ * and should not be overwritten. In Docker builds, .env is absent.
  */
-if (!process.env.WEB_PORT) {
-  loadEnvFile(resolve(import.meta.dirname, "../../.env"));
+const envPath = resolve(import.meta.dirname, "../../.env");
+if (!process.env.WEB_PORT && existsSync(envPath)) {
+  loadEnvFile(envPath);
 }
 
 const apiHost = process.env.API_HOST;
@@ -24,6 +26,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       "/todos": `http://${apiHost}:${apiPort}`,
+      "/users": `http://${apiHost}:${apiPort}`,
     },
   },
 });

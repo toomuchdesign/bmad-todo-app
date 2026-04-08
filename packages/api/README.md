@@ -91,6 +91,57 @@ Used by E2E test setup and for local development when you want a clean slate wit
   - TypeScript type inferred via `json-schema-to-ts` (`FromSchema`)
 - Reuse these definitions in routes, DB mapping boundaries, and API integration test setup helpers.
 
+## Running with Docker
+
+The API ships a multi-stage Dockerfile at `packages/api/Dockerfile`. It builds the `shared` and `api` workspaces, installs production-only dependencies, and on startup runs pending DB migrations before starting the server.
+
+### Prerequisites
+
+- Docker runtime (Colima, Docker Desktop, etc.)
+- A running Postgres instance reachable from the container (the `docker-compose.yml` at the repo root works)
+
+### Build the image
+
+From the **repo root** (the build context must be the monorepo root):
+
+```bash
+docker build -f packages/api/Dockerfile -t bmad-todo-api .
+```
+
+### Run the container
+
+Make sure Postgres is up first:
+
+```bash
+docker-compose up -d   # starts local Postgres on port 5432
+```
+
+Then start the API container:
+
+```bash
+docker run --rm \
+  -e DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:5432/bmad_todo \
+  -e API_PORT=3001 \
+  -p 3001:3001 \
+  bmad-todo-api
+```
+
+> On Linux replace `host.docker.internal` with `172.17.0.1` (default Docker bridge gateway) or use `--network host`.
+
+The container will apply any pending migrations and then start Fastify on `0.0.0.0:3001`. Verify with:
+
+```bash
+curl http://localhost:3001/todos
+```
+
+### Environment variables
+
+| Variable       | Required | Default   | Notes                                        |
+| -------------- | -------- | --------- | -------------------------------------------- |
+| `DATABASE_URL` | yes      | —         | Postgres connection string                   |
+| `API_PORT`     | no       | 3001      | Port Fastify listens on                      |
+| `API_HOST`     | no       | `0.0.0.0` | Set in the Dockerfile; override if needed    |
+
 ## Scripts
 
 Run these from the repo root:
