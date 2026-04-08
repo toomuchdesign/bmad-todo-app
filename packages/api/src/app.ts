@@ -9,6 +9,7 @@ import { closeDb } from "./db/client.js";
 import { errorHandlerPlugin } from "./plugins/error-handler.js";
 import { requestIdPlugin } from "./plugins/request-id.js";
 import { todosRoutes } from "./routes/todos.js";
+import { usersRoutes } from "./routes/users.js";
 
 export async function buildApp(
   options: FastifyServerOptions = {},
@@ -37,6 +38,7 @@ export async function buildApp(
   app.get("/healthcheck", async () => ({ status: "ok" }));
 
   app.register(todosRoutes);
+  app.register(usersRoutes);
 
   app.addHook("onClose", async () => {
     await closeDb();

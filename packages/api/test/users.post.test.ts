@@ -1,11 +1,12 @@
 import type { FastifyInstance } from "fastify";
-import { MAX_TODO_TEXT_LENGTH, MAX_TODO_TITLE_LENGTH } from "shared";
+import { DEFAULT_USER_ID, MAX_USER_NAME_LENGTH } from "shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
-import type { PostTodosRouteResponses } from "../src/routes/schemas.js";
+import type { PostUsersRouteResponses } from "../src/routes/schemas.js";
 import {
   ANY_ISO_DATETIME,
   ANY_UUID,
+  runQuery,
   runRequestIdHeaderTests,
 } from "./test-utils/index.js";
 
@@ -19,84 +20,81 @@ afterEach(async () => {
   await app.close();
 });
 
-describe("POST /todos", () => {
+describe("default user seed", () => {
+  it("exists in the database after migration", async () => {
+    // Act
+    const result = await runQuery("SELECT id, name FROM users WHERE id = $1", [
+      DEFAULT_USER_ID,
+    ]);
+
+    // Assert
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0]).toEqual({
+      id: DEFAULT_USER_ID,
+      name: "Default User",
+    });
+  });
+});
+
+describe("POST /users", () => {
   describe("valid payload", () => {
-    it("returns 201 with title and text when both provided", async () => {
+    it("returns 201 with user shape", async () => {
       // Arrange
-      const payload = {
-        title: "  buy milk  ",
-        text: "  whole milk from the store  ",
-      };
+      const payload = { name: "Alice" };
 
       // Act
       const response = await app.inject({
         method: "POST",
-        url: "/todos",
+        url: "/users",
         payload,
       });
 
       // Assert
       expect(response.statusCode).toBe(201);
 
-      const body = response.json<PostTodosRouteResponses[201]>();
+      const body = response.json<PostUsersRouteResponses[201]>();
 
       expect(body).toEqual({
         id: ANY_UUID,
-        title: "buy milk",
-        text: "whole milk from the store",
-        completed: false,
+        name: "Alice",
         createdAt: ANY_ISO_DATETIME,
         updatedAt: ANY_ISO_DATETIME,
       });
-      expect(body).not.toHaveProperty("deletedAt");
     });
 
-    it("returns 201 with empty text when only title provided", async () => {
+    it("trims whitespace from the name", async () => {
       // Arrange
-      const payload = { title: "title only" };
+      const payload = { name: "  Bob  " };
 
       // Act
       const response = await app.inject({
         method: "POST",
-        url: "/todos",
+        url: "/users",
         payload,
       });
 
       // Assert
       expect(response.statusCode).toBe(201);
 
-      const body = response.json<PostTodosRouteResponses[201]>();
+      const body = response.json<PostUsersRouteResponses[201]>();
 
-      expect(body).toEqual({
-        id: ANY_UUID,
-        title: "title only",
-        text: "",
-        completed: false,
-        createdAt: ANY_ISO_DATETIME,
-        updatedAt: ANY_ISO_DATETIME,
-      });
+      expect(body.name).toBe("Bob");
     });
   });
 
   describe("invalid payload", () => {
     it.each([
-      { name: "empty title", payload: { title: "   " } },
+      { name: "empty name", payload: { name: "" } },
+      { name: "whitespace-only name", payload: { name: "   " } },
       {
-        name: "title exceeding MAX_TODO_TITLE_LENGTH",
-        payload: { title: "a".repeat(MAX_TODO_TITLE_LENGTH + 1) },
-      },
-      {
-        name: "text exceeding MAX_TODO_TEXT_LENGTH",
-        payload: {
-          title: "valid title",
-          text: "a".repeat(MAX_TODO_TEXT_LENGTH + 1),
-        },
+        name: "name exceeding MAX_USER_NAME_LENGTH",
+        payload: { name: "a".repeat(MAX_USER_NAME_LENGTH + 1) },
       },
     ])("returns 400 with VALIDATION_ERROR for $name", async ({ payload }) => {
       // Act
       const response = await app.inject({
         method: "POST",
-        url: "/todos",
+        url: "/users",
         payload,
       });
 
@@ -104,7 +102,7 @@ describe("POST /todos", () => {
       expect(response.statusCode).toBe(400);
       expect(response.headers["x-request-id"]).toBeTypeOf("string");
 
-      const body = response.json<PostTodosRouteResponses[400]>();
+      const body = response.json<PostUsersRouteResponses[400]>();
 
       expect(body).toEqual({
         code: "VALIDATION_ERROR",
@@ -117,10 +115,8 @@ describe("POST /todos", () => {
     app: () => app,
     injectInput: {
       method: "POST",
-      url: "/todos",
-      payload: {
-        title: "task",
-      },
+      url: "/users",
+      payload: { name: "TestUser" },
     },
   });
 });

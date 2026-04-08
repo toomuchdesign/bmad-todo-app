@@ -5,6 +5,12 @@ When in doubt, prefer explicitness over cleverness.
 
 ---
 
+## Planning & Story Design
+
+- Stories must be scoped so the project remains deployable and deliverable after each one is completed.
+
+---
+
 ## Git
 
 ### Commits
@@ -22,17 +28,19 @@ Types: `feat` `fix` `docs` `style` `refactor` `perf` `test` `chore` `ci` `build`
 - Body (optional): explain _why_, not _what_ — separated by a blank line
 - Footers (optional): `BREAKING CHANGE:`, `Closes #123`
 
-Never commit with vague messages (`fix`, `update`, `wip`).
-Each commit must be atomic — one logical change.
+- Never commit with vague messages (`fix`, `update`, `wip`).
+- Each commit must be atomic — one logical change.
 
 ### Branches
 
-Mirror commit types: `feat/`, `fix/`, `chore/`, `docs/` prefixes.
-Example: `feat/oauth-login`, `fix/null-payment-response`
+Format: `<type>/<task-id>-<description>` (task ID is optional)
+
+Examples: `feat/4.1-user-entity`, `fix/null-payment-response`, `chore/update-deps`
 
 ### Workflow
 
 - Always start new work/tasks on a new branch with proper name, unless specified.
+- Split long tasks into multiple organic, self-contained commits — each one should leave the codebase in a valid state.
 
 ---
 
@@ -42,11 +50,14 @@ Example: `feat/oauth-login`, `fix/null-payment-response`
 
 - Code must be boring, obvious and predictable. Favor clarity over cleverness.
 - Don't hesitate to add a short comment whenever a piece of code is not immediately self-explanatory.
-- Avoid single letter variable names or abbreviations, prefer self-descriptive names
 
 ### General
 
 - Prefer `undefined` (or omit optional props) over `null` unless explicitly required
+
+### Naming conventions
+
+- Avoid single letter variable names or abbreviations, prefer self-descriptive names
 
 ### Functions
 
@@ -99,7 +110,7 @@ if (attempts > 3) { ... }
 
 - No `any`. Use `unknown` for genuinely unknown shapes
 - Types must flow naturally — do not fight the compiler with casts
-- When something truly cannot be typed: use `// @ts-expect-error <reason>`, never `as`
+- When something truly cannot be typed: use `// @ts-expect-error <reason>`, never use `as` assertion
 - Descriptive type and generic names in plain English — no single-letter generics outside trivial map/filter lambdas
 
 ---
@@ -144,10 +155,12 @@ Keep tested scenarios to a reasonable minimum. Avoid exhaustive or redundant tes
 - If an `it` contains a condition like "when", "if", "for", ":", or "on" — that condition belongs in a `describe` block
 - Prefer `.each` test loops when implementing 2+ structurally identical tests
 - Prepend assertions that are not self-explanatory with a brief 1 line comment
+- Test file-wide `beforeEach`/`afterAll` hooks go at the top level, outside the root `describe` block
+- Tests must be typed as strictly as source code — type errors in tests are expected to surface bugs before execution
 
 ### AAA Pattern
 
-Every test must follow Arrange → Act → Assert, separated by blank lines.
+Every test must follow "Arrange → Act → Assert", separated by blank lines.
 A test that can't be cleanly split into three sections signals the unit needs refactoring.
 
 ```ts
@@ -160,7 +173,7 @@ it("returns the discounted price", () => {
   const actual = applyDiscount(cart, coupon);
 
   // Expected
-  const expected = { total: 80 };
+  const expected: ExpectedType = { total: 80 };
   expect(actual).toEqual(expected);
 });
 ```
@@ -170,6 +183,7 @@ it("returns the discounted price", () => {
 - Prefer a single assertion against the whole entity/object when manageable
 - Use `actual` / `expected` named constants for structured comparisons
 - Avoid asserting implementation details — test observable behavior
+- Prefer explicit regex matchers (e.g. `ANY_UUID`, `ANY_ISO_DATETIME`) over `expect.any(String)` when the expected shape is known — reserve `expect.any(String)` for genuinely unconstrained strings
 
 ### Anti-Patterns
 
@@ -180,8 +194,8 @@ it("returns the discounted price", () => {
 
 ### Utilities
 
-- Abstract shared setup into local `test-utils/` folders as domain modules
-- File-wide `beforeEach`/`afterAll` hooks go at the top level, outside the root `describe`
+- Abstract shared setup/utils into local `test-utils/` folders as domain modules
+- Push setup/teardown into global hooks (e.g. `vitest.setup.ts`) whenever possible so individual test files stay focused on assertions
 
 ---
 
@@ -204,8 +218,8 @@ is part of the task — not optional follow-up work.
 An agent task is complete only when:
 
 - [ ] All changed behavior has corresponding tests
-- [ ] `test:ci` passes with no failures
-- [ ] No lint or type errors
+- [ ] All tests pass with no failures
+- [ ] No lint, formatting, or type errors
 - [ ] No dead code, unused imports, or leftover debug statements
 - [ ] Commit message follows Conventional Commits spec
 

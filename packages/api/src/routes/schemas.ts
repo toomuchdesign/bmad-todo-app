@@ -3,7 +3,9 @@ import {
   apiErrorResponseSchema,
   MAX_TODO_TEXT_LENGTH,
   MAX_TODO_TITLE_LENGTH,
+  MAX_USER_NAME_LENGTH,
   todoSchema,
+  userSchema,
 } from "shared";
 
 const requestHeadersSchema = {
@@ -171,4 +173,35 @@ export const deleteTodosRouteSchema = {
 
 export type DeleteTodosRouteResponses = InferRouteResponses<
   typeof deleteTodosRouteSchema.response
+>;
+
+export const postUsersRouteSchema = {
+  tags: ["users"],
+  summary: "Create user",
+  headers: requestHeadersSchema,
+  body: {
+    type: "object",
+    required: ["name"],
+    additionalProperties: false,
+    properties: {
+      name: {
+        type: "string",
+        minLength: 1,
+        maxLength: MAX_USER_NAME_LENGTH,
+        pattern: ".*\\S.*",
+      },
+    },
+  },
+  response: {
+    201: {
+      headers: responseHeadersSchema,
+      ...userSchema,
+    },
+    400: errorResponseSchema,
+    default: errorResponseSchema,
+  },
+} as const;
+
+export type PostUsersRouteResponses = InferRouteResponses<
+  typeof postUsersRouteSchema.response
 >;

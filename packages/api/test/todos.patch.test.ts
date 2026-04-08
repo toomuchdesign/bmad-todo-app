@@ -8,6 +8,7 @@ import type {
   PatchTodosRouteResponses,
 } from "../src/routes/schemas.js";
 import {
+  ANY_ISO_DATETIME,
   makeSeedTodo,
   runRequestIdHeaderTests,
   seedTodo,
@@ -52,7 +53,7 @@ describe("PATCH /todos/:id", () => {
         text: "some details",
         completed: false,
         createdAt: seed.createdAt,
-        updatedAt: expect.any(String),
+        updatedAt: ANY_ISO_DATETIME,
       });
 
       expect(body.updatedAt > "2026-01-01T00:00:00.000Z").toBe(true);
@@ -90,7 +91,7 @@ describe("PATCH /todos/:id", () => {
         text: "",
         completed: true,
         createdAt: seed.createdAt,
-        updatedAt: expect.any(String),
+        updatedAt: ANY_ISO_DATETIME,
       });
     });
   });
@@ -119,7 +120,7 @@ describe("PATCH /todos/:id", () => {
         text: "",
         completed: true,
         createdAt: seed.createdAt,
-        updatedAt: expect.any(String),
+        updatedAt: ANY_ISO_DATETIME,
       });
 
       const getResponse = await app.inject({ method: "GET", url: "/todos" });
