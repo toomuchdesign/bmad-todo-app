@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { DEFAULT_USER_ID } from "shared";
 
 import styles from "./App.module.css";
 import { AddTodoForm } from "./components/AddTodoForm";
@@ -8,7 +9,7 @@ import { useTodos } from "./hooks/useTodos";
 
 function App() {
   const { todos, loading, error, retry, createTodo, updateTodo, deleteTodo } =
-    useTodos();
+    useTodos({ userId: DEFAULT_USER_ID });
 
   const addTitleInputRef = useRef<HTMLInputElement>(null);
   const [focusTodoId, setFocusTodoId] = useState<string | undefined>();

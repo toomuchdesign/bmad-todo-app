@@ -3,7 +3,7 @@
 import fetchMock from "@fetch-mock/vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { Todo } from "shared";
+import { DEFAULT_USER_ID, type Todo } from "shared";
 import { describe, expect, it } from "vitest";
 import { App } from "./App";
 import { createDeferred, TODO_FIXTURES } from "./test-utils";
@@ -14,6 +14,7 @@ function makeTodo(overrides: Partial<Todo>): Todo {
     title: "Buy milk",
     text: "",
     completed: false,
+    userId: DEFAULT_USER_ID,
     createdAt: "2026-03-01T10:00:00.000Z",
     updatedAt: "2026-03-01T10:00:00.000Z",
     ...overrides,
@@ -82,6 +83,9 @@ describe("App", () => {
 
       // No error banner
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(fetchMock).toHavePatched("express:/todos/:id", {
+        headers: { "x-user-id": DEFAULT_USER_ID },
+      });
     });
 
     describe("given rapid toggle while first is in-flight", () => {

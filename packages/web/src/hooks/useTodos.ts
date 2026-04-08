@@ -31,7 +31,7 @@ function extractErrorMessage(err: unknown, fallback: string): string {
 }
 
 /** Fetches todos on mount and exposes CRUD with optimistic updates. */
-function useTodos(): UseTodosResult {
+function useTodos({ userId }: { userId: string }): UseTodosResult {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,17 +46,20 @@ function useTodos(): UseTodosResult {
     mutationFn: (id, fields, signal) =>
       httpClient.patch<
         ApiResponses<typeof TODO_BY_ID_API_PATH, "patch">["200"]
-      >(`/todos/${id}`, { body: fields, signal }),
+      >(`/todos/${id}`, {
+        body: fields,
+        headers: { "x-user-id": userId },
+        signal,
+      }),
   });
 
   const fetchTodos = useCallback(async () => {
     setLoading(true);
 
     try {
-      const data =
-        await httpClient.get<ApiResponses<typeof TODOS_API_PATH, "get">["200"]>(
-          TODOS_API_PATH,
-        );
+      const data = await httpClient.get<
+        ApiResponses<typeof TODOS_API_PATH, "get">["200"]
+      >(TODOS_API_PATH, { headers: { "x-user-id": userId } });
       setTodos(data.todos);
       setError(null);
     } catch (err) {
@@ -64,7 +67,7 @@ function useTodos(): UseTodosResult {
     }
 
     setLoading(false);
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     fetchTodos();
@@ -87,7 +90,10 @@ function useTodos(): UseTodosResult {
     try {
       const created = await httpClient.post<
         ApiResponses<typeof TODOS_API_PATH, "post">["201"]
-      >(TODOS_API_PATH, { body: { title, ...(text && { text }) } });
+      >(TODOS_API_PATH, {
+        body: { title, ...(text && { text }) },
+        headers: { "x-user-id": userId },
+      });
       setTodos((prev) => [created, ...prev]);
       return true;
     } catch (err) {
@@ -117,7 +123,9 @@ function useTodos(): UseTodosResult {
     setError(null);
 
     try {
-      await httpClient.del(`/todos/${id}`);
+      await httpClient.del(`/todos/${id}`, {
+        headers: { "x-user-id": userId },
+      });
       setTodos((prev) => prev.filter((t) => t.id !== id));
       return true;
     } catch (err) {

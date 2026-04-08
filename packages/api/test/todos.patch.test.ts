@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
-import { MAX_TODO_TEXT_LENGTH, MAX_TODO_TITLE_LENGTH } from "shared";
+import {
+  DEFAULT_USER_ID,
+  MAX_TODO_TEXT_LENGTH,
+  MAX_TODO_TITLE_LENGTH,
+} from "shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import type {
@@ -11,8 +15,11 @@ import {
   ANY_ISO_DATETIME,
   makeSeedTodo,
   runRequestIdHeaderTests,
+  runUserScopingTests,
   seedTodo,
 } from "./test-utils/index.js";
+
+const DEFAULT_HEADERS = { "x-user-id": DEFAULT_USER_ID };
 
 let app: FastifyInstance;
 
@@ -35,6 +42,7 @@ describe("PATCH /todos/:id", () => {
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${seed.id}`,
+        headers: DEFAULT_HEADERS,
         payload: {
           title: "  updated title  ",
           text: "  some details  ",
@@ -52,13 +60,18 @@ describe("PATCH /todos/:id", () => {
         title: "updated title",
         text: "some details",
         completed: false,
+        userId: DEFAULT_USER_ID,
         createdAt: seed.createdAt,
         updatedAt: ANY_ISO_DATETIME,
       });
 
       expect(body.updatedAt > "2026-01-01T00:00:00.000Z").toBe(true);
 
-      const getResponse = await app.inject({ method: "GET", url: "/todos" });
+      const getResponse = await app.inject({
+        method: "GET",
+        url: "/todos",
+        headers: DEFAULT_HEADERS,
+      });
       const listed = getResponse.json<GetTodosRouteResponses[200]>();
 
       expect(listed.todos).toEqual([
@@ -77,6 +90,7 @@ describe("PATCH /todos/:id", () => {
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${seed.id}`,
+        headers: DEFAULT_HEADERS,
         payload: { completed: true },
       });
 
@@ -90,6 +104,7 @@ describe("PATCH /todos/:id", () => {
         title: seed.title,
         text: "",
         completed: true,
+        userId: DEFAULT_USER_ID,
         createdAt: seed.createdAt,
         updatedAt: ANY_ISO_DATETIME,
       });
@@ -106,6 +121,7 @@ describe("PATCH /todos/:id", () => {
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${seed.id}`,
+        headers: DEFAULT_HEADERS,
         payload: { title: "new title", completed: true },
       });
 
@@ -119,11 +135,16 @@ describe("PATCH /todos/:id", () => {
         title: "new title",
         text: "",
         completed: true,
+        userId: DEFAULT_USER_ID,
         createdAt: seed.createdAt,
         updatedAt: ANY_ISO_DATETIME,
       });
 
-      const getResponse = await app.inject({ method: "GET", url: "/todos" });
+      const getResponse = await app.inject({
+        method: "GET",
+        url: "/todos",
+        headers: DEFAULT_HEADERS,
+      });
       const listed = getResponse.json<GetTodosRouteResponses[200]>();
 
       expect(listed.todos).toEqual([
@@ -156,6 +177,7 @@ describe("PATCH /todos/:id", () => {
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${seed.id}`,
+        headers: DEFAULT_HEADERS,
         payload,
       });
 
@@ -180,6 +202,7 @@ describe("PATCH /todos/:id", () => {
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${fakeId}`,
+        headers: DEFAULT_HEADERS,
         payload: { title: "whatever" },
       });
 
@@ -207,6 +230,7 @@ describe("PATCH /todos/:id", () => {
       const response = await app.inject({
         method: "PATCH",
         url: `/todos/${seed.id}`,
+        headers: DEFAULT_HEADERS,
         payload: { title: "should not work" },
       });
 
@@ -228,6 +252,7 @@ describe("PATCH /todos/:id", () => {
       const response = await app.inject({
         method: "PATCH",
         url: "/todos/not-a-uuid",
+        headers: DEFAULT_HEADERS,
         payload: { title: "whatever" },
       });
 
@@ -244,6 +269,16 @@ describe("PATCH /todos/:id", () => {
   });
 
   runRequestIdHeaderTests({
+    app: () => app,
+    injectInput: {
+      method: "PATCH",
+      url: `/todos/${randomUUID()}`,
+      headers: DEFAULT_HEADERS,
+      payload: { title: "task" },
+    },
+  });
+
+  runUserScopingTests({
     app: () => app,
     injectInput: {
       method: "PATCH",

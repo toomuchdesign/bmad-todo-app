@@ -3,7 +3,7 @@
 import fetchMock from "@fetch-mock/vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { Todo } from "shared";
+import { DEFAULT_USER_ID, type Todo } from "shared";
 import { describe, expect, it } from "vitest";
 import { App } from "./App";
 import { TODO_FIXTURES } from "./test-utils";
@@ -17,6 +17,7 @@ describe("App", () => {
         title: "Buy oat milk",
         text: "",
         completed: false,
+        userId: DEFAULT_USER_ID,
         createdAt: "2026-03-01T10:00:00.000Z",
         updatedAt: "2026-03-30T10:00:00.000Z",
       };
@@ -47,6 +48,9 @@ describe("App", () => {
       expect(
         screen.queryByRole("textbox", { name: "Edit todo title" }),
       ).not.toBeInTheDocument();
+      expect(fetchMock).toHavePatched("express:/todos/:id", {
+        headers: { "x-user-id": DEFAULT_USER_ID },
+      });
     });
 
     describe("when pressing Escape", () => {

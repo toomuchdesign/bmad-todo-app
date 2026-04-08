@@ -164,7 +164,7 @@ describe("httpClient", () => {
       await httpClient.get("/api/items");
 
       const call = fetchMock.callHistory.lastCall();
-      expect(call?.options.headers).toBeUndefined();
+      expect(call?.options.headers).toEqual({});
     });
   });
 });

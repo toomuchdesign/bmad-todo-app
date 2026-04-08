@@ -35,10 +35,10 @@ export async function runQuery(
 /**
  * Cleans all configured test tables so each test starts from a known-empty state.
  * Re-seeds the default user so it is always available.
- * Note: cleanup order should be revisited in Story 4.2 when FK between todos and users is added.
+ * Truncates todos first due to FK constraint on user_id → users.id.
  */
 export async function cleanupTestDatabase(): Promise<void> {
-  await runQuery(`TRUNCATE TABLE todos, users;`);
+  await runQuery(`TRUNCATE TABLE todos, users CASCADE;`);
   await runQuery(
     `INSERT INTO users (id, name, created_at, updated_at)
      VALUES ($1, 'Default User', NOW(), NOW())

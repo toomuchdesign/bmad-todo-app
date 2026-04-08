@@ -1,12 +1,16 @@
 import type { FastifyInstance } from "fastify";
+import { DEFAULT_USER_ID } from "shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import type { GetTodosRouteResponses } from "../src/routes/schemas.js";
 import {
   makeSeedTodo,
   runRequestIdHeaderTests,
+  runUserScopingTests,
   seedTodo,
 } from "./test-utils/index.js";
+
+const DEFAULT_HEADERS = { "x-user-id": DEFAULT_USER_ID };
 
 let app: FastifyInstance;
 
@@ -24,6 +28,7 @@ describe("GET /todos", () => {
     const response = await app.inject({
       method: "GET",
       url: "/todos",
+      headers: DEFAULT_HEADERS,
     });
 
     // Assert
@@ -65,6 +70,7 @@ describe("GET /todos", () => {
     const response = await app.inject({
       method: "GET",
       url: "/todos",
+      headers: DEFAULT_HEADERS,
     });
 
     // Assert
@@ -81,6 +87,7 @@ describe("GET /todos", () => {
           title: "newer active",
           text: "",
           completed: true,
+          userId: DEFAULT_USER_ID,
           createdAt: "2026-03-04T10:00:00.000Z",
           updatedAt: "2026-03-04T10:00:00.000Z",
         },
@@ -89,6 +96,7 @@ describe("GET /todos", () => {
           title: "older active",
           text: "",
           completed: false,
+          userId: DEFAULT_USER_ID,
           createdAt: "2026-03-01T10:00:00.000Z",
           updatedAt: "2026-03-01T10:00:00.000Z",
         },
@@ -97,6 +105,15 @@ describe("GET /todos", () => {
   });
 
   runRequestIdHeaderTests({
+    app: () => app,
+    injectInput: {
+      method: "GET",
+      url: "/todos",
+      headers: DEFAULT_HEADERS,
+    },
+  });
+
+  runUserScopingTests({
     app: () => app,
     injectInput: {
       method: "GET",

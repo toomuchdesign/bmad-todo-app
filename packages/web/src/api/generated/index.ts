@@ -15,9 +15,11 @@ export interface paths {
         get: {
             parameters: {
                 query?: never;
-                header?: {
+                header: {
                     /** @description Optional correlation ID for request tracing. If provided, the API echoes it back in the response; otherwise a new UUID is generated. */
                     "x-request-id"?: string;
+                    /** @description User ID for scoping todo operations */
+                    "x-user-id": string;
                 };
                 path?: never;
                 cookie?: never;
@@ -39,6 +41,8 @@ export interface paths {
                                 title: string;
                                 text: string;
                                 completed: boolean;
+                                /** Format: uuid */
+                                userId: string;
                                 /** Format: date-time */
                                 createdAt: string;
                                 /** Format: date-time */
@@ -70,9 +74,11 @@ export interface paths {
         post: {
             parameters: {
                 query?: never;
-                header?: {
+                header: {
                     /** @description Optional correlation ID for request tracing. If provided, the API echoes it back in the response; otherwise a new UUID is generated. */
                     "x-request-id"?: string;
+                    /** @description User ID for scoping todo operations */
+                    "x-user-id": string;
                 };
                 path?: never;
                 cookie?: never;
@@ -100,6 +106,8 @@ export interface paths {
                             title: string;
                             text: string;
                             completed: boolean;
+                            /** Format: uuid */
+                            userId: string;
                             /** Format: date-time */
                             createdAt: string;
                             /** Format: date-time */
@@ -159,9 +167,11 @@ export interface paths {
         delete: {
             parameters: {
                 query?: never;
-                header?: {
+                header: {
                     /** @description Optional correlation ID for request tracing. If provided, the API echoes it back in the response; otherwise a new UUID is generated. */
                     "x-request-id"?: string;
+                    /** @description User ID for scoping todo operations */
+                    "x-user-id": string;
                 };
                 path: {
                     id: string;
@@ -229,9 +239,11 @@ export interface paths {
         patch: {
             parameters: {
                 query?: never;
-                header?: {
+                header: {
                     /** @description Optional correlation ID for request tracing. If provided, the API echoes it back in the response; otherwise a new UUID is generated. */
                     "x-request-id"?: string;
+                    /** @description User ID for scoping todo operations */
+                    "x-user-id": string;
                 };
                 path: {
                     id: string;
@@ -262,6 +274,8 @@ export interface paths {
                             title: string;
                             text: string;
                             completed: boolean;
+                            /** Format: uuid */
+                            userId: string;
                             /** Format: date-time */
                             createdAt: string;
                             /** Format: date-time */

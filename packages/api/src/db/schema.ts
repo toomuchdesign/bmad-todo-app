@@ -18,6 +18,9 @@ export const todos = pgTable("todos", {
   title: text("title").notNull(),
   text: text("text"),
   completed: boolean("completed").notNull().default(false),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id),
   createdAt: timestamp("created_at", {
     withTimezone: true,
     mode: "date",

@@ -1,5 +1,9 @@
 import type { FastifyInstance } from "fastify";
-import { MAX_TODO_TEXT_LENGTH, MAX_TODO_TITLE_LENGTH } from "shared";
+import {
+  DEFAULT_USER_ID,
+  MAX_TODO_TEXT_LENGTH,
+  MAX_TODO_TITLE_LENGTH,
+} from "shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import type { PostTodosRouteResponses } from "../src/routes/schemas.js";
@@ -7,7 +11,10 @@ import {
   ANY_ISO_DATETIME,
   ANY_UUID,
   runRequestIdHeaderTests,
+  runUserScopingTests,
 } from "./test-utils/index.js";
+
+const DEFAULT_HEADERS = { "x-user-id": DEFAULT_USER_ID };
 
 let app: FastifyInstance;
 
@@ -32,6 +39,7 @@ describe("POST /todos", () => {
       const response = await app.inject({
         method: "POST",
         url: "/todos",
+        headers: DEFAULT_HEADERS,
         payload,
       });
 
@@ -45,6 +53,7 @@ describe("POST /todos", () => {
         title: "buy milk",
         text: "whole milk from the store",
         completed: false,
+        userId: DEFAULT_USER_ID,
         createdAt: ANY_ISO_DATETIME,
         updatedAt: ANY_ISO_DATETIME,
       });
@@ -59,6 +68,7 @@ describe("POST /todos", () => {
       const response = await app.inject({
         method: "POST",
         url: "/todos",
+        headers: DEFAULT_HEADERS,
         payload,
       });
 
@@ -72,6 +82,7 @@ describe("POST /todos", () => {
         title: "title only",
         text: "",
         completed: false,
+        userId: DEFAULT_USER_ID,
         createdAt: ANY_ISO_DATETIME,
         updatedAt: ANY_ISO_DATETIME,
       });
@@ -97,6 +108,7 @@ describe("POST /todos", () => {
       const response = await app.inject({
         method: "POST",
         url: "/todos",
+        headers: DEFAULT_HEADERS,
         payload,
       });
 
@@ -114,6 +126,18 @@ describe("POST /todos", () => {
   });
 
   runRequestIdHeaderTests({
+    app: () => app,
+    injectInput: {
+      method: "POST",
+      url: "/todos",
+      headers: DEFAULT_HEADERS,
+      payload: {
+        title: "task",
+      },
+    },
+  });
+
+  runUserScopingTests({
     app: () => app,
     injectInput: {
       method: "POST",

@@ -19,6 +19,19 @@ const requestHeadersSchema = {
   },
 } as const;
 
+const todoRequestHeadersSchema = {
+  type: "object",
+  required: ["x-user-id"],
+  properties: {
+    ...requestHeadersSchema.properties,
+    "x-user-id": {
+      type: "string",
+      format: "uuid",
+      description: "User ID for scoping todo operations",
+    },
+  },
+} as const;
+
 const responseHeadersSchema = {
   "x-request-id": {
     required: true,
@@ -47,7 +60,7 @@ export type InferRouteResponses<TResponse extends RouteResponseSchemas> = {
 export const getTodosRouteSchema = {
   tags: ["todos"],
   summary: "List todos",
-  headers: requestHeadersSchema,
+  headers: todoRequestHeadersSchema,
   response: {
     200: {
       headers: responseHeadersSchema,
@@ -71,7 +84,7 @@ export type GetTodosRouteResponses = InferRouteResponses<
 export const postTodosRouteSchema = {
   tags: ["todos"],
   summary: "Create todo",
-  headers: requestHeadersSchema,
+  headers: todoRequestHeadersSchema,
   body: {
     type: "object",
     required: ["title"],
@@ -106,7 +119,7 @@ export type PostTodosRouteResponses = InferRouteResponses<
 export const patchTodosRouteSchema = {
   tags: ["todos"],
   summary: "Update todo",
-  headers: requestHeadersSchema,
+  headers: todoRequestHeadersSchema,
   params: {
     type: "object",
     required: ["id"],
@@ -151,7 +164,7 @@ export type PatchTodosRouteResponses = InferRouteResponses<
 export const deleteTodosRouteSchema = {
   tags: ["todos"],
   summary: "Delete todo",
-  headers: requestHeadersSchema,
+  headers: todoRequestHeadersSchema,
   params: {
     type: "object",
     required: ["id"],

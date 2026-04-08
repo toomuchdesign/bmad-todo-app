@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { FastifyInstance } from "fastify";
+import { DEFAULT_USER_ID } from "shared";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import type { GetTodosRouteResponses } from "../src/routes/schemas.js";
@@ -7,8 +8,11 @@ import {
   makeSeedTodo,
   runQuery,
   runRequestIdHeaderTests,
+  runUserScopingTests,
   seedTodo,
 } from "./test-utils/index.js";
+
+const DEFAULT_HEADERS = { "x-user-id": DEFAULT_USER_ID };
 
 let app: FastifyInstance;
 
@@ -31,6 +35,7 @@ describe("DELETE /todos/:id", () => {
       const response = await app.inject({
         method: "DELETE",
         url: `/todos/${seed.id}`,
+        headers: DEFAULT_HEADERS,
       });
 
       // Assert
@@ -50,6 +55,7 @@ describe("DELETE /todos/:id", () => {
       const response = await app.inject({
         method: "DELETE",
         url: `/todos/${seed.id}`,
+        headers: DEFAULT_HEADERS,
       });
 
       // Assert
@@ -73,9 +79,14 @@ describe("DELETE /todos/:id", () => {
       await app.inject({
         method: "DELETE",
         url: `/todos/${seed.id}`,
+        headers: DEFAULT_HEADERS,
       });
 
-      const getResponse = await app.inject({ method: "GET", url: "/todos" });
+      const getResponse = await app.inject({
+        method: "GET",
+        url: "/todos",
+        headers: DEFAULT_HEADERS,
+      });
       const listed = getResponse.json<GetTodosRouteResponses[200]>();
 
       // Assert
@@ -93,6 +104,7 @@ describe("DELETE /todos/:id", () => {
       const response = await app.inject({
         method: "DELETE",
         url: `/todos/${fakeId}`,
+        headers: DEFAULT_HEADERS,
       });
 
       // Assert
@@ -119,6 +131,7 @@ describe("DELETE /todos/:id", () => {
       const response = await app.inject({
         method: "DELETE",
         url: `/todos/${seed.id}`,
+        headers: DEFAULT_HEADERS,
       });
 
       // Assert
@@ -139,6 +152,7 @@ describe("DELETE /todos/:id", () => {
       const response = await app.inject({
         method: "DELETE",
         url: "/todos/not-a-uuid",
+        headers: DEFAULT_HEADERS,
       });
 
       // Assert
@@ -154,6 +168,15 @@ describe("DELETE /todos/:id", () => {
   });
 
   runRequestIdHeaderTests({
+    app: () => app,
+    injectInput: {
+      method: "DELETE",
+      url: `/todos/${randomUUID()}`,
+      headers: DEFAULT_HEADERS,
+    },
+  });
+
+  runUserScopingTests({
     app: () => app,
     injectInput: {
       method: "DELETE",

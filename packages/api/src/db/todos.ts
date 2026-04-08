@@ -16,6 +16,7 @@ function mapTodoRowToApiTodo(row: TodoRow): Todo {
     title: row.title,
     text: row.text ?? "",
     completed: row.completed,
+    userId: row.userId,
     createdAt: toIsoDateTimeString(row.createdAt),
     updatedAt: toIsoDateTimeString(row.updatedAt),
     ...(row.deletedAt && {
@@ -24,13 +25,17 @@ function mapTodoRowToApiTodo(row: TodoRow): Todo {
   };
 }
 
-export async function listTodosFromDatabase(): Promise<Todo[]> {
+export async function listTodosFromDatabase({
+  userId,
+}: {
+  userId: string;
+}): Promise<Todo[]> {
   const db = getDb();
 
   const rows = await db
     .select()
     .from(todos)
-    .where(isNull(todos.deletedAt))
+    .where(and(eq(todos.userId, userId), isNull(todos.deletedAt)))
     .orderBy(desc(todos.createdAt));
 
   return rows.map(mapTodoRowToApiTodo);
@@ -42,9 +47,11 @@ export async function listTodosFromDatabase(): Promise<Todo[]> {
 export async function createTodoInDatabase({
   title,
   text,
+  userId,
 }: {
   title: string;
-  text?: string;
+  text?: string | undefined;
+  userId: string;
 }): Promise<Todo> {
   const db = getDb();
   const now = new Date();
@@ -56,6 +63,7 @@ export async function createTodoInDatabase({
       title,
       text,
       completed: false,
+      userId,
       createdAt: now,
       updatedAt: now,
     })
@@ -73,14 +81,16 @@ export async function createTodoInDatabase({
  */
 export async function updateTodoInDatabase({
   id,
+  userId,
   title,
   text,
   completed,
 }: {
   id: string;
-  title?: string;
-  text?: string;
-  completed?: boolean;
+  userId: string;
+  title?: string | undefined;
+  text?: string | undefined;
+  completed?: boolean | undefined;
 }): Promise<Todo | null> {
   const db = getDb();
   const [row] = await db
@@ -91,7 +101,9 @@ export async function updateTodoInDatabase({
       text,
       completed,
     })
-    .where(and(eq(todos.id, id), isNull(todos.deletedAt)))
+    .where(
+      and(eq(todos.id, id), eq(todos.userId, userId), isNull(todos.deletedAt)),
+    )
     .returning();
 
   return row ? mapTodoRowToApiTodo(row) : null;
@@ -102,8 +114,10 @@ export async function updateTodoInDatabase({
  */
 export async function deleteTodoInDatabase({
   id,
+  userId,
 }: {
   id: string;
+  userId: string;
 }): Promise<boolean> {
   const db = getDb();
   const now = new Date();
@@ -111,7 +125,9 @@ export async function deleteTodoInDatabase({
   const result = await db
     .update(todos)
     .set({ deletedAt: now, updatedAt: now })
-    .where(and(eq(todos.id, id), isNull(todos.deletedAt)))
+    .where(
+      and(eq(todos.id, id), eq(todos.userId, userId), isNull(todos.deletedAt)),
+    )
     .returning();
 
   return result.length > 0;

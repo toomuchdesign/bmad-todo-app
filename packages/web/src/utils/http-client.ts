@@ -11,6 +11,7 @@ class HttpError extends Error {
 
 type RequestOptions = {
   body?: unknown;
+  headers?: Record<string, string>;
   signal?: AbortSignal;
 };
 
@@ -23,10 +24,11 @@ async function request<T>(
   method: string,
   options?: RequestOptions,
 ): Promise<T> {
-  const init: RequestInit = { method };
+  const headers: Record<string, string> = { ...options?.headers };
+  const init: RequestInit = { method, headers };
 
   if (options?.body !== undefined) {
-    init.headers = { "Content-Type": "application/json" };
+    headers["Content-Type"] = "application/json";
     init.body = JSON.stringify(options.body);
   }
 

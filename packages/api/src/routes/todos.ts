@@ -5,6 +5,7 @@ import {
   listTodosFromDatabase,
   updateTodoInDatabase,
 } from "../db/todos.js";
+import { validateUserPlugin } from "../plugins/validate-user.js";
 import {
   deleteTodosRouteSchema,
   getTodosRouteSchema,
@@ -13,13 +14,15 @@ import {
 } from "./schemas.js";
 
 const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
+  await validateUserPlugin(app, {});
+
   app.get(
     "/todos",
     {
       schema: getTodosRouteSchema,
     },
-    async (_request, reply) => {
-      const todos = await listTodosFromDatabase();
+    async (request, reply) => {
+      const todos = await listTodosFromDatabase({ userId: request.userId });
 
       return reply.code(200).send({ todos });
     },
@@ -35,7 +38,8 @@ const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
 
       const todo = await createTodoInDatabase({
         title: title.trim(),
-        ...(text !== undefined && { text: text.trim() }),
+        text: text?.trim(),
+        userId: request.userId,
       });
 
       return reply.code(201).send(todo);
@@ -53,9 +57,10 @@ const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
 
       const todo = await updateTodoInDatabase({
         id,
-        ...(title !== undefined && { title: title.trim() }),
-        ...(text !== undefined && { text: text.trim() }),
-        ...(completed !== undefined && { completed }),
+        userId: request.userId,
+        title: title?.trim(),
+        text: text?.trim(),
+        completed,
       });
 
       if (!todo) {
@@ -77,7 +82,10 @@ const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
     async (request, reply) => {
       const { id } = request.params;
 
-      const deleted = await deleteTodoInDatabase({ id });
+      const deleted = await deleteTodoInDatabase({
+        id,
+        userId: request.userId,
+      });
 
       if (!deleted) {
         return reply.code(404).send({
