@@ -75,3 +75,10 @@ development_status:
   4-2-scope-todos-by-user-across-api-web-and-tests: done
   4-3-enable-parallel-api-test-execution-with-per-user-isolation: done
   epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-0-pre-deployment-cleanup-resolve-deferred-action-points: backlog
+  5-1-dockerize-the-api: backlog
+  5-2-dockerize-the-web-nginx-spa-api-proxy: backlog
+  5-3-docker-compose-production-orchestration: backlog
+  epic-5-retrospective: optional

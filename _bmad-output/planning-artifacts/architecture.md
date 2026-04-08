@@ -403,9 +403,55 @@ To keep quality high while moving quickly, every story/task is considered **done
   - Vitest and Playwright load root `.env.test` explicitly via `loadEnvFile`
   - The rest of the API codebase must not read `process.env` directly; it consumes the exported config object instead
 - **Migrations:** Drizzle Kit runs against `DATABASE_URL` (same URL used by API runtime)
-- **Deploy shape (MVP):**
-  - Web: Vite static build output hosted as static assets
-  - API: Node process running Fastify
+- **Deploy shape (MVP):** Docker Compose — three services: `db`, `api`, `web` (see Docker Deployment below)
+
+### Docker Deployment (Epic 5)
+
+**Service topology:**
+
+```
+┌─────────────────────────────────────────────────┐
+│  docker-compose.prod.yml                        │
+│                                                 │
+│  [web: nginx:alpine]  →proxy→  [api: node:22]  │
+│                                      │          │
+│                               [db: postgres:16] │
+└─────────────────────────────────────────────────┘
+```
+
+**API container (`packages/api/Dockerfile`):**
+- Multi-stage build (monorepo root as context)
+- `builder` stage: Node 22 Alpine, installs all deps, compiles `shared` + `api` to `dist/`
+- `runtime` stage: Node 22 Alpine, production deps only (`npm ci --omit=dev`), copies `dist/` and `drizzle/` SQL migration files
+- Entrypoint: `node dist/db/migrate.js && node dist/server.js` (migration runs on every startup; idempotent)
+- Required env vars: `DATABASE_URL`, `API_PORT`, `WEB_ORIGIN`
+
+**Web container (`packages/web/Dockerfile`):**
+- Multi-stage build (monorepo root as context)
+- `builder` stage: Node 22 Alpine, installs all deps, runs `npm run build -w web`
+- `runtime` stage: `nginx:alpine`, serves `dist/` static files
+- Nginx proxies `/todos` and `/users` to `http://api:${API_PORT}` — mirrors the Vite dev proxy; no web source changes required
+- SPA fallback: all non-API paths return `index.html`
+- Required build arg / env: `API_PORT` (for Nginx upstream, resolved via `envsubst` at container start)
+
+**Production Compose (`docker-compose.prod.yml`):**
+- `db`: `postgres:16-alpine`, named volume for data persistence, health check
+- `api`: depends on `db` (healthy), reads from `.env.prod` (git-ignored; `.env.prod.example` committed)
+- `web`: depends on `api`, exposes host port (e.g. 80)
+- TLS: terminated by an upstream reverse proxy (Nginx/Caddy/load balancer) outside Docker scope for MVP
+
+**Migration strategy:**
+- `packages/api/src/db/migrate.ts` — standalone script using drizzle-orm's programmatic `migrate()` API
+- Compiled to `dist/db/migrate.js` as part of `npm run build`
+- Runs before server start in the container entrypoint; idempotent (safe to re-run on restart)
+
+**Environment variables (production):**
+
+| Variable | Service | Description |
+|---|---|---|
+| `DATABASE_URL` | api | Postgres connection string |
+| `API_PORT` | api, web | Fastify listen port (default 3001) |
+| `WEB_ORIGIN` | api | CORS allowed origin for the web container |
 
 ## Implementation Patterns & Consistency Rules
 

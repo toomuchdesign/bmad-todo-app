@@ -148,6 +148,11 @@ A maintainer can validate the MVP is shippable via automated tests for all requi
 A user's todos are scoped to their identity. The system supports multiple users at the DB/API level, with the web app using a hidden default user. API tests run in parallel with per-user isolation.
 **FRs covered:** FR25, FR26, FR30, NFR10
 
+### Epic 5: Deployment (Dockerize API and Web)
+
+A maintainer can deploy the full stack (web + API + Postgres) as Docker containers with a single `docker compose` command, with zero local Node.js required. Begins with a cleanup story to resolve all tracked deferred action points before first deployment.
+**NFRs covered:** NFR7 (TLS-ready — TLS terminated by upstream reverse proxy in production)
+
 ## Epic 1: First Usable Todo List (Load + Create)
 
 Deliver a vertical slice where the app can be started locally, persists todos via API + DB, loads list on open with clear states, and supports creating new todos with validation and predictable recovery.
@@ -699,3 +704,169 @@ So that the test suite runs faster without DB concurrency issues.
 - Remove global `TRUNCATE TABLE todos` from `vitest.setup.ts`, replace with per-user cleanup
 - Each test file's `beforeAll` creates a user via the API; `beforeEach` deletes that user's todos
 - No product code changes — purely test infrastructure
+
+## Epic 5: Deployment (Dockerize API and Web)
+
+Package the API and web as production-ready Docker images and provide a Docker Compose configuration that brings up the full stack (web + API + Postgres) with zero local Node.js required.
+
+### Story 5.0: Pre-deployment cleanup — resolve deferred action points
+
+As a maintainer,
+I want all tracked open deferred items resolved or explicitly accepted,
+So that known bugs and convention violations do not ship into the first deployed build.
+
+**Acceptance Criteria:**
+
+**UX bug: stale list on retry failure**
+
+**Given** the initial todo load succeeded and the list is showing
+**When** a retry-after-error fetch fails (e.g. network flaps)
+**Then** the stale todo list is cleared (or visually marked as outdated) and only the error banner is shown
+**And** the retry action is still available
+
+**UX bug: 404 on already-deleted todo**
+
+**Given** a todo exists in the UI
+**When** delete or update returns `404` (item already removed server-side)
+**Then** the UI treats the response as success and removes the item from the list
+**And** no error banner is shown
+
+**UX bug: stale mutation refs after fetchTodos retry**
+
+**Given** a mutation (edit, toggle, delete) is in-flight
+**When** `fetchTodos` is triggered (e.g. user retries) and succeeds
+**Then** all in-flight mutations are aborted
+**And** `pendingFields`, `snapshots`, and `mutationControllers` refs are cleared
+**And** the fresh server data is the new source of truth
+
+**API schema gap: PATCH accepts empty body**
+
+**Given** the `PATCH /todos/:id` route schema
+**When** I call `PATCH /todos/:id` with an empty body `{}`
+**Then** the API returns `400` with `code = VALIDATION_ERROR` (no silent `updatedAt` bump for no-op requests)
+
+**Code convention: default export in todosRoutes**
+
+**Given** `packages/api/src/routes/todos/` uses `export default`
+**When** I open the file
+**Then** it uses a named export (per project-context.md: "named exports only — no default exports")
+
+**CSS: hardcoded values in TodoItem.module.css**
+
+**Given** `packages/web/src/components/TodoItem.module.css`
+**When** I inspect spacing, font-size, and border-radius values
+**Then** they reference semantic tokens (`--s-*`) rather than hardcoded values
+**And** any required new tokens are added to `tokens/semantic.css` (and primitives if needed)
+
+**Minor UX: focusTodoId never cleared**
+
+**Given** `focusTodoId` is set in App.tsx to trigger focus after a todo action
+**When** the focus effect fires
+**Then** `focusTodoId` is reset to `null` immediately after to prevent stale re-focus on remount
+
+**Technical notes:**
+
+- Open items from `deferred-work.md` addressed here: Story 1.6 stale list, Story 2.5 404 loop, Story 2.6 stale refs, Story 3.0 PATCH empty body, Story 3.0 default export, Story 2.2 CSS values, Story 3.4 focusTodoId
+- Items remaining accepted (do NOT fix here): `createTodo`/`updateTodo` clearing each other's errors (low impact), pre-commit `source:fix` staged file mutation, concurrent multi-item edit (intentional), `validateUserPlugin` caching (future auth story), 401 web client handling (future auth story)
+- All tests must remain green; update any affected tests alongside code changes
+
+### Story 5.1: Dockerize the API
+
+As a maintainer,
+I want the Fastify API to run as a Docker container,
+So that it can be deployed without a local Node.js installation.
+
+**Acceptance Criteria:**
+
+**Given** a `packages/api/Dockerfile` exists
+**When** I build the image from the monorepo root
+**Then** the build succeeds via a multi-stage build (builder → runtime)
+**And** the runtime image is based on `node:22-alpine` with only production dependencies
+**And** the image runs `node dist/server.js` as its entrypoint
+
+**Given** the container starts
+**When** `DATABASE_URL`, `API_PORT`, and `WEB_ORIGIN` are provided as env vars
+**Then** the API reads config from those env vars (no hardcoded values)
+
+**Given** the migrations have not been applied
+**When** the container starts
+**Then** it runs `node dist/db/migrate.js` (programmatic drizzle `migrate()`) before starting the server
+**And** the `drizzle/` folder with migration SQL files is included in the image
+
+**Given** a `.dockerignore` at project root
+**When** the Docker build context is sent
+**Then** `node_modules/`, `*.test.ts`, `.debug/`, and other non-production files are excluded
+
+**Technical notes:**
+
+- Multi-stage: `builder` stage installs all deps + compiles; `runtime` stage copies `dist/`, `drizzle/`, and `node_modules` pruned to prod-only via `npm ci --omit=dev`
+- The monorepo root is the build context (needed for `packages/shared` dependency)
+- Add `packages/api/src/db/migrate.ts` — a standalone script that calls drizzle-orm's programmatic `migrate(db, { migrationsFolder: './drizzle' })`
+- The container entrypoint runs: `node dist/db/migrate.js && node dist/server.js` (via a shell script or CMD array)
+
+### Story 5.2: Dockerize the Web (Nginx SPA + API proxy)
+
+As a maintainer,
+I want the Vite SPA to be served via an Nginx container that also proxies API requests,
+So that the web app works in production without any source code changes.
+
+**Acceptance Criteria:**
+
+**Given** a `packages/web/Dockerfile` exists
+**When** I build the image from the monorepo root
+**Then** the build succeeds via a multi-stage build (builder → nginx runtime)
+**And** the runtime image is based on `nginx:alpine` serving the Vite `dist/` output
+
+**Given** the Nginx container is running
+**When** a request arrives at `/todos` or `/users`
+**Then** Nginx proxies the request to the `api` service
+
+**Given** the Nginx container is running
+**When** a request arrives for any non-API path (including SPA deep links)
+**Then** Nginx falls back to `index.html` (SPA routing)
+
+**Given** a `packages/web/nginx.conf` exists
+**When** I inspect its contents
+**Then** it proxies `/todos` and `/users` to `http://api:${API_PORT}` and serves the SPA for all other routes
+
+**Technical notes:**
+
+- Nginx listens on port 80 inside the container (host port mapped in Compose)
+- The API upstream address uses the Docker Compose internal service name `api`; port is configurable via `envsubst` at container startup
+- No changes to `packages/web/src/` — relative paths (`/todos`, `/users`) already work with the proxy
+
+### Story 5.3: Docker Compose production orchestration
+
+As a maintainer,
+I want a single `docker-compose.prod.yml` that brings up the full stack,
+So that I can run the deployed app locally or on a server with one command.
+
+**Acceptance Criteria:**
+
+**Given** `docker-compose.prod.yml` at the project root
+**When** I run `docker compose -f docker-compose.prod.yml up`
+**Then** three services start: `db` (Postgres 16 Alpine), `api` (Fastify), `web` (Nginx)
+
+**Given** the `db` service
+**When** it starts
+**Then** a named volume provides data persistence across container restarts
+**And** a health check confirms Postgres is ready before the API starts
+
+**Given** the `api` service
+**When** it starts
+**Then** it depends on `db` being healthy and reads `DATABASE_URL`, `API_PORT`, and `WEB_ORIGIN` from `.env.prod` (git-ignored)
+
+**Given** the `web` service
+**When** it starts
+**Then** it depends on `api` and proxies API requests to it via the Docker Compose internal network
+
+**Given** an `.env.prod.example` at project root
+**When** I inspect it
+**Then** it documents all required environment variables with placeholder values (no real secrets committed)
+
+**Technical notes:**
+
+- `.env.prod` is git-ignored; `.env.prod.example` is committed as documentation
+- `docker-compose.yml` (existing dev Postgres setup) is unchanged
+- Update `README.md` with a "Deployment" section covering the `docker-compose.prod.yml` workflow and required env vars
+- Optional convenience root scripts: `docker:build` (`docker compose -f docker-compose.prod.yml build`) and `docker:up` (`docker compose -f docker-compose.prod.yml up`)
