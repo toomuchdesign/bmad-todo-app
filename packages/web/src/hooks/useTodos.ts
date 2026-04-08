@@ -63,6 +63,7 @@ function useTodos({ userId }: { userId: string }): UseTodosResult {
       setTodos(data.todos);
       setError(null);
     } catch (err) {
+      setTodos([]);
       setError(extractErrorMessage(err, GENERIC_ERROR_MESSAGE));
     }
 

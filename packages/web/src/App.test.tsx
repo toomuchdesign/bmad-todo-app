@@ -131,6 +131,44 @@ describe("App", () => {
       });
     });
 
+    it("clears stale todo list when retry-fetch fails after initial success", async () => {
+      // Arrange — initial load succeeds, then a create fails to trigger error banner
+      fetchMock.get("/todos", { todos: TODO_FIXTURES });
+      fetchMock.post("/todos", {
+        status: 500,
+        body: { code: "INTERNAL_ERROR", message: "Create failed" },
+      });
+
+      render(<App />);
+
+      await waitFor(() => {
+        expect(screen.getByText("Buy milk")).toBeInTheDocument();
+      });
+
+      // Trigger error banner via failed create
+      const titleInput = screen.getByLabelText("New todo title");
+      fireEvent.change(titleInput, { target: { value: "New todo" } });
+      fireEvent.click(screen.getByRole("button", { name: "Add" }));
+
+      await waitFor(() => {
+        expect(screen.getByRole("alert")).toBeInTheDocument();
+      });
+
+      // Act — retry fetch fails
+      fetchMock
+        .removeRoutes()
+        .get("/todos", { throws: new Error("Network error") });
+
+      fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+      // Assert — stale list cleared, only error banner shown
+      await waitFor(() => {
+        expect(screen.queryByText("Buy milk")).not.toBeInTheDocument();
+      });
+      expect(screen.queryByText("Walk the dog")).not.toBeInTheDocument();
+      expect(screen.getByRole("alert")).toBeInTheDocument();
+    });
+
     it("shows a Retry button that is disabled during fetch and resolves on success", async () => {
       fetchMock.get("/todos", { throws: new Error("Network error") });
 
