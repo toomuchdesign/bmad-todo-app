@@ -71,6 +71,16 @@
 - `db:migrate` convenience npm script removed — the replacement scripts (`db:migrate:local`, `db:migrate:test`) both start Docker Compose, which may not be suitable for CI pipelines without Docker Compose access. Any CI step calling `npm run db:migrate` would break.
 - No DB connection retry in migration script (`packages/api/src/db/migrate.ts`) — if the database container is not ready at container startup, migration fails immediately. Retry logic or orchestration healthchecks (e.g. `depends_on: condition: service_healthy`) should be added at the Docker Compose / Kubernetes level in Story 5.3.
 
+## Deferred from: code review of 5-2-dockerize-the-web-nginx-spa-api-proxy (2026-04-08)
+
+- `X-Forwarded-For` not forwarded in nginx proxy — API sees nginx container IP for all requests. Add `proxy_set_header X-Forwarded-For $remote_addr;` in location blocks when API adds IP-based logic.
+- Host header injection via `proxy_set_header Host $host` — acceptable for internal proxy but could be hardened to `$proxy_host`.
+- Missing `X-Forwarded-Proto` header in proxy config — add if API ever needs to distinguish HTTP/HTTPS origin.
+- Nginx prefix `location /todos` and `location /users` capture any path starting with those strings — latent routing trap if future routes share the prefix.
+- `apiHost`/`apiPort` undefined in `vite.config.ts` when `.env` absent → Vite proxy target `http://undefined:undefined` — pre-existing issue, only affects dev server not production build.
+- No `EXPOSE 80` in `packages/web/Dockerfile` — add for self-documenting port declaration.
+- No `CMD` in `packages/web/Dockerfile` — consider `CMD ["nginx", "-g", "daemon off;"]` passed as `$@` for operator flexibility.
+
 ## Deferred from: code review of 4-2-scope-todos-by-user-across-api-web-and-tests (2026-04-08)
 
 - Migration backfill in `0003_odd_joystick.sql` assumes `DEFAULT_USER_ID` user row exists in `users` before the FK constraint is added — could fail in non-standard deployments without prior seeding. Acceptable for dev-only destructive migration.
