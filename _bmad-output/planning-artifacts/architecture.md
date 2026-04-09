@@ -512,6 +512,7 @@ bmad-todo/
 ├── package.json
 ├── package-lock.json
 ├── docker-compose.yml
+├── docker-compose.prod.yml
 ├── .gitignore
 ├── .env.example
 ├── .env.test

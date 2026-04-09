@@ -3,11 +3,14 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Copy workspace manifests for layer-cache-friendly install
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json tsconfig.base.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/web/package.json ./packages/web/
 
-RUN npm ci
+# Work around npm/cli#4828: npm ci does not resolve cross-platform optional deps
+# for native bindings (rolldown, lightningcss). Clean slate install resolves them
+# for the container platform. --legacy-peer-deps handles TS6/openapi-typescript peer conflict.
+RUN rm -rf node_modules package-lock.json && npm install --legacy-peer-deps
 
 # Copy source
 COPY packages/shared/ ./packages/shared/
