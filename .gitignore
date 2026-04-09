@@ -19,4 +19,5 @@ test-results
 !.changeset
 !.gitattributes
 !.env.example
+!.env.prod.example
 !.env.test

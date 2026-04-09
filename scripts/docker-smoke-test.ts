@@ -26,8 +26,11 @@ const READINESS_INTERVAL_MS = 2_000;
 // ---------------------------------------------------------------------------
 
 function compose(command: string): void {
+  // --env-file /dev/null prevents Docker Compose from loading the root .env
+  // (which has dev values like DATABASE_URL pointing to 127.0.0.1).
+  // The compose file's ${VAR:-default} fallbacks provide the correct values.
   execSync(
-    `docker-compose -p ${PROD_PROJECT} -f ${PROD_COMPOSE_FILE} ${command}`,
+    `docker-compose -p ${PROD_PROJECT} -f ${PROD_COMPOSE_FILE} --env-file /dev/null ${command}`,
     { stdio: "inherit" },
   );
 }

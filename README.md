@@ -62,11 +62,19 @@ Once Postgres is running, use `npm run dev` to start both the API and web dev se
 
 This compose file builds and runs the full application stack using the production Dockerfiles. Use it to verify that containers build, migrations run, and the app works end-to-end before deploying.
 
+All environment values have `${VAR:-default}` fallbacks so the compose file works out of the box. To override values for production, create a `.env.prod` file:
+
+```bash
+cp .env.prod.example .env.prod   # then edit with real credentials
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+```
+
 | Command                                                   | Effect                                   |
 | --------------------------------------------------------- | ---------------------------------------- |
-| `docker-compose -f docker-compose.prod.yml up -d --build` | Build images and start the full stack    |
-| `docker-compose -f docker-compose.prod.yml down`          | Stop all services                        |
-| `docker-compose -f docker-compose.prod.yml down -v`       | Stop all services and delete stored data |
+| `npm run docker:build`                                    | Build production images                  |
+| `npm run docker:up`                                       | Build images and start the full stack    |
+| `docker compose -f docker-compose.prod.yml down`          | Stop all services                        |
+| `docker compose -f docker-compose.prod.yml down -v`       | Stop all services and delete stored data |
 
 Once running, open http://localhost:8090 to use the app.
 
@@ -74,7 +82,7 @@ Once running, open http://localhost:8090 to use the app.
 
 | Service    | Image                                | Host port | Notes                                                          |
 | ---------- | ------------------------------------ | --------- | -------------------------------------------------------------- |
-| `postgres` | `postgres:16`                        | 5432      | Healthcheck ensures readiness before API starts                |
+| `postgres` | `postgres:16-alpine`                 | 5432      | Healthcheck ensures readiness before API starts                |
 | `api`      | Built from `packages/api/Dockerfile` | 3001      | Runs DB migrations on startup, then starts Fastify             |
 | `web`      | Built from `packages/web/Dockerfile` | 8090      | Nginx serves the SPA and proxies `/todos`, `/users` to the API |
 
@@ -135,11 +143,15 @@ The `docker-compose.prod.yml` file mirrors the intended deployment topology. It 
 
 **Required environment variables:**
 
-| Variable       | Service  | Description                                           |
-| -------------- | -------- | ----------------------------------------------------- |
-| `DATABASE_URL` | api      | Postgres connection string                            |
-| `API_PORT`     | api, web | Port the API listens on (default: 3001)               |
-| `WEB_ORIGIN`   | api      | Allowed CORS origin (e.g. `https://todo.example.com`) |
+| Variable            | Service  | Description                                           |
+| ------------------- | -------- | ----------------------------------------------------- |
+| `POSTGRES_USER`     | postgres | Postgres superuser name (default: `postgres`)         |
+| `POSTGRES_PASSWORD` | postgres | Postgres superuser password (default: `postgres`)     |
+| `POSTGRES_DB`       | postgres | Database name (default: `bmad_todo`)                  |
+| `DATABASE_URL`      | api      | Postgres connection string                            |
+| `API_PORT`          | api, web | Port the API listens on (default: `3001`)             |
+| `API_HOST`          | api      | Host the API binds to (default: `0.0.0.0`)            |
+| `WEB_ORIGIN`        | api      | Allowed CORS origin (e.g. `https://todo.example.com`) |
 
 ## Development reference
 
@@ -164,10 +176,12 @@ Dev and test use separate ports so they can run simultaneously.
 
 All environment variables live in **root-level** `.env` files (no per-package env files):
 
-| File        | Purpose                                    | Git status                         |
-| ----------- | ------------------------------------------ | ---------------------------------- |
-| `.env`      | Development settings                       | Ignored (copy from `.env.example`) |
-| `.env.test` | Test settings (shared by all contributors) | Committed                          |
+| File                | Purpose                                    | Git status                              |
+| ------------------- | ------------------------------------------ | --------------------------------------- |
+| `.env`              | Development settings                       | Ignored (copy from `.env.example`)      |
+| `.env.test`         | Test settings (shared by all contributors) | Committed                               |
+| `.env.prod`         | Production Docker overrides                | Ignored (copy from `.env.prod.example`) |
+| `.env.prod.example` | Documents production env vars              | Committed                               |
 
 The API dev server and Vite auto-load `.env`. Vitest and Playwright auto-load `.env.test`.
 

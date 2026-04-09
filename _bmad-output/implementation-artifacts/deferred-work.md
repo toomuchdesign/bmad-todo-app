@@ -87,3 +87,12 @@
 - `validateUserPlugin` issues a DB lookup on every request (no caching) — N+1 DB round-trips under load. Future auth story should consider caching or session tokens.
 - `PATCH /todos/:id` with empty body `{}` silently bumps `updatedAt` without changing data — no `minProperties` constraint. Pre-existing, also noted in Story 3.0/3.1 reviews.
 - No 401-specific handling in web client — auth failure shows same generic "Couldn't load todos" message as a network error. Future auth story should differentiate error types.
+
+## Deferred from: code review of 5-3-docker-compose-production-orchestration (2026-04-09)
+
+- Healthcheck hardcodes `-U postgres` regardless of `POSTGRES_USER` override — if `POSTGRES_USER` is changed, the healthcheck may fail on strict Postgres `pg_hba.conf` configs, blocking `api` service start.
+- `docker-compose` v1 CLI used in smoke test (`scripts/docker-smoke-test.ts`) vs `docker compose` v2 in npm scripts — modern Docker installations may only have v2; smoke test would fail with "command not found".
+- Postgres port 5432 exposed on host in production compose — `"5432:5432"` binding exposes the database to the host network; API communicates over the internal Docker network and does not need this.
+- `web` service depends on `api` with default `service_started` rather than `service_healthy` — Nginx may start proxying to the API before it finishes running migrations and accepting connections.
+- `waitForReady` in smoke test accepts any HTTP status including 5xx — a misconfigured but responding container would pass the readiness check.
+- `--env-file /dev/null` in smoke test is not portable to Windows — would fail on Windows CI runners.
