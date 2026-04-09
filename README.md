@@ -80,6 +80,21 @@ Once running, open http://localhost:8090 to use the app.
 
 **Important:** Both compose files bind to port 5432. Stop one before starting the other to avoid port conflicts.
 
+### Smoke test
+
+An on-demand test suite (Node test runner) that verifies both compose setups work correctly:
+
+```bash
+npm run docker:smoke
+```
+
+| Suite | What it verifies |
+|---|---|
+| `docker-compose.yml` | Dev Postgres starts and accepts connections |
+| `docker-compose.prod.yml` | Images build, web serves HTML, API responds, Nginx proxies API routes |
+
+The script automatically stops the dev Postgres to free port 5432, runs all checks, tears down the smoke stack, and restores the dev Postgres. Use it after changing Dockerfiles, nginx config, or compose files.
+
 ### Dockerfiles
 
 Both Dockerfiles use multi-stage builds with the monorepo root as the build context.

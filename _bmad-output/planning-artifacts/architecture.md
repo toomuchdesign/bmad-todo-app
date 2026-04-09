@@ -517,6 +517,8 @@ bmad-todo/
 ├── .env.example
 ├── .env.test
 ├── README.md
+├── scripts/
+│   ├── docker-smoke-test.ts       # builds prod stack, verifies services, tears down
 ├── packages/
 │   ├── shared/
 │   │   ├── package.json
