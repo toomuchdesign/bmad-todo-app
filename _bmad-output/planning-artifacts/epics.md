@@ -153,6 +153,11 @@ A user's todos are scoped to their identity. The system supports multiple users 
 A maintainer can deploy the full stack (web + API + Postgres) as Docker containers with a single `docker compose` command, with zero local Node.js required. Begins with a cleanup story to resolve all tracked deferred action points before first deployment.
 **NFRs covered:** NFR7 (TLS-ready — TLS terminated by upstream reverse proxy in production)
 
+### Epic 6: User Authentication
+
+A real user can register an account and log in. Todos are scoped to their authenticated identity. The `x-user-id` placeholder header (introduced in Epic 4) is replaced by a proper auth flow. Auth strategy is selected in Story 6.0 (design spike + ADR) before implementation begins.
+**Begins after:** Epic 5 complete
+
 ## Epic 1: First Usable Todo List (Load + Create)
 
 Deliver a vertical slice where the app can be started locally, persists todos via API + DB, loads list on open with clear states, and supports creating new todos with validation and predictable recovery.
@@ -870,3 +875,40 @@ So that I can run the deployed app locally or on a server with one command.
 - `docker-compose.yml` (existing dev Postgres setup) is unchanged
 - Update `README.md` with a "Deployment" section covering the `docker-compose.prod.yml` workflow and required env vars
 - Optional convenience root scripts: `docker:build` (`docker compose -f docker-compose.prod.yml build`) and `docker:up` (`docker compose -f docker-compose.prod.yml up`)
+
+## Epic 6: User Authentication
+
+Replace the `x-user-id` placeholder header with a real authentication flow. A user can register an account, log in, and have their todos scoped to their authenticated identity.
+
+Auth strategy is selected via a design spike (Story 6.0) before any implementation begins.
+
+### Story 6.0: Auth design spike — evaluate and decide auth strategy
+
+As a maintainer,
+I want a documented, evaluated decision on the authentication approach,
+So that implementation stories are built on a well-reasoned foundation with no surprise pivots.
+
+**Acceptance Criteria:**
+
+**Given** the four candidate approaches (DIY JWT, Better Auth, Clerk, session-based)
+**When** the design spike is complete
+**Then** an ADR exists at `docs/decisions/adr-auth-strategy.md` covering:
+  - Problem statement and constraints (stack: Fastify, Drizzle, Postgres, React; Docker; learning goals)
+  - Each option evaluated: implementation effort, security surface, vendor risk, DX
+  - Selected approach with explicit rationale
+  - How the `x-user-id` placeholder will be replaced
+  - DB schema changes required (e.g. `email`, `password_hash` on `users`, or external provider mapping)
+  - API surface sketch: new routes (e.g. `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`)
+  - Web client changes: how the token/session is stored and attached to requests
+  - UX implications: login/register screens, session persistence, redirect behavior
+
+**Technical notes:**
+
+- Options to evaluate:
+  - **A — DIY JWT** (`@fastify/jwt` + bcrypt): full control, max learning value, zero cost — own the security surface
+  - **B — Better Auth**: TS-first library with Drizzle adapter, email/password + OAuth support
+  - **C — Clerk**: external service, pre-built React UI, verifies JWTs via JWKS — best DX, vendor lock-in
+  - **D — Session-based** (`@fastify/session` + `@fastify/cookie`): simple, stateful, needs session store
+- Primary candidates: A and B (stack-native, no vendor lock-in)
+- Consider Option C only if speed-to-value outweighs learning goals
+- After ADR is approved, create implementation stories 6.1+ via `bmad-create-story`

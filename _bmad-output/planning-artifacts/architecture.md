@@ -304,7 +304,11 @@ To keep quality high while moving quickly, every story/task is considered **done
 
 ### Authentication & Security
 
-- **Authentication (MVP):** none (single-user MVP, no user auth)
+- **Authentication (MVP):** none (single-user MVP — `x-user-id` header placeholder)
+- **Authentication (Epic 6):** strategy TBD — see Story 6.0 ADR in `docs/decisions/`.
+  Options evaluated: DIY JWT (`@fastify/jwt` + bcrypt), Better Auth (Drizzle adapter),
+  Clerk (external service), session-based (`@fastify/session`).
+  Decision and implementation details will be appended here after ADR approval.
 - **API guard:** none (no static API key)
 - **CORS:** enabled and restricted to the SPA origin (no `*`) via `@fastify/cors@11.2.0`
   - Use env var `WEB_ORIGIN` to configure the allowed origin in non-local environments.

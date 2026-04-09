@@ -97,6 +97,7 @@ The MVP differentiator is restraint: “just enough” task management with no f
 
 ### Growth Features (Post-MVP)
 
+- User authentication (register/login, replacing x-user-id placeholder — Epic 6)
 - Search / filter
 - Offline-first (queued mutations + sync)
 - Bin page (view/restore deleted items)

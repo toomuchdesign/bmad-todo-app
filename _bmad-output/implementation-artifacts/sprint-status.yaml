@@ -84,3 +84,6 @@ development_status:
   5-4-unify-api-routes-under-api-prefix: done
   5-5-discover-e2e-parallelization-pattern: ready-for-dev
   epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-0-auth-design-spike: backlog
