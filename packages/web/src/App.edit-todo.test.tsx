@@ -22,8 +22,8 @@ describe("App", () => {
         updatedAt: "2026-03-30T10:00:00.000Z",
       };
       fetchMock
-        .get("/todos", { todos: TODO_FIXTURES })
-        .patch("express:/todos/:id", updatedTodo);
+        .get("/api/todos", { todos: TODO_FIXTURES })
+        .patch("express:/api/todos/:id", updatedTodo);
 
       render(<App />);
 
@@ -48,7 +48,7 @@ describe("App", () => {
       expect(
         screen.queryByRole("textbox", { name: "Edit todo title" }),
       ).not.toBeInTheDocument();
-      expect(fetchMock).toHavePatched("express:/todos/:id", {
+      expect(fetchMock).toHavePatched("express:/api/todos/:id", {
         headers: { "x-user-id": DEFAULT_USER_ID },
       });
     });
@@ -56,7 +56,7 @@ describe("App", () => {
     describe("when pressing Escape", () => {
       it("restores original title", async () => {
         const user = userEvent.setup();
-        fetchMock.get("/todos", { todos: TODO_FIXTURES });
+        fetchMock.get("/api/todos", { todos: TODO_FIXTURES });
 
         render(<App />);
 
@@ -86,8 +86,8 @@ describe("App", () => {
       it("removes the todo from the list without showing error banner", async () => {
         const user = userEvent.setup();
         fetchMock
-          .get("/todos", { todos: TODO_FIXTURES })
-          .patch("express:/todos/:id", {
+          .get("/api/todos", { todos: TODO_FIXTURES })
+          .patch("express:/api/todos/:id", {
             status: 404,
             body: { code: "NOT_FOUND", message: "Todo not found" },
           });
@@ -121,8 +121,8 @@ describe("App", () => {
       it("shows global error banner and preserves edit mode", async () => {
         const user = userEvent.setup();
         fetchMock
-          .get("/todos", { todos: TODO_FIXTURES })
-          .patch("express:/todos/:id", {
+          .get("/api/todos", { todos: TODO_FIXTURES })
+          .patch("express:/api/todos/:id", {
             status: 500,
             body: { code: "INTERNAL_ERROR", message: "Database error" },
           });

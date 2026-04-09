@@ -22,8 +22,8 @@ describe("App", () => {
         };
 
         fetchMock
-          .get("/todos", { todos: TODO_FIXTURES })
-          .post("/todos", newTodo);
+          .get("/api/todos", { todos: TODO_FIXTURES })
+          .post("/api/todos", newTodo);
 
         render(<App />);
 
@@ -39,7 +39,7 @@ describe("App", () => {
           expect(screen.getByText("New task")).toBeInTheDocument();
         });
         expect(input).toHaveValue("");
-        expect(fetchMock).toHavePosted("/todos", {
+        expect(fetchMock).toHavePosted("/api/todos", {
           headers: { "x-user-id": DEFAULT_USER_ID },
         });
       });
@@ -47,10 +47,12 @@ describe("App", () => {
 
     describe("on failed create", () => {
       it("shows global error banner and preserves input", async () => {
-        fetchMock.get("/todos", { todos: TODO_FIXTURES }).post("/todos", {
-          status: 500,
-          body: { code: "INTERNAL_ERROR", message: "Database error" },
-        });
+        fetchMock
+          .get("/api/todos", { todos: TODO_FIXTURES })
+          .post("/api/todos", {
+            status: 500,
+            body: { code: "INTERNAL_ERROR", message: "Database error" },
+          });
 
         render(<App />);
 
@@ -71,7 +73,7 @@ describe("App", () => {
     });
 
     it("shows inline validation for empty input without network call", async () => {
-      fetchMock.get("/todos", { todos: TODO_FIXTURES });
+      fetchMock.get("/api/todos", { todos: TODO_FIXTURES });
 
       render(<App />);
 
@@ -86,7 +88,7 @@ describe("App", () => {
     });
 
     it("shows inline validation for too-long input without network call", async () => {
-      fetchMock.get("/todos", { todos: TODO_FIXTURES });
+      fetchMock.get("/api/todos", { todos: TODO_FIXTURES });
 
       render(<App />);
 

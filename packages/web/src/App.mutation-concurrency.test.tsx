@@ -44,8 +44,8 @@ describe("App", () => {
       });
 
       let patchCallCount = 0;
-      fetchMock.get("/todos", { todos: TODO_FIXTURES });
-      fetchMock.patch("express:/todos/:id", () => {
+      fetchMock.get("/api/todos", { todos: TODO_FIXTURES });
+      fetchMock.patch("express:/api/todos/:id", () => {
         patchCallCount++;
         if (patchCallCount === 1) {
           return firstDeferred.promise.then(() => toggledFirst);
@@ -83,7 +83,7 @@ describe("App", () => {
 
       // No error banner
       expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-      expect(fetchMock).toHavePatched("express:/todos/:id", {
+      expect(fetchMock).toHavePatched("express:/api/todos/:id", {
         headers: { "x-user-id": DEFAULT_USER_ID },
       });
     });
@@ -104,8 +104,8 @@ describe("App", () => {
         });
 
         let patchCallCount = 0;
-        fetchMock.get("/todos", { todos: TODO_FIXTURES });
-        fetchMock.patch("express:/todos/:id", () => {
+        fetchMock.get("/api/todos", { todos: TODO_FIXTURES });
+        fetchMock.patch("express:/api/todos/:id", () => {
           patchCallCount++;
           if (patchCallCount === 1) {
             return firstDeferred.promise.then(() => toggledOn);
@@ -168,8 +168,8 @@ describe("App", () => {
           updatedAt: "2026-04-01T11:00:00.000Z",
         });
 
-        fetchMock.get("/todos", { todos: TODO_FIXTURES });
-        fetchMock.patch("express:/todos/:id", () => {
+        fetchMock.get("/api/todos", { todos: TODO_FIXTURES });
+        fetchMock.patch("express:/api/todos/:id", () => {
           patchCallCount++;
           if (patchCallCount === 1) return toggledOn;
           return toggledOff;
@@ -217,8 +217,8 @@ describe("App", () => {
           updatedAt: "2026-04-01T11:00:00.000Z",
         });
 
-        fetchMock.get("/todos", { todos: TODO_FIXTURES });
-        fetchMock.patch("express:/todos/:id", () => {
+        fetchMock.get("/api/todos", { todos: TODO_FIXTURES });
+        fetchMock.patch("express:/api/todos/:id", () => {
           patchCallCount++;
           if (patchCallCount === 1) return editedTodo;
           return toggledTodo;
@@ -282,8 +282,8 @@ describe("App", () => {
         });
 
         let patchCallCount = 0;
-        fetchMock.get("/todos", { todos: TODO_FIXTURES });
-        fetchMock.patch("express:/todos/:id", () => {
+        fetchMock.get("/api/todos", { todos: TODO_FIXTURES });
+        fetchMock.patch("express:/api/todos/:id", () => {
           patchCallCount++;
           if (patchCallCount === 1) {
             return firstDeferred.promise.then(() => toggledFirst);

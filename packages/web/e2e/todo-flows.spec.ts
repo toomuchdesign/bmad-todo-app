@@ -16,7 +16,7 @@ test.describe("Todo flows", () => {
     test("shows error banner with retry button on load failure", async ({
       page,
     }) => {
-      await page.route("**/todos", (route) => {
+      await page.route("**/api/todos", (route) => {
         route.fulfill({
           status: 500,
           contentType: "application/json",
@@ -33,7 +33,7 @@ test.describe("Todo flows", () => {
       await expect(retryButton).toBeVisible();
 
       // Remove the route intercept so retry succeeds
-      await page.unroute("**/todos");
+      await page.unroute("**/api/todos");
 
       await retryButton.click();
 
@@ -141,7 +141,7 @@ test.describe("Todo flows", () => {
 
       // Intercept POST with failure
       const deferred = createDeferred<void>();
-      await page.route("**/todos", (route) => {
+      await page.route("**/api/todos", (route) => {
         if (route.request().method() === "POST") {
           deferred.promise.then(() => {
             route.fulfill({
@@ -414,7 +414,7 @@ test.describe("Todo flows", () => {
 
       // Intercept PATCH with failure
       const deferred = createDeferred<void>();
-      await page.route("**/todos/*", (route) => {
+      await page.route("**/api/todos/*", (route) => {
         if (route.request().method() === "PATCH") {
           deferred.promise.then(() => {
             route.fulfill({
@@ -529,7 +529,7 @@ test.describe("Todo flows", () => {
 
       // Intercept the PATCH request — hold it until deferred resolves
       const deferred = createDeferred<void>();
-      await page.route("**/todos/*", (route) => {
+      await page.route("**/api/todos/*", (route) => {
         if (route.request().method() === "PATCH") {
           deferred.promise.then(() => {
             route.fulfill({
@@ -619,7 +619,7 @@ test.describe("Todo flows", () => {
 
       // Intercept the DELETE request with a failure
       const deferred = createDeferred<void>();
-      await page.route("**/todos/*", (route) => {
+      await page.route("**/api/todos/*", (route) => {
         if (route.request().method() === "DELETE") {
           deferred.promise.then(() => {
             route.fulfill({

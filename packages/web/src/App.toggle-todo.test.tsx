@@ -22,8 +22,8 @@ describe("App", () => {
         updatedAt: "2026-03-30T10:00:00.000Z",
       };
       fetchMock
-        .get("/todos", { todos: TODO_FIXTURES })
-        .patch("express:/todos/:id", toggledTodo);
+        .get("/api/todos", { todos: TODO_FIXTURES })
+        .patch("express:/api/todos/:id", toggledTodo);
 
       render(<App />);
 
@@ -46,7 +46,7 @@ describe("App", () => {
       });
 
       // Verify PATCH was called with the correct body and x-user-id header
-      expect(fetchMock).toHavePatched("express:/todos/:id", {
+      expect(fetchMock).toHavePatched("express:/api/todos/:id", {
         body: { completed: true },
         headers: { "x-user-id": DEFAULT_USER_ID },
       });
@@ -58,8 +58,8 @@ describe("App", () => {
         const deferred = createDeferred<void>();
 
         fetchMock
-          .get("/todos", { todos: TODO_FIXTURES })
-          .patch("express:/todos/:id", () =>
+          .get("/api/todos", { todos: TODO_FIXTURES })
+          .patch("express:/api/todos/:id", () =>
             deferred.promise.then(() => ({
               status: 500,
               body: { code: "INTERNAL_ERROR", message: "Database error" },

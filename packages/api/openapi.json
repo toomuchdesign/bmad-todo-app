@@ -8,7 +8,7 @@
     "schemas": {}
   },
   "paths": {
-    "/api/todos": {
+    "/todos": {
       "get": {
         "summary": "List todos",
         "tags": [
@@ -316,7 +316,7 @@
         }
       }
     },
-    "/api/todos/{id}": {
+    "/todos/{id}": {
       "patch": {
         "summary": "Update todo",
         "tags": [
@@ -677,7 +677,7 @@
         }
       }
     },
-    "/api/users": {
+    "/users": {
       "post": {
         "summary": "Create user",
         "tags": [

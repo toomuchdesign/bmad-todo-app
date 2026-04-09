@@ -96,3 +96,8 @@
 - `web` service depends on `api` with default `service_started` rather than `service_healthy` — Nginx may start proxying to the API before it finishes running migrations and accepting connections.
 - `waitForReady` in smoke test accepts any HTTP status including 5xx — a misconfigured but responding container would pass the readiness check.
 - `--env-file /dev/null` in smoke test is not portable to Windows — would fail on Windows CI runners.
+
+## Deferred from: code review of 5-4-unify-api-routes-under-api-prefix (2026-04-09)
+
+- OpenAPI spec and generated types are manually kept in sync — `openapi.json` and `generated/index.ts` have no regeneration guard; sync relies on manual discipline. Pre-existing fragility.
+- HTTP client has no base URL management — developer forgetting the `/api` prefix would work in Vite dev (rewrite handles it) but fail silently in production (nginx only matches `/api/`). No lint or type guard exists. Pre-existing design.

@@ -2,7 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import type { Todo } from "shared";
 
 import type { ApiResponses, TodoUpdatableFields } from "../contracts";
-import { type TODO_BY_ID_API_PATH, TODOS_API_PATH } from "../contracts";
+import {
+  type TODO_BY_ID_SPEC_PATH,
+  TODOS_API_PATH,
+  type TODOS_SPEC_PATH,
+} from "../contracts";
 import { HttpError, httpClient } from "../utils";
 import { useOptimisticUpdate } from "./useOptimisticUpdate";
 
@@ -45,8 +49,8 @@ function useTodos({ userId }: { userId: string }): UseTodosResult {
     },
     mutationFn: (id, fields, signal) =>
       httpClient.patch<
-        ApiResponses<typeof TODO_BY_ID_API_PATH, "patch">["200"]
-      >(`/todos/${id}`, {
+        ApiResponses<typeof TODO_BY_ID_SPEC_PATH, "patch">["200"]
+      >(`${TODOS_API_PATH}/${id}`, {
         body: fields,
         headers: { "x-user-id": userId },
         signal,
@@ -58,7 +62,7 @@ function useTodos({ userId }: { userId: string }): UseTodosResult {
 
     try {
       const data = await httpClient.get<
-        ApiResponses<typeof TODOS_API_PATH, "get">["200"]
+        ApiResponses<typeof TODOS_SPEC_PATH, "get">["200"]
       >(TODOS_API_PATH, { headers: { "x-user-id": userId } });
       setTodos(data.todos);
       setError(null);
@@ -90,7 +94,7 @@ function useTodos({ userId }: { userId: string }): UseTodosResult {
 
     try {
       const created = await httpClient.post<
-        ApiResponses<typeof TODOS_API_PATH, "post">["201"]
+        ApiResponses<typeof TODOS_SPEC_PATH, "post">["201"]
       >(TODOS_API_PATH, {
         body: { title, ...(text && { text }) },
         headers: { "x-user-id": userId },
@@ -129,7 +133,7 @@ function useTodos({ userId }: { userId: string }): UseTodosResult {
     setError(null);
 
     try {
-      await httpClient.del(`/todos/${id}`, {
+      await httpClient.del(`${TODOS_API_PATH}/${id}`, {
         headers: { "x-user-id": userId },
       });
       setTodos((prev) => prev.filter((t) => t.id !== id));

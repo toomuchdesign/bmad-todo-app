@@ -1,6 +1,6 @@
 # Story 5.4: Unify API routes under /api prefix
 
-Status: backlog
+Status: done
 
 ## Story
 
@@ -10,12 +10,12 @@ making it trivial to add new API routes without touching proxy configuration.
 
 ## Acceptance Criteria
 
-### AC1 — API serves all routes under /api prefix
+### AC1 — All API routes reachable under /api prefix via proxy
 
-**Given** the API is running
-**When** I send a request to `/api/todos` or `/api/users`
-**Then** the API responds correctly
-**And** the old unprefixed routes (`/todos`, `/users`) no longer respond
+**Given** the web stack is running (Nginx in production, Vite in dev)
+**When** I send a request to `/api/todos` or `/api/users` through the proxy
+**Then** the request is forwarded to the API and responds correctly
+**Note** The API container itself continues to serve routes at `/todos` and `/users` — the `/api` prefix is enforced at the proxy layer (Nginx rewrite / Vite rewrite). The API port is not publicly exposed, so unprefixed access is not possible from outside the Docker network.
 
 ### AC2 — Web client uses /api-prefixed paths
 
@@ -45,32 +45,32 @@ making it trivial to add new API routes without touching proxy configuration.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Add `/api` prefix to Fastify route registration (AC1)
-  - [ ] Register `todosRoutes` and `usersRoutes` under a `/api` prefix in `packages/api/src/app.ts`
-  - [ ] Update Swagger config `prefix` if applicable
-  - [ ] Update API integration tests in `packages/api/test/` to use `/api/todos`, `/api/users` paths
+- [x] Task 1 — API remains untouched (AC1)
+  - [x] API routes unchanged — `/todos` and `/users` served as before
+  - [x] API integration tests unchanged — no path updates needed
 
-- [ ] Task 2 — Update web client API paths (AC2)
-  - [ ] Update `TODOS_API_PATH` and `TODO_BY_ID_API_PATH` in `packages/web/src/contracts.ts` to `/api/todos` and `/api/todos/{id}`
-  - [ ] Regenerate or update OpenAPI types in `packages/web/src/api/generated/index.ts` if paths are used as type keys
-  - [ ] Update all web component/unit test mocks from `/todos` to `/api/todos` (~30+ occurrences across `App.*.test.tsx` files)
+- [x] Task 2 — Update web client API paths (AC2)
+  - [x] Add `TODOS_SPEC_PATH` / `TODO_BY_ID_SPEC_PATH` for OpenAPI type extraction, separate from runtime paths
+  - [x] Update `TODOS_API_PATH` and `TODO_BY_ID_API_PATH` in `packages/web/src/contracts.ts` to `/api/todos` and `/api/todos/{id}`
+  - [x] Update `useTodos.ts` to use spec paths for types and runtime paths for fetch calls
+  - [x] Update all web component/unit test mocks from `/todos` to `/api/todos` (~40+ occurrences across `App.*.test.tsx` files)
 
-- [ ] Task 3 — Simplify Nginx proxy config (AC3)
-  - [ ] Replace per-route `/todos` and `/users` location blocks with a single `/api/` location in `packages/web/nginx.conf`
-  - [ ] Use `rewrite ^/api(/.*)$ $1 break;` to strip the prefix before proxying
+- [x] Task 3 — Simplify Nginx proxy config (AC3)
+  - [x] Replace per-route `/todos` and `/users` location blocks with a single `/api/` location in `packages/web/nginx.conf`
+  - [x] Use `rewrite ^/api(/.*)$ $1 break;` to strip the prefix before proxying to the API
 
-- [ ] Task 4 — Simplify Vite dev proxy (AC4)
-  - [ ] Replace per-route `/todos` and `/users` proxy entries with a single `/api` entry in `packages/web/vite.config.ts`
-  - [ ] Configure `rewrite` to strip `/api` prefix when proxying to the backend
+- [x] Task 4 — Simplify Vite dev proxy (AC4)
+  - [x] Replace per-route `/todos` and `/users` proxy entries with a single `/api` entry in `packages/web/vite.config.ts`
+  - [x] Configure `rewrite` to strip `/api` prefix when proxying to the backend
 
-- [ ] Task 5 — Update e2e tests (AC5)
-  - [ ] Update Playwright route intercepts from `**/todos` to `**/api/todos` in `packages/web/e2e/todo-flows.spec.ts`
+- [x] Task 5 — Update e2e tests (AC5)
+  - [x] Update Playwright route intercepts from `**/todos` to `**/api/todos` in `packages/web/e2e/todo-flows.spec.ts`
 
-- [ ] Task 6 — Validate all tests pass (AC5)
-  - [ ] Run `npm run type:check`
-  - [ ] Run `npm run biome:check`
-  - [ ] Run `npm run test:ci`
-  - [ ] Run `npm run test:e2e`
+- [x] Task 6 — Validate all tests pass (AC5)
+  - [x] Run `npm run type:check`
+  - [x] Run `npm run biome:check`
+  - [x] Run `npm run test:ci`
+  - [x] Run `npm run test:e2e`
 
 ## Dev Notes
 
@@ -98,6 +98,8 @@ location /api/ {
 }
 ```
 
+The rewrite strips the `/api` prefix before forwarding to the API, which continues to serve routes at `/todos` and `/users` unchanged.
+
 ### Vite proxy config after change
 
 ```ts
@@ -108,6 +110,8 @@ proxy: {
   },
 },
 ```
+
+Same approach — prefix stripped by the proxy, not the API.
 
 ### Files affected (estimated)
 
@@ -132,8 +136,46 @@ proxy: {
 
 ### Agent Model Used
 
+Claude Opus 4.6 (1M context)
+
 ### Debug Log References
+
+None — clean implementation, no debugging needed.
 
 ### Completion Notes List
 
+- API left untouched — routes remain at `/todos` and `/users`, no API test changes
+- Updated contracts.ts: added `TODOS_SPEC_PATH` / `TODO_BY_ID_SPEC_PATH` for OpenAPI type extraction, runtime paths now `/api/todos` and `/api/todos/{id}`
+- Updated `useTodos.ts` to use spec paths for type positions and runtime paths for fetch calls
+- Updated all web component/unit test mocks (~40+ occurrences across 6 App.*.test.tsx files)
+- Simplified Nginx config: replaced 2 per-route location blocks with single `/api/` location + rewrite to strip prefix
+- Simplified Vite proxy: replaced 2 per-route entries with single `/api` entry + rewrite to strip prefix
+- Updated e2e Playwright route intercepts to `**/api/todos` patterns
+- All validation gates pass: type:check, biome:check, test:ci (140 tests), test:e2e (26 tests)
+
+### Change Log
+
+- 2026-04-09: Implemented story 5.4 — unified all API routes under /api prefix
+
 ### File List
+
+- `packages/web/src/contracts.ts` — added spec path constants, updated runtime API paths
+- `packages/web/src/hooks/useTodos.ts` — use spec paths for types, runtime paths for fetches
+- `packages/web/src/App.test.tsx` — updated mock paths
+- `packages/web/src/App.create-todo.test.tsx` — updated mock paths
+- `packages/web/src/App.delete-todo.test.tsx` — updated mock and express paths
+- `packages/web/src/App.edit-todo.test.tsx` — updated mock and express paths
+- `packages/web/src/App.toggle-todo.test.tsx` — updated mock and express paths
+- `packages/web/src/App.mutation-concurrency.test.tsx` — updated mock and express paths
+- `packages/web/nginx.conf` — simplified to single /api/ location block with rewrite
+- `packages/web/vite.config.ts` — simplified to single /api proxy entry with rewrite
+- `packages/web/e2e/todo-flows.spec.ts` — updated route intercept patterns
+
+### Review Findings
+
+- [x] [Review][Decision] AC1 — accepted proxy-level approach: AC1 updated to reflect that the `/api` prefix is enforced at the proxy layer; API routes unchanged, API port not publicly exposed.
+- [x] [Review][Decision] OpenAPI spec paths — accepted: spec reflects API-internal paths (the trailing part after proxy strips `/api`); SPEC_PATH vs API_PATH split in contracts.ts is the intentional design.
+- [x] [Review][Patch] Dev notes contradict actual implementation — story file says "No rewrite needed — the API handles the `/api` prefix at the Fastify registration level" but both `nginx.conf` and `vite.config.ts` use explicit rewrites to strip the prefix [`_bmad-output/implementation-artifacts/5-4-unify-api-routes-under-api-prefix.md` Dev Notes section]
+- [x] [Review][Patch] Hardcoded `/api/todos/${id}` in useTodos.ts — PATCH mutation and DELETE call construct the path as a template literal instead of using `TODOS_API_PATH`. Future `API_PREFIX` changes would silently miss these two call sites. Additionally, `TODO_BY_ID_API_PATH` is exported but never used — dead code since dynamic ID paths must be constructed at call sites anyway. [`packages/web/src/hooks/useTodos.ts`]
+- [x] [Review][Defer] OpenAPI/generated types manually kept in sync — `openapi.json` and `generated/index.ts` have no regeneration guard; sync relies on manual discipline — deferred, pre-existing
+- [x] [Review][Defer] HTTP client has no base URL management — developer forgetting the `/api` prefix would work in dev (Vite rewrite) but fail in production (nginx only matches `/api/`); no lint/type guard exists — deferred, pre-existing

@@ -14,8 +14,10 @@ describe("App", () => {
       const deferred = createDeferred<void>();
 
       fetchMock
-        .get("/todos", { todos: TODO_FIXTURES })
-        .delete("express:/todos/:id", () => deferred.promise.then(() => 204));
+        .get("/api/todos", { todos: TODO_FIXTURES })
+        .delete("express:/api/todos/:id", () =>
+          deferred.promise.then(() => 204),
+        );
 
       render(<App />);
 
@@ -41,8 +43,8 @@ describe("App", () => {
         const user = userEvent.setup();
 
         fetchMock
-          .get("/todos", { todos: TODO_FIXTURES })
-          .delete("express:/todos/:id", 204);
+          .get("/api/todos", { todos: TODO_FIXTURES })
+          .delete("express:/api/todos/:id", 204);
 
         render(<App />);
 
@@ -66,8 +68,8 @@ describe("App", () => {
         const user = userEvent.setup();
 
         fetchMock
-          .get("/todos", { todos: TODO_FIXTURES })
-          .delete("express:/todos/:id", 204);
+          .get("/api/todos", { todos: TODO_FIXTURES })
+          .delete("express:/api/todos/:id", 204);
 
         render(<App />);
 
@@ -92,8 +94,8 @@ describe("App", () => {
         const singleTodo = [TODO_FIXTURES[0]];
 
         fetchMock
-          .get("/todos", { todos: singleTodo })
-          .delete("express:/todos/:id", 204);
+          .get("/api/todos", { todos: singleTodo })
+          .delete("express:/api/todos/:id", 204);
 
         render(<App />);
 
@@ -121,8 +123,8 @@ describe("App", () => {
         const user = userEvent.setup();
 
         fetchMock
-          .get("/todos", { todos: TODO_FIXTURES })
-          .delete("express:/todos/:id", {
+          .get("/api/todos", { todos: TODO_FIXTURES })
+          .delete("express:/api/todos/:id", {
             status: 404,
             body: { code: "NOT_FOUND", message: "Todo not found" },
           });
@@ -154,8 +156,8 @@ describe("App", () => {
         const deferred = createDeferred<void>();
 
         fetchMock
-          .get("/todos", { todos: TODO_FIXTURES })
-          .delete("express:/todos/:id", () =>
+          .get("/api/todos", { todos: TODO_FIXTURES })
+          .delete("express:/api/todos/:id", () =>
             deferred.promise.then(() => ({
               status: 500,
               body: { code: "INTERNAL_ERROR", message: "Server error" },
@@ -191,8 +193,8 @@ describe("App", () => {
         const deferred = createDeferred<void>();
 
         fetchMock
-          .get("/todos", { todos: TODO_FIXTURES })
-          .delete("express:/todos/:id", () =>
+          .get("/api/todos", { todos: TODO_FIXTURES })
+          .delete("express:/api/todos/:id", () =>
             deferred.promise.then(() => {
               throw new TypeError("Failed to fetch");
             }),

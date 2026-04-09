@@ -25,8 +25,10 @@ export default defineConfig({
     port: webPort,
     strictPort: true,
     proxy: {
-      "/todos": `http://${apiHost}:${apiPort}`,
-      "/users": `http://${apiHost}:${apiPort}`,
+      "/api": {
+        target: `http://${apiHost}:${apiPort}`,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
     },
   },
 });
