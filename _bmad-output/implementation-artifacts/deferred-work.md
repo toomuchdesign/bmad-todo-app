@@ -101,3 +101,13 @@
 
 - OpenAPI spec and generated types are manually kept in sync — `openapi.json` and `generated/index.ts` have no regeneration guard; sync relies on manual discipline. Pre-existing fragility.
 - HTTP client has no base URL management — developer forgetting the `/api` prefix would work in Vite dev (rewrite handles it) but fail silently in production (nginx only matches `/api/`). No lint or type guard exists. Pre-existing design.
+
+## Deferred from: code review of 5-5-discover-e2e-parallelization-pattern (2026-04-09)
+
+> **Decision:** E2E parallelization implementation deferred to post-Epic 6. Once real auth (httpOnly session cookies) is in place, the test fixture uses `POST /api/auth/login` directly — no throwaway cookie scaffolding needed. Story 5.6 should be scoped as part of or immediately after Epic 6.
+
+
+- No `response.ok` guard before destructuring `{ id: userId }` in proposed fixture — API failure would propagate `undefined` as cookie value, causing silent test corruption. Implementation detail for story 5.6.
+- Teardown is a comment stub (`// Teardown: clean todos then user via direct DB`) — full teardown design (pg client setup, query ordering, FK constraints) needed in story 5.6.
+- Playwright proxy readiness for fixture API calls — `request.post("/api/users")` routes through the Vite dev server proxy; global-setup ordering must ensure servers are ready before fixtures run. Address in story 5.6.
+- App-layer `getUserId()` change described in F4 but not in F3 where it belongs structurally — minor gap; story 5.6 spec should co-locate app-layer and test-layer changes in the fixture design section.

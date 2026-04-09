@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26 19:38:27
-last_updated: 2026-04-09 # story 5.4 done after code review
+last_updated: 2026-04-09 # story 5.5 done after code review; e2e parallelization impl deferred to post-epic-6
 project: bmad-todo
 project_key: NOKEY
 tracking_system: file-system
@@ -82,8 +82,8 @@ development_status:
   5-2-dockerize-the-web-nginx-spa-api-proxy: done
   5-3-docker-compose-production-orchestration: done
   5-4-unify-api-routes-under-api-prefix: done
-  5-5-discover-e2e-parallelization-pattern: ready-for-dev
+  5-5-discover-e2e-parallelization-pattern: done
   epic-5-retrospective: optional
 
-  epic-6: backlog
-  6-0-auth-design-spike: backlog
+  epic-6: in-progress
+  6-0-auth-design-spike: ready-for-dev
