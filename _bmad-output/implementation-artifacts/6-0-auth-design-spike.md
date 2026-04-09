@@ -1,6 +1,6 @@
 # Story 6.0: Auth design spike — evaluate and decide auth strategy
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -57,39 +57,39 @@ so that implementation stories are built on a well-reasoned foundation with no s
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Evaluate each option (AC1)
-  - [ ] **Option A — DIY JWT** (`@fastify/jwt` + `bcrypt`/`argon2`): email/password → signed JWT stored in httpOnly cookie or Authorization header. Assess: JWKS not needed (symmetric secret), token expiry + refresh complexity, security surface owned entirely.
-  - [ ] **Option B — Better Auth**: TS-first library with official Drizzle adapter. Assess: schema migration path, how it wraps Fastify, community maturity (~1 yr old), email/password + OAuth support, whether it can coexist with the existing `users` table.
-  - [ ] **Option C — Clerk**: external service, issues JWTs verified via JWKS; pre-built React UI components. Assess: free tier (10k MAU), vendor lock-in, Docker/self-hosted feasibility, learning value for auth internals.
-  - [ ] **Option D — Session-based** (`@fastify/session` + `@fastify/cookie`): server-side sessions in Postgres or memory. Assess: statefulness and horizontal-scaling implications, simplicity of implementation, session store options (connect-pg-simple or in-memory for dev).
+- [x] Task 1 — Evaluate each option (AC1)
+  - [x] **Option A — DIY JWT** (`@fastify/jwt` + `bcrypt`/`argon2`): email/password → signed JWT stored in httpOnly cookie or Authorization header. Assess: JWKS not needed (symmetric secret), token expiry + refresh complexity, security surface owned entirely.
+  - [x] **Option B — Better Auth**: TS-first library with official Drizzle adapter. Assess: schema migration path, how it wraps Fastify, community maturity (~1 yr old), email/password + OAuth support, whether it can coexist with the existing `users` table.
+  - [x] **Option C — Clerk**: external service, issues JWTs verified via JWKS; pre-built React UI components. Assess: free tier (10k MAU), vendor lock-in, Docker/self-hosted feasibility, learning value for auth internals.
+  - [x] **Option D — Session-based** (`@fastify/session` + `@fastify/cookie`): server-side sessions in Postgres or memory. Assess: statefulness and horizontal-scaling implications, simplicity of implementation, session store options (connect-pg-simple or in-memory for dev).
 
-- [ ] Task 2 — Make and justify the decision (AC2)
-  - [ ] Choose one primary option (preference: A or B, stack-native, no vendor lock-in)
-  - [ ] Write a clear rationale paragraph; list rejected alternatives and why
+- [x] Task 2 — Make and justify the decision (AC2)
+  - [x] Choose one primary option (preference: A or B, stack-native, no vendor lock-in)
+  - [x] Write a clear rationale paragraph; list rejected alternatives and why
 
-- [ ] Task 3 — Define DB schema changes (AC3)
-  - [ ] Determine what columns are added to `users` (or if a new table is needed, e.g. `sessions`, `accounts`)
-  - [ ] Specify migration approach: new Drizzle migration file, no destructive changes to existing `user_id` FK or todo rows
+- [x] Task 3 — Define DB schema changes (AC3)
+  - [x] Determine what columns are added to `users` (or if a new table is needed, e.g. `sessions`, `accounts`)
+  - [x] Specify migration approach: new Drizzle migration file, no destructive changes to existing `user_id` FK or todo rows
 
-- [ ] Task 4 — Sketch API surface (AC4)
-  - [ ] List new routes: `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout` (at minimum)
-  - [ ] Specify request bodies and success/error response shapes using the existing API error contract (`{ code, message, requestId? }`)
-  - [ ] Describe how `validateUserPlugin` (`packages/api/src/plugins/validate-user.ts`) is replaced or extended: e.g. JWT verification hook vs. session lookup hook
+- [x] Task 4 — Sketch API surface (AC4)
+  - [x] List new routes: `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout` (at minimum)
+  - [x] Specify request bodies and success/error response shapes using the existing API error contract (`{ code, message, requestId? }`)
+  - [x] Describe how `validateUserPlugin` (`packages/api/src/plugins/validate-user.ts`) is replaced or extended: e.g. JWT verification hook vs. session lookup hook
 
-- [ ] Task 5 — Document web client changes (AC5)
-  - [ ] Identify the `x-user-id` call site: `App.tsx:2+12` imports `DEFAULT_USER_ID` from `shared` and passes to `useTodos`
-  - [ ] Specify how the token/session reaches the API: httpOnly cookie (transparent to JS) vs. header (requires JS to store/attach)
-  - [ ] Describe changes to `useTodos` hook and its fetch calls in `packages/web/src`
+- [x] Task 5 — Document web client changes (AC5)
+  - [x] Identify the `x-user-id` call site: `App.tsx:2+12` imports `DEFAULT_USER_ID` from `shared` and passes to `useTodos`
+  - [x] Specify how the token/session reaches the API: httpOnly cookie (transparent to JS) vs. header (requires JS to store/attach)
+  - [x] Describe changes to `useTodos` hook and its fetch calls in `packages/web/src`
 
-- [ ] Task 6 — Document UX implications (AC6)
-  - [ ] Define login + register screen requirements (fields, validation, error states)
-  - [ ] Session persistence: remain logged in across refresh (httpOnly cookie → yes by default; JWT in memory → no)
-  - [ ] Redirect flow: unauth user lands on `/login`, successful auth redirects to `/` (todo list)
+- [x] Task 6 — Document UX implications (AC6)
+  - [x] Define login + register screen requirements (fields, validation, error states)
+  - [x] Session persistence: remain logged in across refresh (httpOnly cookie → yes by default; JWT in memory → no)
+  - [x] Redirect flow: unauth user lands on `/login`, successful auth redirects to `/` (todo list)
 
-- [ ] Task 7 — Write and commit the ADR (AC7)
-  - [ ] Create `docs/decisions/` directory
-  - [ ] Write `docs/decisions/adr-auth-strategy.md` using the structure: Problem → Constraints → Options considered → Decision → Consequences
-  - [ ] Commit only the ADR file (no production code changes in this story)
+- [x] Task 7 — Write and commit the ADR (AC7)
+  - [x] Create `docs/decisions/` directory
+  - [x] Write `docs/decisions/adr-auth-strategy.md` using the structure: Problem → Constraints → Options considered → Decision → Consequences
+  - [x] Commit only the ADR file (no production code changes in this story)
 
 ## Dev Notes
 
@@ -202,8 +202,26 @@ Use this structure for `docs/decisions/adr-auth-strategy.md`:
 
 ### Agent Model Used
 
+Claude Opus 4.6 (1M context)
+
 ### Debug Log References
+
+None — no throwaway spikes or debugging needed for this design-only story.
 
 ### Completion Notes List
 
+- Evaluated all four auth options (DIY JWT, Better Auth, Clerk, Session-based) across implementation effort, security surface, vendor risk, DX, stack compatibility, and learning value
+- Selected **Option A — DIY JWT** (`@fastify/jwt` + `argon2` + `@fastify/cookie`) as the best fit for stack alignment, learning value, and no vendor lock-in
+- Documented DB schema changes: add `email` (unique, not null) and `password_hash` (not null) columns to existing `users` table via new Drizzle migration
+- Sketched full API surface: `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me` with request/response shapes
+- Documented web client transition: remove `DEFAULT_USER_ID` / `x-user-id` header; httpOnly cookie is transparent to JS fetch
+- Documented UX implications: login/register screens, session persistence via httpOnly cookie, redirect flows
+- Documented Docker/nginx cookie proxy considerations (`proxy_pass_header Set-Cookie`, `sameSite`, `secure` flags)
+
+### Change Log
+
+- 2026-04-09: Created ADR at `docs/decisions/adr-auth-strategy.md` — auth design spike complete
+
 ### File List
+
+- `docs/decisions/adr-auth-strategy.md` (new)
