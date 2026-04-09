@@ -1,6 +1,6 @@
 # Story 6.0: Auth design spike — evaluate and decide auth strategy
 
-Status: review
+Status: done
 
 ## Story
 
@@ -112,8 +112,14 @@ If a tiny throwaway spike is needed to validate a hypothesis (e.g. a minimal `@f
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().notNull(),
   name: text("name").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull(),
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
+  updatedAt: timestamp("updated_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
 });
 ```
 
@@ -121,18 +127,19 @@ No `email` or credential column yet. Every todo has a `user_id` FK to this table
 
 ### Auth Options Reference
 
-| Option | Library/Service | Token storage | Stateless? | Vendor risk | Learning value |
-|--------|----------------|---------------|-----------|-------------|----------------|
-| A — DIY JWT | `@fastify/jwt` + `argon2`/`bcrypt` | httpOnly cookie or Auth header | Yes (JWT) | None | High |
-| B — Better Auth | `better-auth` (Drizzle adapter) | httpOnly cookie | Yes | Low | Medium |
-| C — Clerk | External service (JWKS) | Managed by Clerk SDK | Yes | High | Low |
-| D — Session | `@fastify/session` + `@fastify/cookie` | Server session + cookie | No (stateful) | None | Medium |
+| Option          | Library/Service                        | Token storage                  | Stateless?    | Vendor risk | Learning value |
+| --------------- | -------------------------------------- | ------------------------------ | ------------- | ----------- | -------------- |
+| A — DIY JWT     | `@fastify/jwt` + `argon2`/`bcrypt`     | httpOnly cookie or Auth header | Yes (JWT)     | None        | High           |
+| B — Better Auth | `better-auth` (Drizzle adapter)        | httpOnly cookie                | Yes           | Low         | Medium         |
+| C — Clerk       | External service (JWKS)                | Managed by Clerk SDK           | Yes           | High        | Low            |
+| D — Session     | `@fastify/session` + `@fastify/cookie` | Server session + cookie        | No (stateful) | None        | Medium         |
 
 **Recommendation for this spike:** Evaluate A and B as primary candidates. Evaluate C only if speed-to-value outweighs learning goals. D is a valid fallback if simplicity is paramount.
 
 ### Fastify Plugin Architecture Pattern
 
 Existing plugins in `packages/api/src/plugins/`:
+
 - `error-handler.ts` — global error handler
 - `request-id.ts` — `x-request-id` propagation
 - `validate-user.ts` — current auth enforcement
@@ -146,6 +153,7 @@ All routes are prefixed under `/api` via Fastify's proxy in the web layer. New a
 ### Docker / CORS Considerations
 
 The app runs in Docker with `nginx` proxying `/api` to the Fastify service. For httpOnly cookies to work cross-origin:
+
 - The Fastify API must set `sameSite`, `secure`, and `domain` correctly in the cookie options
 - nginx config may need `proxy_pass_header Set-Cookie` or equivalent
 - For local dev (non-HTTPS), `secure: false` is acceptable; production requires `secure: true`
@@ -169,8 +177,11 @@ Use this structure for `docs/decisions/adr-auth-strategy.md`:
 ## Options Considered
 
 ### Option A — DIY JWT
+
 ### Option B — Better Auth
+
 ### Option C — Clerk
+
 ### Option D — Session-based
 
 ## Decision
@@ -178,6 +189,7 @@ Use this structure for `docs/decisions/adr-auth-strategy.md`:
 ## Consequences
 
 ### Positive
+
 ### Negative / Trade-offs
 
 ## Implementation Outline (for Story 6.1+)
@@ -202,26 +214,8 @@ Use this structure for `docs/decisions/adr-auth-strategy.md`:
 
 ### Agent Model Used
 
-Claude Opus 4.6 (1M context)
-
 ### Debug Log References
-
-None — no throwaway spikes or debugging needed for this design-only story.
 
 ### Completion Notes List
 
-- Evaluated all four auth options (DIY JWT, Better Auth, Clerk, Session-based) across implementation effort, security surface, vendor risk, DX, stack compatibility, and learning value
-- Selected **Option A — DIY JWT** (`@fastify/jwt` + `argon2` + `@fastify/cookie`) as the best fit for stack alignment, learning value, and no vendor lock-in
-- Documented DB schema changes: add `email` (unique, not null) and `password_hash` (not null) columns to existing `users` table via new Drizzle migration
-- Sketched full API surface: `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me` with request/response shapes
-- Documented web client transition: remove `DEFAULT_USER_ID` / `x-user-id` header; httpOnly cookie is transparent to JS fetch
-- Documented UX implications: login/register screens, session persistence via httpOnly cookie, redirect flows
-- Documented Docker/nginx cookie proxy considerations (`proxy_pass_header Set-Cookie`, `sameSite`, `secure` flags)
-
-### Change Log
-
-- 2026-04-09: Created ADR at `docs/decisions/adr-auth-strategy.md` — auth design spike complete
-
 ### File List
-
-- `docs/decisions/adr-auth-strategy.md` (new)
