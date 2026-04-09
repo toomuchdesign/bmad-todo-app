@@ -155,7 +155,7 @@ A maintainer can deploy the full stack (web + API + Postgres) as Docker containe
 
 ### Epic 6: User Authentication
 
-A real user can register an account and log in. Todos are scoped to their authenticated identity. The `x-user-id` placeholder header (introduced in Epic 4) is replaced by a proper auth flow. Auth strategy is selected in Story 6.0 (design spike + ADR) before implementation begins.
+A real user can register an account and log in. Todos are scoped to their authenticated identity. The `x-user-id` placeholder header (introduced in Epic 4) is replaced by DIY JWT auth (`@fastify/jwt` + `argon2` + `@fastify/cookie`) — decided in Story 6.0 ADR (`docs/decisions/adr-auth-strategy.md`).
 **Begins after:** Epic 5 complete
 
 ## Epic 1: First Usable Todo List (Load + Create)
@@ -878,37 +878,274 @@ So that I can run the deployed app locally or on a server with one command.
 
 ## Epic 6: User Authentication
 
-Replace the `x-user-id` placeholder header with a real authentication flow. A user can register an account, log in, and have their todos scoped to their authenticated identity.
+Replace the `x-user-id` placeholder header with a real authentication flow using DIY JWT (`@fastify/jwt` + `argon2` + `@fastify/cookie`). A user can register an account, log in, and have their todos scoped to their authenticated identity. Auth strategy decided in Story 6.0 ADR (`docs/decisions/adr-auth-strategy.md`).
 
-Auth strategy is selected via a design spike (Story 6.0) before any implementation begins.
-
-### Story 6.0: Auth design spike — evaluate and decide auth strategy
+### Story 6.0: Auth design spike — evaluate and decide auth strategy (DONE)
 
 As a maintainer,
 I want a documented, evaluated decision on the authentication approach,
 So that implementation stories are built on a well-reasoned foundation with no surprise pivots.
 
+**Status:** Done — ADR committed at `docs/decisions/adr-auth-strategy.md`. Decision: Option A (DIY JWT).
+
+### Story 6.1: Auth API — schema migration, dependencies, and auth routes
+
+As a user,
+I want registration and login endpoints,
+So that I can create an account and authenticate.
+
 **Acceptance Criteria:**
 
-**Given** the four candidate approaches (DIY JWT, Better Auth, Clerk, session-based)
-**When** the design spike is complete
-**Then** an ADR exists at `docs/decisions/adr-auth-strategy.md` covering:
-  - Problem statement and constraints (stack: Fastify, Drizzle, Postgres, React; Docker; learning goals)
-  - Each option evaluated: implementation effort, security surface, vendor risk, DX
-  - Selected approach with explicit rationale
-  - How the `x-user-id` placeholder will be replaced
-  - DB schema changes required (e.g. `email`, `password_hash` on `users`, or external provider mapping)
-  - API surface sketch: new routes (e.g. `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/logout`)
-  - Web client changes: how the token/session is stored and attached to requests
-  - UX implications: login/register screens, session persistence, redirect behavior
+**AC1 — Schema migration**
+
+**Given** the existing `users` table with `id`, `name`, `createdAt`, `updatedAt`
+**When** the Drizzle migration runs
+**Then** `email` (text, unique, not null) and `password_hash` (text, not null) are added to the `users` table
+**And** the existing `id`, `name`, `createdAt`, `updatedAt` columns are unchanged
+**And** the `todos.user_id` FK is unaffected
+**And** the default seeded user is backfilled with an email and hashed password
+
+**AC2 — Dependencies and plugin registration**
+
+**Given** the API package
+**When** dependencies are installed
+**Then** `@fastify/jwt`, `@fastify/cookie`, and `argon2` are added
+**And** both plugins are registered in `app.ts`
+**And** `JWT_SECRET` is read from an environment variable (startup fails if missing)
+**And** `.env`, `.env.test`, and `.env.prod.example` are updated with `JWT_SECRET`
+
+**AC3 — POST /api/auth/register**
+
+**Given** the API is running
+**When** I call `POST /api/auth/register` with `{ email, password, name }`
+**Then** the password is hashed with argon2, a user is created, and the user object is returned (without `passwordHash`)
+**And** an httpOnly JWT cookie is set (`sameSite: lax`, `secure` based on env, `path: /`)
+
+**Given** the request has missing/invalid fields or password is too short
+**When** I call `POST /api/auth/register`
+**Then** the API returns `400` with `code = VALIDATION_ERROR`
+
+**Given** the email is already registered
+**When** I call `POST /api/auth/register`
+**Then** the API returns `409` with `code = CONFLICT`
+
+**AC4 — POST /api/auth/login**
+
+**Given** valid credentials
+**When** I call `POST /api/auth/login` with `{ email, password }`
+**Then** the API verifies the credentials, returns the user object, and sets an httpOnly JWT cookie
+
+**Given** invalid credentials
+**When** I call `POST /api/auth/login`
+**Then** the API returns `401` with `code = UNAUTHORIZED` (deliberately vague to prevent enumeration)
+
+**Given** missing fields
+**When** I call `POST /api/auth/login`
+**Then** the API returns `400` with `code = VALIDATION_ERROR`
+
+**AC5 — POST /api/auth/logout**
+
+**Given** any request
+**When** I call `POST /api/auth/logout`
+**Then** the auth cookie is cleared and the API returns `204`
+
+**AC6 — Integration tests**
+
+**Given** the auth routes exist
+**When** I run the API test suite
+**Then** all auth routes are tested (success + failure cases)
+**And** cookie assertions verify httpOnly and correct flags
+**And** existing todo tests are unchanged and passing (still use `x-user-id`)
+
+**AC7 — Docker/nginx cookie support**
+
+**Given** the nginx proxy configuration
+**When** updated
+**Then** `proxy_pass_header Set-Cookie` is included so cookies survive the proxy hop
+**And** cookie flags are documented: `secure: false` for dev, `secure: true` for production
 
 **Technical notes:**
 
-- Options to evaluate:
-  - **A — DIY JWT** (`@fastify/jwt` + bcrypt): full control, max learning value, zero cost — own the security surface
-  - **B — Better Auth**: TS-first library with Drizzle adapter, email/password + OAuth support
-  - **C — Clerk**: external service, pre-built React UI, verifies JWTs via JWKS — best DX, vendor lock-in
-  - **D — Session-based** (`@fastify/session` + `@fastify/cookie`): simple, stateful, needs session store
-- Primary candidates: A and B (stack-native, no vendor lock-in)
-- Consider Option C only if speed-to-value outweighs learning goals
-- After ADR is approved, create implementation stories 6.1+ via `bmad-create-story`
+- ADR reference: `docs/decisions/adr-auth-strategy.md`
+- Auth routes registered under `/api/auth/` prefix following existing route module pattern (`folder + index.ts + schemas.ts`)
+- Migration is additive — no destructive changes. Strategy for adding NOT NULL columns to existing rows: add as nullable → backfill default user → alter to NOT NULL, or use a single migration with DEFAULT + UPDATE + ALTER
+- `POST /users` route remains functional in this story (removed later in 6.3)
+- Existing `x-user-id` auth flow is untouched — no breaking changes to todo routes
+
+### Story 6.2: Auth middleware — JWT verification and test infrastructure migration
+
+As a maintainer,
+I want the API to authenticate requests via JWT cookie,
+So that the `x-user-id` placeholder can be retired.
+
+**Acceptance Criteria:**
+
+**AC1 — JWT auth plugin**
+
+**Given** a request to any protected route (todo routes)
+**When** the JWT auth plugin runs
+**Then** it extracts the JWT from the httpOnly cookie, verifies signature and expiry, and sets `request.userId`
+
+**Given** a request with no cookie, an expired token, or an invalid token
+**When** the JWT auth plugin runs
+**Then** it falls back to `x-user-id` header (dual-mode transition)
+**And** if neither is present, returns `401`
+
+**Given** a request to `/api/auth/*` routes
+**When** the auth plugin runs
+**Then** those routes are excluded from JWT requirement (accessible to unauthenticated users)
+
+**AC2 — Test utility migration**
+
+**Given** the test utilities in `packages/api/test/test-utils/`
+**When** updated for auth
+**Then** `registerTestUser({ app, email?, password?, name? })` creates a user via `POST /api/auth/register` and returns `{ userId, cookie }`
+**And** `loginTestUser({ app, email, password })` authenticates via `POST /api/auth/login` and returns `{ userId, cookie }`
+**And** `testHeaders` includes the auth cookie (not `x-user-id`)
+**And** helpers are exported from `packages/api/test/test-utils/index.ts`
+
+**AC3 — All API tests migrated**
+
+**Given** every API test file
+**When** it sets up test data
+**Then** it uses JWT cookie auth via the updated `createTestContext()`
+**And** no test sends `x-user-id` headers
+**And** all tests pass with `fileParallelism: true`
+
+**AC4 — E2E test setup updated**
+
+**Given** the E2E test suite
+**When** it runs
+**Then** each spec file registers its own user via the auth flow
+**And** the auth cookie is propagated through the Playwright browser context
+**And** all existing E2E tests pass
+
+**Technical notes:**
+
+- `createTestContext()` internals change but its return type (`TestContext`) and caller API stay the same — callers should not need changes beyond the type of `testHeaders`
+- Dual-mode in the auth plugin is a transitional measure — the web still sends `x-user-id` until Story 6.3. This keeps the app deployable after this story
+- `validateUserPlugin` is replaced by the new JWT auth plugin (not extended)
+
+### Story 6.2.1: Parallelize E2E tests with per-user isolation
+
+As a maintainer,
+I want E2E tests to run in parallel with isolated user contexts,
+So that the suite runs faster as auth adds more test scenarios.
+
+**Acceptance Criteria:**
+
+**AC1 — Group E2E tests by feature into separate spec files**
+
+**Given** the current single `todo-flows.spec.ts` with all E2E tests
+**When** split by feature
+**Then** each spec file covers one feature area (e.g. create, edit, toggle, delete, persistence)
+**And** each spec file registers its own user via the auth flow (isolated identity)
+
+**AC2 — Playwright parallel workers**
+
+**Given** the Playwright configuration
+**When** updated for parallelism
+**Then** `workers` is set to enable parallel execution (e.g. `workers: 4` or `workers: '50%'`)
+**And** each worker gets its own browser context with its own auth cookie
+**And** no shared mutable state between spec files
+
+**AC3 — All E2E tests pass in parallel**
+
+**Given** multiple spec files running concurrently
+**When** the suite completes
+**Then** no ordering dependencies exist between spec files
+**And** DB isolation is per-user (no global truncate between files)
+**And** both CI and local runs use parallel mode
+
+**Technical notes:**
+
+- Current state: 26 tests in a single `todo-flows.spec.ts` running with `workers: 1`
+- After 6.2, each spec already registers its own user — the isolation foundation is in place
+- Split follows the existing `describe` groupings: initial load, create, inline edit, toggle, delete, persistence
+- DB reset script runs once before the suite; per-user cleanup handles inter-file isolation
+
+### Story 6.3: Web auth — login/register UI, routing, and legacy auth removal
+
+As a user,
+I want to log in and register from the app,
+So that my todos are tied to my real identity.
+
+**Acceptance Criteria:**
+
+**AC1 — Login form**
+
+**Given** an unauthenticated user
+**When** they visit the login page
+**Then** they see email and password fields
+**And** client-side validation enforces required fields and email format
+**And** server errors (wrong credentials) are displayed clearly
+**And** submit sends `POST /api/auth/login`; on success, redirects to `/` (todo list)
+
+**AC2 — Register form**
+
+**Given** an unauthenticated user
+**When** they visit the register page
+**Then** they see name, email, and password fields
+**And** client-side validation enforces required fields, email format, and password min length
+**And** server errors (email taken) are displayed clearly
+**And** submit sends `POST /api/auth/register`; on success, redirects to `/` (auto-logged-in)
+
+**AC3 — Auth-aware routing**
+
+**Given** an unauthenticated user visiting `/`
+**When** no valid auth cookie exists
+**Then** the user is redirected to `/login`
+
+**Given** a successful login or register
+**When** the auth cookie is set
+**Then** the user is redirected to `/` (todo list)
+
+**Given** a 401 response from any API call
+**When** the error is received
+**Then** the user is redirected to `/login`
+
+**Given** a page refresh
+**When** the httpOnly cookie is still valid
+**Then** the user remains authenticated (session persists)
+
+**AC4 — Logout**
+
+**Given** an authenticated user
+**When** they click the logout button
+**Then** `POST /api/auth/logout` is called, the cookie is cleared, and the user is redirected to `/login`
+
+**AC5 — Remove legacy auth**
+
+**Given** the auth cutover is complete
+**When** all legacy auth code is removed
+**Then** `DEFAULT_USER_ID` is removed from `packages/shared`
+**And** `x-user-id` header is removed from all fetch calls
+**And** the dual-mode fallback is removed from the auth middleware (JWT only)
+**And** `POST /users` route is removed (replaced by register)
+**And** `useTodos` no longer accepts a `userId` parameter — the server identifies the user from the JWT cookie
+
+**AC6 — Web component tests**
+
+**Given** the new auth components
+**When** web tests run
+**Then** login and register forms are tested (validation, submit, error states)
+**And** auth routing is tested (redirect behavior)
+**And** `useTodos` tests are updated (no `userId` param, cookie-based)
+
+**AC7 — E2E tests**
+
+**Given** the full auth flow
+**When** E2E tests run
+**Then** auth flow is covered: register → see todos → logout → redirected to login → login → see todos
+**And** all existing todo CRUD E2E tests pass with auth
+
+**Technical notes:**
+
+- This is the "flip the switch" story — after this, `x-user-id` is fully gone
+- Login/register are new routes in the React app (not Fastify routes) — consider simple client-side routing or a lightweight router
+- All `fetch()` calls automatically include the httpOnly cookie (same-origin) — no JS token management needed
+- The `x-user-id` header removal and dual-mode cleanup must happen atomically in this story to keep the app consistent
+
+### Backlog: GET /api/auth/me
+
+Deferred. Returns the currently authenticated user. Not needed until the UI requires displaying user profile info. Can be added when profile features are introduced.
