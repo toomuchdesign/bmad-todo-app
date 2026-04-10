@@ -466,8 +466,17 @@
             },
             "in": "header",
             "name": "x-user-id",
-            "required": true,
-            "description": "User ID for scoping todo operations"
+            "required": false,
+            "description": "Legacy user ID header (dual-mode transition)"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "description": "Bearer JWT token"
           }
         ],
         "responses": {
@@ -622,8 +631,17 @@
             },
             "in": "header",
             "name": "x-user-id",
-            "required": true,
-            "description": "User ID for scoping todo operations"
+            "required": false,
+            "description": "Legacy user ID header (dual-mode transition)"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "description": "Bearer JWT token"
           }
         ],
         "responses": {
@@ -809,8 +827,17 @@
             },
             "in": "header",
             "name": "x-user-id",
-            "required": true,
-            "description": "User ID for scoping todo operations"
+            "required": false,
+            "description": "Legacy user ID header (dual-mode transition)"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "description": "Bearer JWT token"
           }
         ],
         "responses": {
@@ -999,8 +1026,17 @@
             },
             "in": "header",
             "name": "x-user-id",
-            "required": true,
-            "description": "User ID for scoping todo operations"
+            "required": false,
+            "description": "Legacy user ID header (dual-mode transition)"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "description": "Bearer JWT token"
           }
         ],
         "responses": {

@@ -6,7 +6,7 @@ import {
   listTodosFromDatabase,
   updateTodoInDatabase,
 } from "../../db/todos.js";
-import { validateUserPlugin } from "../../plugins/validate-user.js";
+import { jwtAuthPlugin } from "../../plugins/jwt-auth.js";
 import {
   deleteTodosRouteSchema,
   getTodosRouteSchema,
@@ -15,7 +15,7 @@ import {
 } from "./schemas.js";
 
 const todosRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
-  await validateUserPlugin(app, {});
+  await jwtAuthPlugin(app, {});
 
   app.get(
     "/todos",

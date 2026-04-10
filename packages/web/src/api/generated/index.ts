@@ -299,11 +299,13 @@ export interface paths {
         get: {
             parameters: {
                 query?: never;
-                header: {
+                header?: {
                     /** @description Optional correlation ID for request tracing. If provided, the API echoes it back in the response; otherwise a new UUID is generated. */
                     "x-request-id"?: string;
-                    /** @description User ID for scoping todo operations */
-                    "x-user-id": string;
+                    /** @description Legacy user ID header (dual-mode transition) */
+                    "x-user-id"?: string;
+                    /** @description Bearer JWT token */
+                    authorization?: string;
                 };
                 path?: never;
                 cookie?: never;
@@ -358,11 +360,13 @@ export interface paths {
         post: {
             parameters: {
                 query?: never;
-                header: {
+                header?: {
                     /** @description Optional correlation ID for request tracing. If provided, the API echoes it back in the response; otherwise a new UUID is generated. */
                     "x-request-id"?: string;
-                    /** @description User ID for scoping todo operations */
-                    "x-user-id": string;
+                    /** @description Legacy user ID header (dual-mode transition) */
+                    "x-user-id"?: string;
+                    /** @description Bearer JWT token */
+                    authorization?: string;
                 };
                 path?: never;
                 cookie?: never;
@@ -451,11 +455,13 @@ export interface paths {
         delete: {
             parameters: {
                 query?: never;
-                header: {
+                header?: {
                     /** @description Optional correlation ID for request tracing. If provided, the API echoes it back in the response; otherwise a new UUID is generated. */
                     "x-request-id"?: string;
-                    /** @description User ID for scoping todo operations */
-                    "x-user-id": string;
+                    /** @description Legacy user ID header (dual-mode transition) */
+                    "x-user-id"?: string;
+                    /** @description Bearer JWT token */
+                    authorization?: string;
                 };
                 path: {
                     id: string;
@@ -523,11 +529,13 @@ export interface paths {
         patch: {
             parameters: {
                 query?: never;
-                header: {
+                header?: {
                     /** @description Optional correlation ID for request tracing. If provided, the API echoes it back in the response; otherwise a new UUID is generated. */
                     "x-request-id"?: string;
-                    /** @description User ID for scoping todo operations */
-                    "x-user-id": string;
+                    /** @description Legacy user ID header (dual-mode transition) */
+                    "x-user-id"?: string;
+                    /** @description Bearer JWT token */
+                    authorization?: string;
                 };
                 path: {
                     id: string;
