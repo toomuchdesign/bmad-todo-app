@@ -1,10 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import type { GetTodosRouteResponses } from "../src/routes/todos/schemas.js";
+import type {
+  DeleteTodosRouteResponses,
+  GetTodosRouteResponses,
+} from "../src/routes/todos/schemas.js";
 import {
   createTestContext,
+  findTodoById,
   makeSeedTodo,
-  runQuery,
   runRequestIdHeaderTests,
   runUserScopingTests,
   seedTodo,
@@ -51,13 +54,9 @@ describe("DELETE /todos/:id", () => {
       // Assert
       expect(response.statusCode).toBe(204);
 
-      const result = await runQuery(
-        "SELECT deleted_at FROM todos WHERE id = $1::uuid",
-        [seed.id],
-      );
-
-      expect(result.rows).toHaveLength(1);
-      expect(result.rows[0].deleted_at).not.toBeNull();
+      const todo = await findTodoById({ id: seed.id });
+      expect(todo).toBeDefined();
+      expect(todo?.deletedAt).not.toBeNull();
     });
 
     it("excludes the deleted todo from GET /todos", async () => {
@@ -78,11 +77,11 @@ describe("DELETE /todos/:id", () => {
         url: "/todos",
         headers: testHeaders,
       });
-      const listed = getResponse.json<GetTodosRouteResponses[200]>();
+      const listed = getResponse.json();
 
       // Assert
-      const ids = listed.todos.map((t) => t.id);
-      expect(ids).not.toContain(seed.id);
+      const expected: GetTodosRouteResponses[200] = { todos: [] };
+      expect(listed).toEqual(expected);
     });
   });
 
@@ -104,10 +103,11 @@ describe("DELETE /todos/:id", () => {
 
       const body = response.json();
 
-      expect(body).toEqual({
+      const expected: DeleteTodosRouteResponses[404] = {
         code: "NOT_FOUND",
         message: "Todo not found",
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 
@@ -133,10 +133,11 @@ describe("DELETE /todos/:id", () => {
 
       const body = response.json();
 
-      expect(body).toEqual({
+      const expected: DeleteTodosRouteResponses[404] = {
         code: "NOT_FOUND",
         message: "Todo not found",
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 
@@ -157,10 +158,11 @@ describe("DELETE /todos/:id", () => {
 
       const body = response.json();
 
-      expect(body).toEqual({
+      const expected: DeleteTodosRouteResponses[400] = {
         code: "VALIDATION_ERROR",
         message: expect.any(String),
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 

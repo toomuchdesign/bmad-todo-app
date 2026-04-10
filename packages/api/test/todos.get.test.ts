@@ -26,9 +26,10 @@ describe("GET /todos", () => {
     expect(response.statusCode).toBe(200);
     expect(response.headers["content-type"]).toContain("application/json");
 
-    const body = response.json<GetTodosRouteResponses[200]>();
+    const body = response.json();
 
-    expect(body).toEqual({ todos: [] });
+    const expected: GetTodosRouteResponses[200] = { todos: [] };
+    expect(body).toEqual(expected);
   });
 
   it("returns 200 with active todos ordered newest-first and includes x-request-id", async () => {
@@ -73,9 +74,9 @@ describe("GET /todos", () => {
     expect(response.headers["content-type"]).toContain("application/json");
     expect(response.headers["x-request-id"]).toBeTypeOf("string");
 
-    const body = response.json<GetTodosRouteResponses[200]>();
+    const body = response.json();
 
-    expect(body).toEqual({
+    const expected: GetTodosRouteResponses[200] = {
       todos: [
         {
           id: "33333333-3333-3333-3333-333333333333",
@@ -96,7 +97,8 @@ describe("GET /todos", () => {
           updatedAt: "2026-03-01T10:00:00.000Z",
         },
       ],
-    });
+    };
+    expect(body).toEqual(expected);
   });
 
   runRequestIdHeaderTests(() => {

@@ -7,7 +7,7 @@ import {
   ANY_EMAIL,
   ANY_ISO_DATETIME,
   ANY_UUID,
-  runQuery,
+  findUserById,
   runRequestIdHeaderTests,
 } from "./test-utils/index.js";
 
@@ -27,13 +27,10 @@ afterAll(async () => {
 describe("default user seed", () => {
   it("exists in the database after migration", async () => {
     // Act
-    const result = await runQuery("SELECT id, name FROM users WHERE id = $1", [
-      DEFAULT_USER_ID,
-    ]);
+    const user = await findUserById({ id: DEFAULT_USER_ID });
 
     // Assert
-    expect(result.rows).toHaveLength(1);
-    expect(result.rows[0]).toEqual({
+    expect(user).toMatchObject({
       id: DEFAULT_USER_ID,
       name: "Default User",
     });
@@ -56,15 +53,16 @@ describe("POST /users", () => {
       // Assert
       expect(response.statusCode).toBe(201);
 
-      const body = response.json<PostUsersRouteResponses[201]>();
+      const body = response.json();
 
-      expect(body).toEqual({
+      const expected: PostUsersRouteResponses[201] = {
         id: ANY_UUID,
         name: "Alice",
         email: ANY_EMAIL,
         createdAt: ANY_ISO_DATETIME,
         updatedAt: ANY_ISO_DATETIME,
-      });
+      };
+      expect(body).toEqual(expected);
     });
 
     it("trims whitespace from the name", async () => {
@@ -81,7 +79,7 @@ describe("POST /users", () => {
       // Assert
       expect(response.statusCode).toBe(201);
 
-      const body = response.json<PostUsersRouteResponses[201]>();
+      const body = response.json();
 
       expect(body.name).toBe("Bob");
     });
@@ -109,12 +107,13 @@ describe("POST /users", () => {
       expect(response.statusCode).toBe(400);
       expect(response.headers["x-request-id"]).toBeTypeOf("string");
 
-      const body = response.json<PostUsersRouteResponses[400]>();
+      const body = response.json();
 
-      expect(body).toEqual({
+      const expected: PostUsersRouteResponses[400] = {
         code: "VALIDATION_ERROR",
         message: expect.any(String),
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 

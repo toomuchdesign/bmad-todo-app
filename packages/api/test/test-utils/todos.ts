@@ -1,7 +1,10 @@
 import { randomUUID } from "node:crypto";
+import { eq, sql } from "drizzle-orm";
 import { DEFAULT_USER_ID } from "shared";
 import { todos } from "../../src/db/schema.js";
-import { getTestDb, runQuery } from "./db.js";
+import { getTestDb } from "./db.js";
+
+type TodoSelect = typeof todos.$inferSelect;
 
 type TodoInsert = typeof todos.$inferInsert;
 
@@ -37,7 +40,21 @@ export function makeSeedTodo(
  * Drops the todos table to simulate unexpected DB failures.
  */
 export async function dropTodosTable(): Promise<void> {
-  await runQuery("DROP TABLE IF EXISTS todos;");
+  const db = getTestDb();
+  await db.execute(sql`DROP TABLE IF EXISTS todos`);
+}
+
+/**
+ * Returns a single todo row by ID, or undefined if not found.
+ */
+export async function findTodoById({
+  id,
+}: {
+  id: string;
+}): Promise<TodoSelect | undefined> {
+  const db = getTestDb();
+  const result = await db.select().from(todos).where(eq(todos.id, id));
+  return result[0];
 }
 
 function toDate(value: Date | string): Date {
@@ -48,12 +65,12 @@ function toDate(value: Date | string): Date {
  * Inserts a todo row directly via Drizzle for integration test setup.
  * Type-safe: compile error if a column is added/removed/renamed.
  */
-export async function seedTodo(input: SeedTodoInput): Promise<void> {
+export async function seedTodo(todo: SeedTodoInput): Promise<void> {
   const db = getTestDb();
   await db.insert(todos).values({
-    ...input,
-    createdAt: toDate(input.createdAt),
-    updatedAt: toDate(input.updatedAt),
-    deletedAt: input.deletedAt ? toDate(input.deletedAt) : null,
+    ...todo,
+    createdAt: toDate(todo.createdAt),
+    updatedAt: toDate(todo.updatedAt),
+    deletedAt: todo.deletedAt ? toDate(todo.deletedAt) : null,
   });
 }

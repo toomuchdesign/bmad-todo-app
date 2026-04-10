@@ -6,7 +6,11 @@ import type {
   PostLoginRouteResponses,
   PostRegisterRouteResponses,
 } from "../src/routes/auth/schemas.js";
-import { ANY_ISO_DATETIME, ANY_UUID, runQuery } from "./test-utils/index.js";
+import {
+  ANY_ISO_DATETIME,
+  ANY_UUID,
+  deleteUsersByEmailSuffix,
+} from "./test-utils/index.js";
 
 let app: FastifyInstance;
 
@@ -16,7 +20,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   // Clean up any users created during tests (except the seeded user)
-  await runQuery("DELETE FROM users WHERE email LIKE '%@auth-test.local'");
+  await deleteUsersByEmailSuffix({ suffix: "@auth-test.local" });
   await app.close();
 });
 
@@ -52,8 +56,9 @@ describe("POST /auth/register", () => {
       // Assert
       expect(response.statusCode).toBe(201);
 
-      const body = response.json<PostRegisterRouteResponses[201]>();
-      expect(body).toEqual({
+      const body = response.json();
+
+      const expected: PostRegisterRouteResponses[201] = {
         user: {
           id: ANY_UUID,
           name: "Alice",
@@ -62,14 +67,15 @@ describe("POST /auth/register", () => {
           updatedAt: ANY_ISO_DATETIME,
         },
         token: expect.any(String),
-      });
+      };
+      expect(body).toEqual(expected);
 
       // passwordHash must never appear in the user object
       expect(body.user).not.toHaveProperty("passwordHash");
       expect(body.user).not.toHaveProperty("password_hash");
 
       // Token is a valid JWT (3 dot-separated segments)
-      expect(body.token.split(".")).toHaveLength(3);
+      expect(String(body.token).split(".")).toHaveLength(3);
     });
   });
 
@@ -84,11 +90,13 @@ describe("POST /auth/register", () => {
 
       // Assert
       expect(response.statusCode).toBe(409);
-      const body = response.json<PostRegisterRouteResponses[409]>();
-      expect(body).toEqual({
+      const body = response.json();
+
+      const expected: PostRegisterRouteResponses[409] = {
         code: "CONFLICT",
         message: expect.any(String),
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 
@@ -120,11 +128,13 @@ describe("POST /auth/register", () => {
 
       // Assert
       expect(response.statusCode).toBe(400);
-      const body = response.json<PostRegisterRouteResponses[400]>();
-      expect(body).toEqual({
+      const body = response.json();
+
+      const expected: PostRegisterRouteResponses[400] = {
         code: "VALIDATION_ERROR",
         message: expect.any(String),
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 });
@@ -149,8 +159,9 @@ describe("POST /auth/login", () => {
       // Assert
       expect(response.statusCode).toBe(200);
 
-      const body = response.json<PostLoginRouteResponses[200]>();
-      expect(body).toEqual({
+      const body = response.json();
+
+      const expected: PostLoginRouteResponses[200] = {
         user: {
           id: ANY_UUID,
           name: "Test User",
@@ -159,14 +170,15 @@ describe("POST /auth/login", () => {
           updatedAt: ANY_ISO_DATETIME,
         },
         token: expect.any(String),
-      });
+      };
+      expect(body).toEqual(expected);
 
       // passwordHash must never appear in the user object
       expect(body.user).not.toHaveProperty("passwordHash");
       expect(body.user).not.toHaveProperty("password_hash");
 
       // Token is a valid JWT (3 dot-separated segments)
-      expect(body.token.split(".")).toHaveLength(3);
+      expect(String(body.token).split(".")).toHaveLength(3);
     });
   });
 
@@ -181,11 +193,13 @@ describe("POST /auth/login", () => {
 
       // Assert
       expect(response.statusCode).toBe(401);
-      const body = response.json<PostLoginRouteResponses[401]>();
-      expect(body).toEqual({
+      const body = response.json();
+
+      const expected: PostLoginRouteResponses[401] = {
         code: "UNAUTHORIZED",
         message: expect.any(String),
-      });
+      };
+      expect(body).toEqual(expected);
     });
 
     it("returns 401 with UNAUTHORIZED for unknown email", async () => {
@@ -198,11 +212,13 @@ describe("POST /auth/login", () => {
 
       // Assert
       expect(response.statusCode).toBe(401);
-      const body = response.json<PostLoginRouteResponses[401]>();
-      expect(body).toEqual({
+      const body = response.json();
+
+      const expected: PostLoginRouteResponses[401] = {
         code: "UNAUTHORIZED",
         message: expect.any(String),
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 
@@ -220,11 +236,13 @@ describe("POST /auth/login", () => {
 
       // Assert
       expect(response.statusCode).toBe(400);
-      const body = response.json<PostLoginRouteResponses[400]>();
-      expect(body).toEqual({
+      const body = response.json();
+
+      const expected: PostLoginRouteResponses[400] = {
         code: "VALIDATION_ERROR",
         message: expect.any(String),
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 });

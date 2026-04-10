@@ -32,9 +32,9 @@ describe("POST /todos", () => {
       // Assert
       expect(response.statusCode).toBe(201);
 
-      const body = response.json<PostTodosRouteResponses[201]>();
+      const body = response.json();
 
-      expect(body).toEqual({
+      const expected: PostTodosRouteResponses[201] = {
         id: ANY_UUID,
         title: "buy milk",
         text: "whole milk from the store",
@@ -42,7 +42,8 @@ describe("POST /todos", () => {
         userId: testUserId,
         createdAt: ANY_ISO_DATETIME,
         updatedAt: ANY_ISO_DATETIME,
-      });
+      };
+      expect(body).toEqual(expected);
       expect(body).not.toHaveProperty("deletedAt");
     });
 
@@ -62,9 +63,9 @@ describe("POST /todos", () => {
       // Assert
       expect(response.statusCode).toBe(201);
 
-      const body = response.json<PostTodosRouteResponses[201]>();
+      const body = response.json();
 
-      expect(body).toEqual({
+      const expected: PostTodosRouteResponses[201] = {
         id: ANY_UUID,
         title: "title only",
         text: "",
@@ -72,7 +73,8 @@ describe("POST /todos", () => {
         userId: testUserId,
         createdAt: ANY_ISO_DATETIME,
         updatedAt: ANY_ISO_DATETIME,
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 
@@ -106,12 +108,13 @@ describe("POST /todos", () => {
       expect(response.statusCode).toBe(400);
       expect(response.headers["x-request-id"]).toBeTypeOf("string");
 
-      const body = response.json<PostTodosRouteResponses[400]>();
+      const body = response.json();
 
-      expect(body).toEqual({
+      const expected: PostTodosRouteResponses[400] = {
         code: "VALIDATION_ERROR",
         message: expect.any(String),
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 

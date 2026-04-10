@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
+import { eq } from "drizzle-orm";
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { FastifyInstance } from "fastify";
-import type { QueryResult } from "pg";
-import { Client, Pool } from "pg";
+import { Pool } from "pg";
 import { DEFAULT_USER_ID } from "shared";
 import { afterAll, beforeAll, beforeEach } from "vitest";
 import { buildApp } from "../../src/app.js";
@@ -40,30 +40,6 @@ export async function closeTestDb(): Promise<void> {
     await testPool.end();
     testPool = undefined;
     testDb = undefined;
-  }
-}
-
-/**
- * Creates a new Postgres client connected to the test database URL.
- */
-export function createDbClient(): Client {
-  return new Client({ connectionString: databaseUrl });
-}
-
-/**
- * Executes a SQL query using a short-lived client and returns the result.
- */
-export async function runQuery(
-  text: string,
-  values: unknown[] = [],
-): Promise<QueryResult> {
-  const client = createDbClient();
-
-  try {
-    await client.connect();
-    return await client.query(text, values);
-  } finally {
-    await client.end();
   }
 }
 
@@ -108,7 +84,20 @@ export async function cleanupUserTodos({
 }: {
   userId: string;
 }): Promise<void> {
-  await runQuery("DELETE FROM todos WHERE user_id = $1", [userId]);
+  const db = getTestDb();
+  await db.delete(schema.todos).where(eq(schema.todos.userId, userId));
+}
+
+/**
+ * Deletes a user by ID. Must be called after cleanupUserTodos to satisfy FK constraints.
+ */
+export async function deleteUser({
+  userId,
+}: {
+  userId: string;
+}): Promise<void> {
+  const db = getTestDb();
+  await db.delete(schema.users).where(eq(schema.users.id, userId));
 }
 
 export type TestContext = {
@@ -137,8 +126,8 @@ export function createTestContext(): () => TestContext {
   afterAll(async () => {
     // Delete todos before the user to satisfy the FK constraint (no CASCADE on the FK).
     if (testUserId) {
-      await runQuery("DELETE FROM todos WHERE user_id = $1", [testUserId]);
-      await runQuery("DELETE FROM users WHERE id = $1", [testUserId]);
+      await cleanupUserTodos({ userId: testUserId });
+      await deleteUser({ userId: testUserId });
     }
     if (app) {
       await app.close();
@@ -161,12 +150,13 @@ export function createTestContext(): () => TestContext {
 }
 
 /**
- * Truncates all application tables and re-seeds the default user.
+ * Deletes all rows from application tables and re-seeds the default user.
  * Used by the db-reset script — not called from tests (per-user cleanup is preferred).
  */
 export async function cleanupTestDatabase(): Promise<void> {
   const db = getTestDb();
-  await runQuery("TRUNCATE TABLE todos, users CASCADE;");
+  await db.delete(schema.todos);
+  await db.delete(schema.users);
   const now = new Date();
   await db
     .insert(schema.users)

@@ -5,8 +5,8 @@ import type { GetTodosRouteResponses } from "../src/routes/todos/schemas.js";
 import {
   cleanupUserTodos,
   createTestUser,
+  deleteUser,
   makeSeedTodo,
-  runQuery,
   seedTodo,
 } from "./test-utils/index.js";
 
@@ -26,12 +26,10 @@ beforeAll(async () => {
 
 afterAll(async () => {
   // Delete todos before users to satisfy the FK constraint (no CASCADE on the FK).
-  if (userAId)
-    await runQuery("DELETE FROM todos WHERE user_id = $1", [userAId]);
-  if (userBId)
-    await runQuery("DELETE FROM todos WHERE user_id = $1", [userBId]);
-  if (userAId) await runQuery("DELETE FROM users WHERE id = $1", [userAId]);
-  if (userBId) await runQuery("DELETE FROM users WHERE id = $1", [userBId]);
+  if (userAId) await cleanupUserTodos({ userId: userAId });
+  if (userBId) await cleanupUserTodos({ userId: userBId });
+  if (userAId) await deleteUser({ userId: userAId });
+  if (userBId) await deleteUser({ userId: userBId });
   if (app) await app.close();
 });
 
@@ -54,8 +52,10 @@ describe("cross-user todo isolation", () => {
     });
 
     // Assert
-    const body = response.json<GetTodosRouteResponses[200]>();
-    expect(body.todos).toEqual([]);
+    const body = response.json();
+
+    const expected: GetTodosRouteResponses[200] = { todos: [] };
+    expect(body).toEqual(expected);
   });
 
   it("user B cannot PATCH user A's todo (returns 404)", async () => {
@@ -116,7 +116,7 @@ describe("cross-user todo isolation", () => {
       url: "/todos",
       headers: userBHeaders,
     });
-    expect(listB.json<GetTodosRouteResponses[200]>().todos).toHaveLength(1);
+    expect(listB.json().todos).toHaveLength(1);
 
     // Assert — user A does not see it
     const listA = await app.inject({
@@ -124,6 +124,8 @@ describe("cross-user todo isolation", () => {
       url: "/todos",
       headers: userAHeaders,
     });
-    expect(listA.json<GetTodosRouteResponses[200]>().todos).toEqual([]);
+
+    const expectedEmpty: GetTodosRouteResponses[200] = { todos: [] };
+    expect(listA.json()).toEqual(expectedEmpty);
   });
 });
