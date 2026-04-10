@@ -1,15 +1,46 @@
 import { randomUUID } from "node:crypto";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { FastifyInstance } from "fastify";
 import type { QueryResult } from "pg";
-import { Client } from "pg";
+import { Client, Pool } from "pg";
 import { DEFAULT_USER_ID } from "shared";
 import { afterAll, beforeAll, beforeEach } from "vitest";
 import { buildApp } from "../../src/app.js";
+import * as schema from "../../src/db/schema.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
   throw new Error("Missing DATABASE_URL");
+}
+
+let testPool: Pool | undefined;
+let testDb: NodePgDatabase<typeof schema> | undefined;
+
+/**
+ * Returns a Drizzle instance backed by DATABASE_URL for type-safe test
+ * setup queries. Bypasses getConfig() so only DATABASE_URL is needed.
+ */
+export function getTestDb(): NodePgDatabase<typeof schema> {
+  if (testDb) {
+    return testDb;
+  }
+
+  testPool = new Pool({ connectionString: databaseUrl });
+  testDb = drizzle(testPool, { schema });
+  return testDb;
+}
+
+/**
+ * Closes the shared test Pool. Call from a global afterAll to avoid
+ * connection leaks under parallel CI execution.
+ */
+export async function closeTestDb(): Promise<void> {
+  if (testPool) {
+    await testPool.end();
+    testPool = undefined;
+    testDb = undefined;
+  }
 }
 
 /**
@@ -134,11 +165,18 @@ export function createTestContext(): () => TestContext {
  * Used by the db-reset script — not called from tests (per-user cleanup is preferred).
  */
 export async function cleanupTestDatabase(): Promise<void> {
+  const db = getTestDb();
   await runQuery("TRUNCATE TABLE todos, users CASCADE;");
-  await runQuery(
-    `INSERT INTO users (id, name, created_at, updated_at)
-     VALUES ($1, 'Default User', NOW(), NOW())
-     ON CONFLICT (id) DO NOTHING;`,
-    [DEFAULT_USER_ID],
-  );
+  const now = new Date();
+  await db
+    .insert(schema.users)
+    .values({
+      id: DEFAULT_USER_ID,
+      name: "Default User",
+      email: "seed@example.com",
+      passwordHash: "no-auth",
+      createdAt: now,
+      updatedAt: now,
+    })
+    .onConflictDoNothing();
 }

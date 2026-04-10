@@ -6,10 +6,11 @@ import type { FromSchema } from "json-schema-to-ts";
  */
 export const userSchema = {
   type: "object",
-  required: ["id", "name", "createdAt", "updatedAt"],
+  required: ["id", "name", "email", "createdAt", "updatedAt"],
   properties: {
     id: { type: "string", format: "uuid" },
     name: { type: "string" },
+    email: { type: "string", format: "email" },
     createdAt: { type: "string", format: "date-time" },
     updatedAt: { type: "string", format: "date-time" },
   },

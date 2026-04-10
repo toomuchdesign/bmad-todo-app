@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import type { PostUsersRouteResponses } from "../src/routes/users/schemas.js";
 import {
+  ANY_EMAIL,
   ANY_ISO_DATETIME,
   ANY_UUID,
   runQuery,
@@ -60,6 +61,7 @@ describe("POST /users", () => {
       expect(body).toEqual({
         id: ANY_UUID,
         name: "Alice",
+        email: ANY_EMAIL,
         createdAt: ANY_ISO_DATETIME,
         updatedAt: ANY_ISO_DATETIME,
       });

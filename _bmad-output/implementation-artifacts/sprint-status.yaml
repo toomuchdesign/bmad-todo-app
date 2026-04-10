@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26 19:38:27
-last_updated: 2026-04-09 # story 6.1 auth API ready for dev
+last_updated: 2026-04-10 # story 6.1 auth API code review complete
 project: bmad-todo
 project_key: NOKEY
 tracking_system: file-system
@@ -86,8 +86,8 @@ development_status:
   epic-5-retrospective: optional
 
   epic-6: in-progress
-  6-0-auth-design-spike: review
-  6-1-auth-api-schema-migration-dependencies-and-auth-routes: ready-for-dev
+  6-0-auth-design-spike: done
+  6-1-auth-api-schema-migration-dependencies-and-auth-routes: done
   6-2-auth-middleware-jwt-verification-and-test-infrastructure-migration: backlog
   6-2-1-parallelize-e2e-tests-with-per-user-isolation: backlog
   6-3-web-auth-login-register-ui-routing-and-legacy-auth-removal: backlog
