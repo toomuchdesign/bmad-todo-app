@@ -15,7 +15,7 @@ const JWT_EXPIRY = "7d";
 
 /**
  * Auth routes — register, login, logout.
- * These routes are NOT wrapped by validateUserPlugin so unauthenticated users can access them.
+ * These routes are NOT wrapped by jwtAuthPlugin so unauthenticated users can access them.
  */
 const authRoutes: FastifyPluginAsyncJsonSchemaToTs = async (app) => {
   app.post(

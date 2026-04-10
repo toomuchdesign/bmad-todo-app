@@ -1,35 +1,37 @@
-import { randomUUID } from "node:crypto";
 import type { FastifyInstance, InjectOptions } from "fastify";
 import { describe, expect, it } from "vitest";
 
-type UserScopingTestsInput = () => {
+type AuthScopingTestsInput = () => {
   app: FastifyInstance;
   injectInput: InjectOptions;
 };
 
 /**
- * Defines the standard x-user-id scoping tests for a todo route.
- * Tests 400 when header is missing, 401 when header references a non-existent user,
- * and success when a valid user ID is provided.
+ * Defines the standard auth scoping tests for a protected route.
+ * Tests 401 when no auth is provided, 401 with invalid Bearer token,
+ * and success when valid auth is provided.
  * Accepts a getter to support per-file dynamic user headers.
  */
-export function runUserScopingTests(getContext: UserScopingTestsInput): void {
-  describe("x-user-id scoping", () => {
-    it("returns 400 when x-user-id header is missing", async () => {
-      // Arrange — ensure no x-user-id in headers
+export function runUserScopingTests(getContext: AuthScopingTestsInput): void {
+  describe("auth scoping", () => {
+    it("returns 401 when no auth is provided", async () => {
+      // Arrange — strip both authorization and x-user-id headers
       const { app, injectInput } = getContext();
       const { headers: _headers, ...rest } = injectInput;
 
       // Act
       const response = await app.inject(rest);
 
-      // Assert — schema-level validation rejects missing required header with 400
-      expect(response.statusCode).toBe(400);
+      // Assert — auth plugin rejects with 401
+      expect(response.statusCode).toBe(401);
+      expect(response.json()).toEqual({
+        code: "UNAUTHORIZED",
+        message: "Authentication required",
+      });
     });
 
-    it("returns 401 when x-user-id references a non-existent user", async () => {
+    it("returns 401 with invalid Bearer token", async () => {
       // Arrange
-      const nonExistentUserId = randomUUID();
       const { app, injectInput } = getContext();
 
       // Act
@@ -37,7 +39,7 @@ export function runUserScopingTests(getContext: UserScopingTestsInput): void {
         ...injectInput,
         headers: {
           ...injectInput.headers,
-          "x-user-id": nonExistentUserId,
+          authorization: "Bearer invalid-token",
         },
       });
 
@@ -45,11 +47,11 @@ export function runUserScopingTests(getContext: UserScopingTestsInput): void {
       expect(response.statusCode).toBe(401);
       expect(response.json()).toEqual({
         code: "UNAUTHORIZED",
-        message: "Valid x-user-id header is required",
+        message: "Authentication required",
       });
     });
 
-    it("does not return 401 when x-user-id references a valid user", async () => {
+    it("does not return 401 with valid auth", async () => {
       // Arrange
       const { app, injectInput } = getContext();
 

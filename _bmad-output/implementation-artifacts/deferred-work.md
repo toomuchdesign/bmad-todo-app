@@ -118,3 +118,11 @@
 - Teardown is a comment stub (`// Teardown: clean todos then user via direct DB`) — full teardown design (pg client setup, query ordering, FK constraints) needed in story 5.6.
 - Playwright proxy readiness for fixture API calls — `request.post("/api/users")` routes through the Vite dev server proxy; global-setup ordering must ensure servers are ready before fixtures run. Address in story 5.6.
 - App-layer `getUserId()` change described in F4 but not in F3 where it belongs structurally — minor gap; story 5.6 spec should co-locate app-layer and test-layer changes in the fixture design section.
+
+## Deferred from: code review of 6-2-auth-middleware-jwt-verification-and-test-infrastructure-migration (2026-04-10)
+
+- **Story 6.3 must-do:** Invalid JWT + valid `x-user-id` currently authenticates via fallback (dual-mode window). When `x-user-id` is removed in 6.3, ensure the plugin rejects immediately with 401 if an `Authorization: Bearer` header is present regardless of token validity — no silent fallback.
+- **Story 6.3 must-do:** `x-user-id` fallback in `jwtAuthPlugin` issues a DB query for any non-empty string value (UUID format no longer validated before `onRequest` fires). Will be moot once the entire x-user-id fallback is removed in 6.3.
+- `decorateRequest("userId", "")` initializes to empty string — routes outside the plugin scope (e.g. `usersRoutes`, healthcheck) will silently read `""` if they ever access `request.userId`. Pre-existing pattern carried over from `validateUserPlugin`.
+- Hardcoded `"test-password-123"` in `createTestUser` — test-only, intentional; if the auth endpoint ever enforces password strength, test setup breaks with a misleading error.
+- `Authorization: Bearer ` (empty after prefix) silently falls through to x-user-id fallback — spec-compliant dual-mode behavior, untested edge case.

@@ -13,13 +13,16 @@ import {
 
 const todoRequestHeadersSchema = {
   type: "object",
-  required: ["x-user-id"],
   properties: {
     ...requestHeadersSchema.properties,
     "x-user-id": {
       type: "string",
       format: "uuid",
-      description: "User ID for scoping todo operations",
+      description: "Legacy user ID header (dual-mode transition)",
+    },
+    authorization: {
+      type: "string",
+      description: "Bearer JWT token",
     },
   },
 } as const;
