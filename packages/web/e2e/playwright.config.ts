@@ -14,6 +14,7 @@ const webPort = process.env.WEB_PORT;
 
 export default defineConfig({
   testDir: ".",
+  workers: 4,
   use: {
     baseURL: `http://localhost:${webPort}`,
   },

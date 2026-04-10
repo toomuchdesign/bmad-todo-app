@@ -126,3 +126,11 @@
 - `decorateRequest("userId", "")` initializes to empty string — routes outside the plugin scope (e.g. `usersRoutes`, healthcheck) will silently read `""` if they ever access `request.userId`. Pre-existing pattern carried over from `validateUserPlugin`.
 - Hardcoded `"test-password-123"` in `createTestUser` — test-only, intentional; if the auth endpoint ever enforces password strength, test setup breaks with a misleading error.
 - `Authorization: Bearer ` (empty after prefix) silently falls through to x-user-id fallback — spec-compliant dual-mode behavior, untested edge case.
+
+## Deferred from: code review of 6-2-1-parallelize-e2e-tests-with-per-user-isolation (2026-04-10)
+
+- `create-todo.spec.ts` test 3 implicitly depends on test 2's accumulated DB state — spec designed for sequential accumulation (`fullyParallel: false`); fragile if tests are individually retried or skipped.
+- `deferred.promise.then()` without `.catch()` in route failure handlers across create-todo, toggle-completion, delete-todo, inline-edit specs — pre-existing pattern moved verbatim from `todo-flows.spec.ts`.
+- Keyboard tab-order hardcoded in `toggle-completion.spec.ts` keyboard test (3 `Tab` presses) — pre-existing pattern; breaks if any focusable element is added to the form.
+- `delete-todo.spec.ts` focus assertion (`input[type=checkbox]:focus` count=1) doesn't verify which specific checkbox is focused — pre-existing pattern.
+- `persistence.spec.ts` test trivially passes on Playwright retry (module-scoped `userId` means "Persist me" already exists) — low risk with `retries: 0` in current config.

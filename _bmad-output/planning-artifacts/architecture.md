@@ -615,8 +615,17 @@ bmad-todo/
 │       │   │   ├── TodoList.tsx
 │       │   │   └── TodoList.module.css
 │       └── e2e/
-│           ├── todo-flows.spec.ts          # playwright flows required by PRD
-│           └── playwright.config.ts
+│           ├── initial-load.spec.ts        # initial load E2E tests
+│           ├── create-todo.spec.ts         # create todo E2E tests
+│           ├── inline-edit.spec.ts         # inline edit E2E tests
+│           ├── toggle-completion.spec.ts   # toggle completion E2E tests
+│           ├── delete-todo.spec.ts         # delete todo E2E tests
+│           ├── persistence.spec.ts         # data persistence E2E test
+│           ├── playwright.config.ts
+│           └── test-utils/
+│               ├── auth.ts                 # registerTestUser — per-spec user isolation
+│               ├── deferred.ts
+│               └── index.ts
 │
 └── _bmad-output/
     ├── planning-artifacts/
