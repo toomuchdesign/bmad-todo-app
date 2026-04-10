@@ -546,14 +546,19 @@ bmad-todo/
 │   │   │   ├── plugins/
 │   │   │   │   ├── request-id.ts           # x-request-id generation/echo
 │   │   │   │   └── error-handler.ts        # maps errors -> ApiErrorResponse
+│   │   │   ├── config.ts                    # env-schema config (API_HOST, API_PORT, DATABASE_URL, WEB_ORIGIN, JWT_SECRET)
 │   │   │   ├── db/
 │   │   │   │   ├── client.ts               # pg pool + drizzle instance
 │   │   │   │   ├── todos.ts                # db query mapping for todos
-│   │   │   │   └── schema.ts               # drizzle schema (todos table)
+│   │   │   │   ├── users.ts                # db query mapping for users (createAuthUser, getUserByEmail, mapUserRowToApiUser)
+│   │   │   │   └── schema.ts               # drizzle schema (users + todos tables)
 │   │   │   ├── routes/
 │   │   │   │   ├── README.md
 │   │   │   │   ├── shared/
 │   │   │   │   │   └── schemas.ts          # shared headers, error response, InferRouteResponses type
+│   │   │   │   ├── auth/
+│   │   │   │   │   ├── index.ts            # auth route handlers (POST /auth/register, /auth/login, /auth/logout)
+│   │   │   │   │   └── schemas.ts          # auth-specific route schemas & response types
 │   │   │   │   ├── todos/
 │   │   │   │   │   ├── index.ts            # todo route handlers (GET/POST/PATCH/DELETE /todos)
 │   │   │   │   │   └── schemas.ts          # todo-specific route schemas & response types
@@ -572,6 +577,8 @@ bmad-todo/
 │   │       └── test-utils/
 │   │           ├── db.ts                   # db helpers + global cleanup helper
 │   │           ├── todos.ts                # todos seed/drop helpers
+│   │           ├── users.ts                # user seed helpers
+│   │           ├── matchers.ts             # test matchers (ANY_UUID, ANY_ISO_DATETIME, ANY_EMAIL)
 │   │           └── index.ts                # test-utils barrel exports
 │   │
 │   └── web/

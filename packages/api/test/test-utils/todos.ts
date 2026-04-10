@@ -1,8 +1,19 @@
 import { randomUUID } from "node:crypto";
-import { DEFAULT_USER_ID, type Todo } from "shared";
-import { runQuery } from "./db.js";
+import { DEFAULT_USER_ID } from "shared";
+import { todos } from "../../src/db/schema.js";
+import { getTestDb, runQuery } from "./db.js";
 
-export type SeedTodoInput = Todo;
+type TodoInsert = typeof todos.$inferInsert;
+
+/** Seed input mirrors the Drizzle insert shape but accepts ISO strings for dates. */
+export type SeedTodoInput = Omit<
+  TodoInsert,
+  "createdAt" | "updatedAt" | "deletedAt"
+> & {
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  deletedAt?: Date | string | null;
+};
 
 /**
  * Builds a SeedTodoInput with sensible defaults, overridable per-field.
@@ -29,22 +40,20 @@ export async function dropTodosTable(): Promise<void> {
   await runQuery("DROP TABLE IF EXISTS todos;");
 }
 
+function toDate(value: Date | string): Date {
+  return typeof value === "string" ? new Date(value) : value;
+}
+
 /**
- * Inserts a todo row directly in Postgres for integration test setup.
+ * Inserts a todo row directly via Drizzle for integration test setup.
+ * Type-safe: compile error if a column is added/removed/renamed.
  */
 export async function seedTodo(input: SeedTodoInput): Promise<void> {
-  await runQuery(
-    `INSERT INTO todos (id, title, text, completed, user_id, created_at, updated_at, deleted_at)
-     VALUES ($1::uuid, $2::text, $3::text, $4::boolean, $5::uuid, $6::timestamptz, $7::timestamptz, $8::timestamptz);`,
-    [
-      input.id,
-      input.title,
-      input.text,
-      input.completed,
-      input.userId,
-      input.createdAt,
-      input.updatedAt,
-      input.deletedAt ?? null,
-    ],
-  );
+  const db = getTestDb();
+  await db.insert(todos).values({
+    ...input,
+    createdAt: toDate(input.createdAt),
+    updatedAt: toDate(input.updatedAt),
+    deletedAt: input.deletedAt ? toDate(input.deletedAt) : null,
+  });
 }

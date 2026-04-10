@@ -2,12 +2,14 @@ export type { TestContext } from "./db.js";
 export {
   cleanupTestDatabase,
   cleanupUserTodos,
+  closeTestDb,
   createDbClient,
   createTestContext,
   createTestUser,
+  getTestDb,
   runQuery,
 } from "./db.js";
-export { ANY_ISO_DATETIME, ANY_UUID } from "./matchers.js";
+export { ANY_EMAIL, ANY_ISO_DATETIME, ANY_UUID } from "./matchers.js";
 export { runRequestIdHeaderTests } from "./request-id-tests.js";
 export type { SeedTodoInput } from "./todos.js";
 export { dropTodosTable, makeSeedTodo, seedTodo } from "./todos.js";

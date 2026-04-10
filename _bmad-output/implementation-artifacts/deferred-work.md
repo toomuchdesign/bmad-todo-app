@@ -102,6 +102,13 @@
 - OpenAPI spec and generated types are manually kept in sync — `openapi.json` and `generated/index.ts` have no regeneration guard; sync relies on manual discipline. Pre-existing fragility.
 - HTTP client has no base URL management — developer forgetting the `/api` prefix would work in Vite dev (rewrite handles it) but fail silently in production (nginx only matches `/api/`). No lint or type guard exists. Pre-existing design.
 
+## Deferred from: code review of 6-1-auth-api-schema-migration-dependencies-and-auth-routes (2026-04-10)
+
+- Hardcoded seed credentials (`seed@example.com` / `seedpassword`) baked into migration SQL — any environment that runs migrations has a live account with a known password in version control. Remove or rotate before production.
+- JWT has no server-side invalidation — 7-day tokens remain valid after `POST /auth/logout`. Client discards the token, but a stolen token is usable until expiry. Acceptable for MVP; address in a future auth hardening story.
+- `JWT_SECRET` env-schema only requires `type: "string"` — a one-character secret passes validation. Add `minLength` constraint or document minimum-strength requirement in deployment notes.
+- `argon2.verify` called against placeholder hash `"no-auth"` would throw a 500 rather than a clean 401 if a legacy-created user somehow reaches the login path. Latent risk; not currently reachable but will become a real path once `validateUserPlugin` is replaced (Story 6.2).
+
 ## Deferred from: code review of 5-5-discover-e2e-parallelization-pattern (2026-04-09)
 
 > **Decision:** E2E parallelization implementation deferred to post-Epic 6. Once real auth (httpOnly session cookies) is in place, the test fixture uses `POST /api/auth/login` directly — no throwaway cookie scaffolding needed. Story 5.6 should be scoped as part of or immediately after Epic 6.

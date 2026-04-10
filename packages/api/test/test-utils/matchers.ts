@@ -9,3 +9,6 @@ export const ANY_UUID = expect.stringMatching(
 export const ANY_ISO_DATETIME = expect.stringMatching(
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/,
 );
+
+/** Matches any string containing an `@` (loose email check for assertions). */
+export const ANY_EMAIL = expect.stringMatching(/.+@.+/);

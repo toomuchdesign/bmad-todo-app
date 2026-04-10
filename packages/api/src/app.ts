@@ -1,4 +1,5 @@
 import cors from "@fastify/cors";
+import fastifyJwt from "@fastify/jwt";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import type { JsonSchemaToTsProvider } from "@fastify/type-provider-json-schema-to-ts";
@@ -10,6 +11,7 @@ import { getConfig } from "./config.js";
 import { closeDb } from "./db/client.js";
 import { errorHandlerPlugin } from "./plugins/error-handler.js";
 import { requestIdPlugin } from "./plugins/request-id.js";
+import { authRoutes } from "./routes/auth/index.js";
 import { todosRoutes } from "./routes/todos/index.js";
 import { usersRoutes } from "./routes/users/index.js";
 
@@ -21,7 +23,9 @@ export async function buildApp(
     ...options,
   }).withTypeProvider<JsonSchemaToTsProvider>();
 
-  await app.register(cors, { origin: getConfig().WEB_ORIGIN });
+  const config = getConfig();
+
+  await app.register(cors, { origin: config.WEB_ORIGIN });
 
   app.register(swagger, {
     openapi: {
@@ -39,8 +43,13 @@ export async function buildApp(
   await requestIdPlugin(app, {});
   await errorHandlerPlugin(app, {});
 
+  await app.register(fastifyJwt, {
+    secret: config.JWT_SECRET,
+  });
+
   app.get("/healthcheck", async () => ({ status: "ok" }));
 
+  app.register(authRoutes);
   app.register(todosRoutes);
   app.register(usersRoutes);
 

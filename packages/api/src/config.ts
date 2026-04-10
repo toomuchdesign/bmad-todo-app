@@ -6,11 +6,18 @@ export type ApiConfig = {
   API_PORT: number;
   DATABASE_URL: string;
   WEB_ORIGIN: string;
+  JWT_SECRET: string;
 };
 
 const configSchema = {
   type: "object",
-  required: ["API_HOST", "API_PORT", "DATABASE_URL", "WEB_ORIGIN"],
+  required: [
+    "API_HOST",
+    "API_PORT",
+    "DATABASE_URL",
+    "WEB_ORIGIN",
+    "JWT_SECRET",
+  ],
   properties: {
     API_HOST: {
       type: "string",
@@ -22,6 +29,9 @@ const configSchema = {
       type: "string",
     },
     WEB_ORIGIN: {
+      type: "string",
+    },
+    JWT_SECRET: {
       type: "string",
     },
   },
