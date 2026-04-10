@@ -5,8 +5,8 @@ import type { GetTodosRouteResponses } from "../src/routes/todos/schemas.js";
 import {
   cleanupUserTodos,
   createTestUser,
+  deleteUser,
   makeSeedTodo,
-  runQuery,
   seedTodo,
 } from "./test-utils/index.js";
 
@@ -26,12 +26,10 @@ beforeAll(async () => {
 
 afterAll(async () => {
   // Delete todos before users to satisfy the FK constraint (no CASCADE on the FK).
-  if (userAId)
-    await runQuery("DELETE FROM todos WHERE user_id = $1", [userAId]);
-  if (userBId)
-    await runQuery("DELETE FROM todos WHERE user_id = $1", [userBId]);
-  if (userAId) await runQuery("DELETE FROM users WHERE id = $1", [userAId]);
-  if (userBId) await runQuery("DELETE FROM users WHERE id = $1", [userBId]);
+  if (userAId) await cleanupUserTodos({ userId: userAId });
+  if (userBId) await cleanupUserTodos({ userId: userBId });
+  if (userAId) await deleteUser({ userId: userAId });
+  if (userBId) await deleteUser({ userId: userBId });
   if (app) await app.close();
 });
 

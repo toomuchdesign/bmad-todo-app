@@ -6,8 +6,8 @@ import type {
 } from "../src/routes/todos/schemas.js";
 import {
   createTestContext,
+  findTodoById,
   makeSeedTodo,
-  runQuery,
   runRequestIdHeaderTests,
   runUserScopingTests,
   seedTodo,
@@ -54,13 +54,9 @@ describe("DELETE /todos/:id", () => {
       // Assert
       expect(response.statusCode).toBe(204);
 
-      const result = await runQuery(
-        "SELECT deleted_at FROM todos WHERE id = $1::uuid",
-        [seed.id],
-      );
-
-      expect(result.rows).toHaveLength(1);
-      expect(result.rows[0].deleted_at).not.toBeNull();
+      const todo = await findTodoById({ id: seed.id });
+      expect(todo).toBeDefined();
+      expect(todo?.deletedAt).not.toBeNull();
     });
 
     it("excludes the deleted todo from GET /todos", async () => {

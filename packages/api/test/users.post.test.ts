@@ -7,7 +7,7 @@ import {
   ANY_EMAIL,
   ANY_ISO_DATETIME,
   ANY_UUID,
-  runQuery,
+  findUserById,
   runRequestIdHeaderTests,
 } from "./test-utils/index.js";
 
@@ -27,13 +27,10 @@ afterAll(async () => {
 describe("default user seed", () => {
   it("exists in the database after migration", async () => {
     // Act
-    const result = await runQuery("SELECT id, name FROM users WHERE id = $1", [
-      DEFAULT_USER_ID,
-    ]);
+    const user = await findUserById({ id: DEFAULT_USER_ID });
 
     // Assert
-    expect(result.rows).toHaveLength(1);
-    expect(result.rows[0]).toEqual({
+    expect(user).toMatchObject({
       id: DEFAULT_USER_ID,
       name: "Default User",
     });

@@ -6,7 +6,11 @@ import type {
   PostLoginRouteResponses,
   PostRegisterRouteResponses,
 } from "../src/routes/auth/schemas.js";
-import { ANY_ISO_DATETIME, ANY_UUID, runQuery } from "./test-utils/index.js";
+import {
+  ANY_ISO_DATETIME,
+  ANY_UUID,
+  deleteUsersByEmailSuffix,
+} from "./test-utils/index.js";
 
 let app: FastifyInstance;
 
@@ -16,7 +20,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   // Clean up any users created during tests (except the seeded user)
-  await runQuery("DELETE FROM users WHERE email LIKE '%@auth-test.local'");
+  await deleteUsersByEmailSuffix({ suffix: "@auth-test.local" });
   await app.close();
 });
 

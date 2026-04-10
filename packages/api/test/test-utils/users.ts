@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
+import { eq, like } from "drizzle-orm";
 import { users } from "../../src/db/schema.js";
 import { getTestDb } from "./db.js";
+
+type UserSelect = typeof users.$inferSelect;
 
 type UserInsert = typeof users.$inferInsert;
 
@@ -27,6 +30,32 @@ export function makeSeedUser(
   };
 }
 
+/**
+ * Returns a single user row by ID, or undefined if not found.
+ */
+export async function findUserById({
+  id,
+}: {
+  id: string;
+}): Promise<UserSelect | undefined> {
+  const db = getTestDb();
+  const result = await db.select().from(users).where(eq(users.id, id));
+  return result[0];
+}
+
+/**
+ * Deletes all users whose email ends with the given suffix.
+ * Callers must delete associated todos first to satisfy the FK constraint.
+ */
+export async function deleteUsersByEmailSuffix({
+  suffix,
+}: {
+  suffix: string;
+}): Promise<void> {
+  const db = getTestDb();
+  await db.delete(users).where(like(users.email, `%${suffix}`));
+}
+
 function toDate(value: Date | string): Date {
   return typeof value === "string" ? new Date(value) : value;
 }
@@ -35,11 +64,11 @@ function toDate(value: Date | string): Date {
  * Inserts a user row directly via Drizzle for integration test setup.
  * Type-safe: compile error if a column is added/removed/renamed.
  */
-export async function seedUser(input: SeedUserInput): Promise<void> {
+export async function seedUser(user: SeedUserInput): Promise<void> {
   const db = getTestDb();
   await db.insert(users).values({
-    ...input,
-    createdAt: toDate(input.createdAt),
-    updatedAt: toDate(input.updatedAt),
+    ...user,
+    createdAt: toDate(user.createdAt),
+    updatedAt: toDate(user.updatedAt),
   });
 }
