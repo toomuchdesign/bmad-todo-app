@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import type { GetTodosRouteResponses } from "../src/routes/todos/schemas.js";
+import type {
+  DeleteTodosRouteResponses,
+  GetTodosRouteResponses,
+} from "../src/routes/todos/schemas.js";
 import {
   createTestContext,
   makeSeedTodo,
@@ -78,11 +81,11 @@ describe("DELETE /todos/:id", () => {
         url: "/todos",
         headers: testHeaders,
       });
-      const listed = getResponse.json<GetTodosRouteResponses[200]>();
+      const listed = getResponse.json();
 
       // Assert
-      const ids = listed.todos.map((t) => t.id);
-      expect(ids).not.toContain(seed.id);
+      const expected: GetTodosRouteResponses[200] = { todos: [] };
+      expect(listed).toEqual(expected);
     });
   });
 
@@ -104,10 +107,11 @@ describe("DELETE /todos/:id", () => {
 
       const body = response.json();
 
-      expect(body).toEqual({
+      const expected: DeleteTodosRouteResponses[404] = {
         code: "NOT_FOUND",
         message: "Todo not found",
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 
@@ -133,10 +137,11 @@ describe("DELETE /todos/:id", () => {
 
       const body = response.json();
 
-      expect(body).toEqual({
+      const expected: DeleteTodosRouteResponses[404] = {
         code: "NOT_FOUND",
         message: "Todo not found",
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 
@@ -157,10 +162,11 @@ describe("DELETE /todos/:id", () => {
 
       const body = response.json();
 
-      expect(body).toEqual({
+      const expected: DeleteTodosRouteResponses[400] = {
         code: "VALIDATION_ERROR",
         message: expect.any(String),
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 

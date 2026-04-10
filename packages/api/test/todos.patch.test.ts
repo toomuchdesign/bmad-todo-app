@@ -39,30 +39,34 @@ describe("PATCH /todos/:id", () => {
       expect(response.statusCode).toBe(200);
       expect(response.headers["x-request-id"]).toBeTypeOf("string");
 
-      const body = response.json<PatchTodosRouteResponses[200]>();
+      const body = response.json();
 
-      expect(body).toEqual({
+      const expected: PatchTodosRouteResponses[200] = {
         id: seed.id,
         title: "updated title",
         text: "some details",
         completed: false,
         userId: testUserId,
-        createdAt: seed.createdAt,
+        createdAt: String(seed.createdAt),
         updatedAt: ANY_ISO_DATETIME,
-      });
+      };
+      expect(body).toEqual(expected);
 
-      expect(body.updatedAt > "2026-01-01T00:00:00.000Z").toBe(true);
+      expect(String(body.updatedAt) > "2026-01-01T00:00:00.000Z").toBe(true);
 
       const getResponse = await app.inject({
         method: "GET",
         url: "/todos",
         headers: testHeaders,
       });
-      const listed = getResponse.json<GetTodosRouteResponses[200]>();
+      const listed = getResponse.json();
 
-      expect(listed.todos).toEqual([
-        expect.objectContaining({ id: seed.id, title: "updated title" }),
-      ]);
+      const expectedList: GetTodosRouteResponses[200] = {
+        todos: [
+          expect.objectContaining({ id: seed.id, title: "updated title" }),
+        ],
+      };
+      expect(listed).toEqual(expectedList);
     });
   });
 
@@ -84,17 +88,18 @@ describe("PATCH /todos/:id", () => {
       // Assert
       expect(response.statusCode).toBe(200);
 
-      const body = response.json<PatchTodosRouteResponses[200]>();
+      const body = response.json();
 
-      expect(body).toEqual({
+      const expected: PatchTodosRouteResponses[200] = {
         id: seed.id,
         title: seed.title,
         text: "",
         completed: true,
         userId: testUserId,
-        createdAt: seed.createdAt,
+        createdAt: String(seed.createdAt),
         updatedAt: ANY_ISO_DATETIME,
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 
@@ -116,32 +121,36 @@ describe("PATCH /todos/:id", () => {
       // Assert
       expect(response.statusCode).toBe(200);
 
-      const body = response.json<PatchTodosRouteResponses[200]>();
+      const body = response.json();
 
-      expect(body).toEqual({
+      const expected: PatchTodosRouteResponses[200] = {
         id: seed.id,
         title: "new title",
         text: "",
         completed: true,
         userId: testUserId,
-        createdAt: seed.createdAt,
+        createdAt: String(seed.createdAt),
         updatedAt: ANY_ISO_DATETIME,
-      });
+      };
+      expect(body).toEqual(expected);
 
       const getResponse = await app.inject({
         method: "GET",
         url: "/todos",
         headers: testHeaders,
       });
-      const listed = getResponse.json<GetTodosRouteResponses[200]>();
+      const listed = getResponse.json();
 
-      expect(listed.todos).toEqual([
-        expect.objectContaining({
-          id: seed.id,
-          title: "new title",
-          completed: true,
-        }),
-      ]);
+      const expectedList: GetTodosRouteResponses[200] = {
+        todos: [
+          expect.objectContaining({
+            id: seed.id,
+            title: "new title",
+            completed: true,
+          }),
+        ],
+      };
+      expect(listed).toEqual(expectedList);
     });
   });
 
@@ -163,18 +172,19 @@ describe("PATCH /todos/:id", () => {
       // Assert
       expect(response.statusCode).toBe(200);
 
-      const body = response.json<PatchTodosRouteResponses[200]>();
+      const body = response.json();
 
       // updatedAt unchanged — proves no DB write occurred
-      expect(body).toEqual({
+      const expected: PatchTodosRouteResponses[200] = {
         id: seed.id,
         title: seed.title,
         text: "",
         completed: false,
         userId: testUserId,
-        createdAt: seed.createdAt,
-        updatedAt: seed.updatedAt,
-      });
+        createdAt: String(seed.createdAt),
+        updatedAt: String(seed.updatedAt),
+      };
+      expect(body).toEqual(expected);
     });
 
     it("returns 404 for non-existent todo", async () => {
@@ -192,12 +202,13 @@ describe("PATCH /todos/:id", () => {
       // Assert
       expect(response.statusCode).toBe(404);
 
-      const body = response.json<PatchTodosRouteResponses[404]>();
+      const body = response.json();
 
-      expect(body).toEqual({
+      const expected: PatchTodosRouteResponses[404] = {
         code: "NOT_FOUND",
         message: "Todo not found",
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 
@@ -229,12 +240,13 @@ describe("PATCH /todos/:id", () => {
       // Assert
       expect(response.statusCode).toBe(400);
 
-      const body = response.json<PatchTodosRouteResponses[400]>();
+      const body = response.json();
 
-      expect(body).toEqual({
+      const expected: PatchTodosRouteResponses[400] = {
         code: "VALIDATION_ERROR",
         message: expect.any(String),
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 
@@ -255,12 +267,13 @@ describe("PATCH /todos/:id", () => {
       // Assert
       expect(response.statusCode).toBe(404);
 
-      const body = response.json<PatchTodosRouteResponses[404]>();
+      const body = response.json();
 
-      expect(body).toEqual({
+      const expected: PatchTodosRouteResponses[404] = {
         code: "NOT_FOUND",
         message: "Todo not found",
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 
@@ -285,12 +298,13 @@ describe("PATCH /todos/:id", () => {
       // Assert
       expect(response.statusCode).toBe(404);
 
-      const body = response.json<PatchTodosRouteResponses[404]>();
+      const body = response.json();
 
-      expect(body).toEqual({
+      const expected: PatchTodosRouteResponses[404] = {
         code: "NOT_FOUND",
         message: "Todo not found",
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 
@@ -310,12 +324,13 @@ describe("PATCH /todos/:id", () => {
       // Assert
       expect(response.statusCode).toBe(400);
 
-      const body = response.json<PatchTodosRouteResponses[400]>();
+      const body = response.json();
 
-      expect(body).toEqual({
+      const expected: PatchTodosRouteResponses[400] = {
         code: "VALIDATION_ERROR",
         message: expect.any(String),
-      });
+      };
+      expect(body).toEqual(expected);
     });
   });
 

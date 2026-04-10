@@ -54,8 +54,10 @@ describe("cross-user todo isolation", () => {
     });
 
     // Assert
-    const body = response.json<GetTodosRouteResponses[200]>();
-    expect(body.todos).toEqual([]);
+    const body = response.json();
+
+    const expected: GetTodosRouteResponses[200] = { todos: [] };
+    expect(body).toEqual(expected);
   });
 
   it("user B cannot PATCH user A's todo (returns 404)", async () => {
@@ -116,7 +118,7 @@ describe("cross-user todo isolation", () => {
       url: "/todos",
       headers: userBHeaders,
     });
-    expect(listB.json<GetTodosRouteResponses[200]>().todos).toHaveLength(1);
+    expect(listB.json().todos).toHaveLength(1);
 
     // Assert — user A does not see it
     const listA = await app.inject({
@@ -124,6 +126,8 @@ describe("cross-user todo isolation", () => {
       url: "/todos",
       headers: userAHeaders,
     });
-    expect(listA.json<GetTodosRouteResponses[200]>().todos).toEqual([]);
+
+    const expectedEmpty: GetTodosRouteResponses[200] = { todos: [] };
+    expect(listA.json()).toEqual(expectedEmpty);
   });
 });
