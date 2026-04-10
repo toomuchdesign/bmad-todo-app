@@ -1,6 +1,6 @@
 # Story 6.2: Auth middleware — JWT verification and test infrastructure migration
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -364,6 +364,16 @@ nginx strips the `/api` prefix before forwarding. In `app.inject()` tests, alway
 - Epic 6 definition: [_bmad-output/planning-artifacts/epics.md](_bmad-output/planning-artifacts/epics.md) — Story 6.2
 - Shared constants: [packages/shared/src/constants.ts](packages/shared/src/constants.ts)
 - Project context: [project-context.md](project-context.md)
+
+### Review Findings
+
+- [x] [Review][Decision] Invalid JWT silently falls through to x-user-id fallback — accepted as-is for dual-mode window; Story 6.3 must reject immediately if Bearer header is present (whether valid or not) once x-user-id fallback is removed entirely
+- [x] [Review][Patch] JWT missing `userId` claim bypasses 401 and sets `request.userId` to `undefined` — `app.jwt.verify<{ userId: string }>()` is a generic cast, not a runtime validation; if payload lacks `userId`, the hook returns early with `request.userId = undefined` [packages/api/src/plugins/jwt-auth.ts:25-27]
+- [x] [Review][Defer] x-user-id fallback issues DB query for any non-empty string — plugin runs at `onRequest` (before schema validation), so the `format: uuid` constraint on `x-user-id` no longer blocks malformed values before the DB round-trip [packages/api/src/plugins/jwt-auth.ts:34-47] — deferred, removed entirely in Story 6.3
+- [x] [Review][Patch] Stale JSDoc in authRoutes still references deleted `validateUserPlugin` — fixed [packages/api/src/routes/auth/index.ts:18]
+- [x] [Review][Defer] `decorateRequest("userId", "")` initializes to empty string — pre-existing pattern, routes outside the plugin scope silently receive `""` [packages/api/src/plugins/jwt-auth.ts:18] — deferred, pre-existing
+- [x] [Review][Defer] Hardcoded `"test-password-123"` in `createTestUser` — test-only, no real risk today [packages/api/test/test-utils/db.ts:~62] — deferred, test-only
+- [x] [Review][Defer] `Authorization: Bearer ` (empty after prefix) silently falls through to x-user-id — spec-compliant but untested edge case [packages/api/src/plugins/jwt-auth.ts:22-30] — deferred, spec-compliant transitional behavior
 
 ## Dev Agent Record
 

@@ -22,11 +22,23 @@ export const jwtAuthPlugin: FastifyPluginAsync = async (app) => {
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.slice(7); // "Bearer ".length
       try {
-        const decoded = app.jwt.verify<{ userId: string }>(token);
+        // Widen to unknown so we can perform explicit runtime narrowing below
+        const decoded = app.jwt.verify(token);
+        if (!decoded || typeof decoded !== "object") {
+          throw new Error("invalid token payload");
+        }
+        if (!("userId" in decoded)) {
+          throw new Error("invalid token payload: missing userId claim");
+        }
+        if (typeof decoded.userId !== "string" || !decoded.userId) {
+          throw new Error(
+            "invalid token payload: userId must be a non-empty string",
+          );
+        }
         request.userId = decoded.userId;
         return;
       } catch {
-        // Invalid/expired token — fall through to x-user-id fallback
+        // Invalid/expired/malformed token — fall through to x-user-id fallback
       }
     }
 
