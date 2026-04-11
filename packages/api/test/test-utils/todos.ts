@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { eq, sql } from "drizzle-orm";
-import { DEFAULT_USER_ID } from "shared";
+import { eq } from "drizzle-orm";
 import { todos } from "../../src/db/schema.js";
 import { getTestDb } from "./db.js";
 
@@ -20,28 +19,20 @@ export type SeedTodoInput = Omit<
 
 /**
  * Builds a SeedTodoInput with sensible defaults, overridable per-field.
+ * Requires userId explicitly — no default user fallback.
  */
 export function makeSeedTodo(
-  overrides?: Partial<SeedTodoInput>,
+  overrides: Partial<Omit<SeedTodoInput, "userId">> & { userId: string },
 ): SeedTodoInput {
   return {
     id: randomUUID(),
     title: "seed todo",
     text: "",
     completed: false,
-    userId: DEFAULT_USER_ID,
     createdAt: "2026-01-01T00:00:00.000Z",
     updatedAt: "2026-01-01T00:00:00.000Z",
     ...overrides,
   };
-}
-
-/**
- * Drops the todos table to simulate unexpected DB failures.
- */
-export async function dropTodosTable(): Promise<void> {
-  const db = getTestDb();
-  await db.execute(sql`DROP TABLE IF EXISTS todos`);
 }
 
 /**

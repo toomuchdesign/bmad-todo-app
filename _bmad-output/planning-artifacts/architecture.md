@@ -559,12 +559,9 @@ bmad-todo/
 │   │   │   │   ├── auth/
 │   │   │   │   │   ├── index.ts            # auth route handlers (POST /auth/register, /auth/login, /auth/logout)
 │   │   │   │   │   └── schemas.ts          # auth-specific route schemas & response types
-│   │   │   │   ├── todos/
-│   │   │   │   │   ├── index.ts            # todo route handlers (GET/POST/PATCH/DELETE /todos)
-│   │   │   │   │   └── schemas.ts          # todo-specific route schemas & response types
-│   │   │   │   └── users/
-│   │   │   │       ├── index.ts            # user route handlers (POST /users)
-│   │   │   │       └── schemas.ts          # user-specific route schemas & response types
+│   │   │   │   └── todos/
+│   │   │   │       ├── index.ts            # todo route handlers (GET/POST/PATCH/DELETE /todos)
+│   │   │   │       └── schemas.ts          # todo-specific route schemas & response types
 │   │   ├── drizzle.config.ts               # drizzle-kit config
 │   │   ├── drizzle/
 │   │   │   └── migrations/                 # generated migrations
@@ -593,6 +590,7 @@ bmad-todo/
 │       │   ├── App.tsx
 │       │   ├── App.module.css
 │       │   ├── App.test.tsx                # integration tests: load/structure
+│       │   ├── App.auth.test.tsx            # integration tests: auth gate
 │       │   ├── App.create-todo.test.tsx    # integration tests: create flow
 │       │   ├── index.css                   # imports tokens, global resets, base typography
 │       │   ├── contracts.ts                # re-exports from shared
@@ -603,6 +601,7 @@ bmad-todo/
 │       │   │   ├── helpers.ts              # TypeScript response-type helpers
 │       │   │   └── generated/              # OpenAPI-generated types/client
 │       │   ├── hooks/
+│       │   │   ├── useAuth.ts              # JWT auth state backed by localStorage
 │       │   │   └── useTodos.ts             # React state + load/retry + mutations
 │       │   ├── test-utils/
 │       │   │   └── index.ts                # shared fixtures + fetch mock helpers

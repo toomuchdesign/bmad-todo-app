@@ -13,7 +13,6 @@ import { errorHandlerPlugin } from "./plugins/error-handler.js";
 import { requestIdPlugin } from "./plugins/request-id.js";
 import { authRoutes } from "./routes/auth/index.js";
 import { todosRoutes } from "./routes/todos/index.js";
-import { usersRoutes } from "./routes/users/index.js";
 
 export async function buildApp(
   options: FastifyServerOptions = {},
@@ -51,7 +50,6 @@ export async function buildApp(
 
   app.register(authRoutes);
   app.register(todosRoutes);
-  app.register(usersRoutes);
 
   app.addHook("onClose", async () => {
     await closeDb();

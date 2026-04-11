@@ -15,7 +15,7 @@ type AuthScopingTestsInput = () => {
 export function runUserScopingTests(getContext: AuthScopingTestsInput): void {
   describe("auth scoping", () => {
     it("returns 401 when no auth is provided", async () => {
-      // Arrange — strip both authorization and x-user-id headers
+      // Arrange — strip authorization header
       const { app, injectInput } = getContext();
       const { headers: _headers, ...rest } = injectInput;
 

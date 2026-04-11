@@ -1,11 +1,6 @@
-import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
-import type { FastifyInstance } from "fastify";
 import { Pool } from "pg";
-import { DEFAULT_USER_ID } from "shared";
-import { afterAll, beforeAll, beforeEach } from "vitest";
-import { buildApp } from "../../src/app.js";
 import * as schema from "../../src/db/schema.js";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -44,43 +39,6 @@ export async function closeTestDb(): Promise<void> {
 }
 
 /**
- * Creates a unique test user via POST /auth/register and returns its ID and
- * Bearer auth headers. Intended for per-file beforeAll setup to enable
- * parallel test execution.
- */
-export async function createTestUser({
-  app,
-}: {
-  app: FastifyInstance;
-}): Promise<{
-  userId: string;
-  headers: Record<string, string>;
-}> {
-  const response = await app.inject({
-    method: "POST",
-    url: "/auth/register",
-    payload: {
-      email: `test-${randomUUID()}@test.local`,
-      password: "test-password-123",
-      name: `test-user-${randomUUID()}`,
-    },
-  });
-
-  if (response.statusCode !== 201) {
-    throw new Error(
-      `createTestUser failed: ${response.statusCode} ${response.body}`,
-    );
-  }
-
-  const body = response.json<{ user: { id: string }; token: string }>();
-
-  return {
-    userId: body.user.id,
-    headers: { authorization: `Bearer ${body.token}` },
-  };
-}
-
-/**
  * Deletes all todos belonging to a specific user.
  * Used in per-file beforeEach to isolate test data without affecting other files.
  */
@@ -105,73 +63,12 @@ export async function deleteUser({
   await db.delete(schema.users).where(eq(schema.users.id, userId));
 }
 
-export type TestContext = {
-  app: FastifyInstance;
-  testUserId: string;
-  testHeaders: Record<string, string>;
-};
-
 /**
- * Registers beforeAll/afterAll/beforeEach hooks that build the app, create an
- * isolated test user, and clean up that user's todos between tests.
- * Returns a getter for the context (values are available once beforeAll runs).
- */
-export function createTestContext(): () => TestContext {
-  let app: FastifyInstance;
-  let testUserId: string;
-  let testHeaders: Record<string, string>;
-
-  beforeAll(async () => {
-    app = await buildApp({ logger: false });
-    ({ userId: testUserId, headers: testHeaders } = await createTestUser({
-      app,
-    }));
-  });
-
-  afterAll(async () => {
-    // Delete todos before the user to satisfy the FK constraint (no CASCADE on the FK).
-    if (testUserId) {
-      await cleanupUserTodos({ userId: testUserId });
-      await deleteUser({ userId: testUserId });
-    }
-    if (app) {
-      await app.close();
-    }
-  });
-
-  beforeEach(async () => {
-    if (!testUserId) {
-      throw new Error("testUserId not initialized — beforeAll may have failed");
-    }
-    await cleanupUserTodos({ userId: testUserId });
-  });
-
-  return () => {
-    if (!app) {
-      throw new Error("getContext() called before beforeAll completed");
-    }
-    return { app, testUserId, testHeaders };
-  };
-}
-
-/**
- * Deletes all rows from application tables and re-seeds the default user.
+ * Deletes all rows from application tables.
  * Used by the db-reset script — not called from tests (per-user cleanup is preferred).
  */
 export async function cleanupTestDatabase(): Promise<void> {
   const db = getTestDb();
   await db.delete(schema.todos);
   await db.delete(schema.users);
-  const now = new Date();
-  await db
-    .insert(schema.users)
-    .values({
-      id: DEFAULT_USER_ID,
-      name: "Default User",
-      email: "seed@example.com",
-      passwordHash: "no-auth",
-      createdAt: now,
-      updatedAt: now,
-    })
-    .onConflictDoNothing();
 }

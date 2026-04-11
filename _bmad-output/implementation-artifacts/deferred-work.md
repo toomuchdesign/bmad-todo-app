@@ -127,6 +127,12 @@
 - Hardcoded `"test-password-123"` in `createTestUser` — test-only, intentional; if the auth endpoint ever enforces password strength, test setup breaks with a misleading error.
 - `Authorization: Bearer ` (empty after prefix) silently falls through to x-user-id fallback — spec-compliant dual-mode behavior, untested edge case.
 
+## Deferred from: code review of 6-3-web-auth-login-register-ui-routing-and-legacy-auth-removal (2026-04-11)
+
+- JWT stored in `localStorage` is XSS-vulnerable — architectural decision documented in ADR; Bearer token over httpOnly cookies was a deliberate Story 6.1 deviation. Address in a future auth hardening story.
+- No credential recovery path after logout — random UUID credentials are never shown to the user; acknowledged scope limitation of temporary UI. Story 6.4 replaces this with real login/register forms.
+- `AUTH_TOKEN_KEY` is a hardcoded string literal in test `localStorage.setItem` calls rather than imported from `useAuth.ts` — minor DX concern; importing would couple tests to implementation internals.
+
 ## Deferred from: code review of 6-2-1-parallelize-e2e-tests-with-per-user-isolation (2026-04-10)
 
 - `create-todo.spec.ts` test 3 implicitly depends on test 2's accumulated DB state — spec designed for sequential accumulation (`fullyParallel: false`); fragile if tests are individually retried or skipped.

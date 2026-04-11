@@ -6,31 +6,15 @@ import {
 
 import type { InferRouteResponses } from "../shared/schemas.js";
 import {
+  authenticatedRequestHeadersSchema,
   errorResponseSchema,
-  requestHeadersSchema,
   responseHeadersSchema,
 } from "../shared/schemas.js";
-
-const todoRequestHeadersSchema = {
-  type: "object",
-  properties: {
-    ...requestHeadersSchema.properties,
-    "x-user-id": {
-      type: "string",
-      format: "uuid",
-      description: "Legacy user ID header (dual-mode transition)",
-    },
-    authorization: {
-      type: "string",
-      description: "Bearer JWT token",
-    },
-  },
-} as const;
 
 export const getTodosRouteSchema = {
   tags: ["todos"],
   summary: "List todos",
-  headers: todoRequestHeadersSchema,
+  headers: authenticatedRequestHeadersSchema,
   response: {
     200: {
       headers: responseHeadersSchema,
@@ -54,7 +38,7 @@ export type GetTodosRouteResponses = InferRouteResponses<
 export const postTodosRouteSchema = {
   tags: ["todos"],
   summary: "Create todo",
-  headers: todoRequestHeadersSchema,
+  headers: authenticatedRequestHeadersSchema,
   body: {
     type: "object",
     required: ["title"],
@@ -89,7 +73,7 @@ export type PostTodosRouteResponses = InferRouteResponses<
 export const patchTodosRouteSchema = {
   tags: ["todos"],
   summary: "Update todo",
-  headers: todoRequestHeadersSchema,
+  headers: authenticatedRequestHeadersSchema,
   params: {
     type: "object",
     required: ["id"],
@@ -134,7 +118,7 @@ export type PatchTodosRouteResponses = InferRouteResponses<
 export const deleteTodosRouteSchema = {
   tags: ["todos"],
   summary: "Delete todo",
-  headers: todoRequestHeadersSchema,
+  headers: authenticatedRequestHeadersSchema,
   params: {
     type: "object",
     required: ["id"],

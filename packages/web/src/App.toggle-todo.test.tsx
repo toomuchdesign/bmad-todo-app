@@ -3,10 +3,17 @@
 import fetchMock from "@fetch-mock/vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { DEFAULT_USER_ID, type Todo } from "shared";
-import { describe, expect, it } from "vitest";
+import type { Todo } from "shared";
+import { beforeEach, describe, expect, it } from "vitest";
 import { App } from "./App";
 import { createDeferred, TODO_FIXTURES } from "./test-utils";
+
+const TEST_USER_ID = "test-user-id";
+
+beforeEach(() => {
+  localStorage.setItem("auth_token", "test-token");
+  fetchMock.post("/api/auth/logout", 204);
+});
 
 describe("App", () => {
   describe("toggle todo flow", () => {
@@ -17,7 +24,7 @@ describe("App", () => {
         title: "Buy milk",
         text: "",
         completed: true,
-        userId: DEFAULT_USER_ID,
+        userId: TEST_USER_ID,
         createdAt: "2026-03-01T10:00:00.000Z",
         updatedAt: "2026-03-30T10:00:00.000Z",
       };
@@ -45,10 +52,10 @@ describe("App", () => {
         ).toBeChecked();
       });
 
-      // Verify PATCH was called with the correct body and x-user-id header
+      // Verify PATCH was called with the correct body and auth header
       expect(fetchMock).toHavePatched("express:/api/todos/:id", {
         body: { completed: true },
-        headers: { "x-user-id": DEFAULT_USER_ID },
+        headers: { authorization: "Bearer test-token" },
       });
     });
 

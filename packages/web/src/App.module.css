@@ -6,6 +6,13 @@
   flex-grow: 1;
 }
 
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 0 var(--s-space-4);
+}
+
 .title {
   font-size: var(--s-font-size-2xl);
   letter-spacing: -0.5px;
