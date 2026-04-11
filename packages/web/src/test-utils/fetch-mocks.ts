@@ -1,4 +1,6 @@
-import { DEFAULT_USER_ID, type Todo } from "shared";
+import type { Todo } from "shared";
+
+const TEST_USER_ID = "00000000-0000-4000-8000-000000000001";
 
 export const TODO_FIXTURES: Todo[] = [
   {
@@ -6,7 +8,7 @@ export const TODO_FIXTURES: Todo[] = [
     title: "Buy milk",
     text: "",
     completed: false,
-    userId: DEFAULT_USER_ID,
+    userId: TEST_USER_ID,
     createdAt: "2026-03-01T10:00:00.000Z",
     updatedAt: "2026-03-01T10:00:00.000Z",
   },
@@ -15,7 +17,7 @@ export const TODO_FIXTURES: Todo[] = [
     title: "Walk the dog",
     text: "Take the usual route through the park",
     completed: true,
-    userId: DEFAULT_USER_ID,
+    userId: TEST_USER_ID,
     createdAt: "2026-03-02T12:00:00.000Z",
     updatedAt: "2026-03-02T14:00:00.000Z",
   },

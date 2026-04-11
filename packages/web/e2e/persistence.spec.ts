@@ -3,21 +3,17 @@ import { expect, test } from "@playwright/test";
 import { registerTestUser } from "./test-utils";
 
 // Module-scoped: shared across all tests within this spec file
-let userId: string;
+let authToken: string;
 
 test.beforeAll(async ({ request }) => {
-  userId = await registerTestUser({ request });
+  const { token } = await registerTestUser({ request });
+  authToken = token;
 });
 
 test.beforeEach(async ({ page }) => {
-  // Intercept all API requests and inject the per-spec user ID (dual-mode fallback).
-  // page.route() persists across page.goto() and page.reload() calls for the lifetime of this page.
-  // TODO(story 6.3): remove this header injection once dual-mode is dropped and JWT auth is required.
-  await page.route("**/api/**", (route) => {
-    route.continue({
-      headers: { ...route.request().headers(), "x-user-id": userId },
-    });
-  });
+  await page.addInitScript(
+    `localStorage.setItem("auth_token", ${JSON.stringify(authToken)})`,
+  );
 });
 
 test.describe("data persistence", () => {

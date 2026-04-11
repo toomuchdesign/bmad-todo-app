@@ -461,21 +461,11 @@
           },
           {
             "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "header",
-            "name": "x-user-id",
-            "required": false,
-            "description": "Legacy user ID header (dual-mode transition)"
-          },
-          {
-            "schema": {
               "type": "string"
             },
             "in": "header",
             "name": "authorization",
-            "required": false,
+            "required": true,
             "description": "Bearer JWT token"
           }
         ],
@@ -626,21 +616,11 @@
           },
           {
             "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "header",
-            "name": "x-user-id",
-            "required": false,
-            "description": "Legacy user ID header (dual-mode transition)"
-          },
-          {
-            "schema": {
               "type": "string"
             },
             "in": "header",
             "name": "authorization",
-            "required": false,
+            "required": true,
             "description": "Bearer JWT token"
           }
         ],
@@ -822,21 +802,11 @@
           },
           {
             "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "header",
-            "name": "x-user-id",
-            "required": false,
-            "description": "Legacy user ID header (dual-mode transition)"
-          },
-          {
-            "schema": {
               "type": "string"
             },
             "in": "header",
             "name": "authorization",
-            "required": false,
+            "required": true,
             "description": "Bearer JWT token"
           }
         ],
@@ -1021,21 +991,11 @@
           },
           {
             "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "in": "header",
-            "name": "x-user-id",
-            "required": false,
-            "description": "Legacy user ID header (dual-mode transition)"
-          },
-          {
-            "schema": {
               "type": "string"
             },
             "in": "header",
             "name": "authorization",
-            "required": false,
+            "required": true,
             "description": "Bearer JWT token"
           }
         ],
@@ -1084,158 +1044,6 @@
             }
           },
           "404": {
-            "description": "Default Response",
-            "headers": {
-              "x-request-id": {
-                "schema": {
-                  "required": true,
-                  "type": "string"
-                },
-                "description": "Request correlation identifier"
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Default Response",
-            "headers": {
-              "x-request-id": {
-                "schema": {
-                  "required": true,
-                  "type": "string"
-                },
-                "description": "Request correlation identifier"
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string"
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/users": {
-      "post": {
-        "summary": "Create user",
-        "tags": [
-          "users"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "name"
-                ],
-                "additionalProperties": false,
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100,
-                    "pattern": ".*\\S.*"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "header",
-            "name": "x-request-id",
-            "required": false,
-            "description": "Optional correlation ID for request tracing. If provided, the API echoes it back in the response; otherwise a new UUID is generated."
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Default Response",
-            "headers": {
-              "x-request-id": {
-                "schema": {
-                  "required": true,
-                  "type": "string"
-                },
-                "description": "Request correlation identifier"
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "id",
-                    "name",
-                    "email",
-                    "createdAt",
-                    "updatedAt"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "email": {
-                      "type": "string",
-                      "format": "email"
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
             "description": "Default Response",
             "headers": {
               "x-request-id": {

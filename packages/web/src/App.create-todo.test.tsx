@@ -2,10 +2,17 @@
 
 import fetchMock from "@fetch-mock/vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { DEFAULT_USER_ID, type Todo } from "shared";
-import { describe, expect, it } from "vitest";
+import type { Todo } from "shared";
+import { beforeEach, describe, expect, it } from "vitest";
 import { App } from "./App";
 import { TODO_FIXTURES } from "./test-utils";
+
+const TEST_USER_ID = "test-user-id";
+
+beforeEach(() => {
+  localStorage.setItem("auth_token", "test-token");
+  fetchMock.post("/api/auth/logout", 204);
+});
 
 describe("App", () => {
   describe("create todo flow", () => {
@@ -16,7 +23,7 @@ describe("App", () => {
           title: "New task",
           text: "",
           completed: false,
-          userId: DEFAULT_USER_ID,
+          userId: TEST_USER_ID,
           createdAt: "2026-03-03T10:00:00.000Z",
           updatedAt: "2026-03-03T10:00:00.000Z",
         };
@@ -40,7 +47,7 @@ describe("App", () => {
         });
         expect(input).toHaveValue("");
         expect(fetchMock).toHavePosted("/api/todos", {
-          headers: { "x-user-id": DEFAULT_USER_ID },
+          headers: { authorization: "Bearer test-token" },
         });
       });
     });

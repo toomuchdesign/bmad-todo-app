@@ -14,6 +14,11 @@ const API_PREFIX = "/api";
 /** Runtime API paths (prefixed for proxy routing). */
 export const TODOS_API_PATH = `${API_PREFIX}${TODOS_SPEC_PATH}`;
 
+const AUTH_API_PREFIX = `${API_PREFIX}/auth`;
+export const AUTH_LOGIN_API_PATH = `${AUTH_API_PREFIX}/login`;
+export const AUTH_REGISTER_API_PATH = `${AUTH_API_PREFIX}/register`;
+export const AUTH_LOGOUT_API_PATH = `${AUTH_API_PREFIX}/logout`;
+
 /** Fields accepted by PATCH /todos/:id, derived from the API contract. */
 export type TodoUpdatableFields = ApiRequestBody<
   typeof TODO_BY_ID_SPEC_PATH,

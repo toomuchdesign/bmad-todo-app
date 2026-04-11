@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Todo } from "shared";
 
 import type { ApiResponses, TodoUpdatableFields } from "../contracts";
@@ -35,7 +35,17 @@ function extractErrorMessage(err: unknown, fallback: string): string {
 }
 
 /** Fetches todos on mount and exposes CRUD with optimistic updates. */
-function useTodos({ userId }: { userId: string }): UseTodosResult {
+function useTodos({
+  token,
+  onUnauthorized,
+}: {
+  token: string;
+  onUnauthorized: () => void;
+}): UseTodosResult {
+  const authHeaders = useMemo(
+    () => ({ authorization: `Bearer ${token}` }),
+    [token],
+  );
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +62,7 @@ function useTodos({ userId }: { userId: string }): UseTodosResult {
         ApiResponses<typeof TODO_BY_ID_SPEC_PATH, "patch">["200"]
       >(`${TODOS_API_PATH}/${id}`, {
         body: fields,
-        headers: { "x-user-id": userId },
+        headers: authHeaders,
         signal,
       }),
   });
@@ -63,16 +73,21 @@ function useTodos({ userId }: { userId: string }): UseTodosResult {
     try {
       const data = await httpClient.get<
         ApiResponses<typeof TODOS_SPEC_PATH, "get">["200"]
-      >(TODOS_API_PATH, { headers: { "x-user-id": userId } });
+      >(TODOS_API_PATH, { headers: authHeaders });
       setTodos(data.todos);
       setError(null);
     } catch (err) {
+      if (err instanceof HttpError && err.status === 401) {
+        setLoading(false);
+        onUnauthorized();
+        return;
+      }
       setTodos([]);
       setError(extractErrorMessage(err, GENERIC_ERROR_MESSAGE));
     }
 
     setLoading(false);
-  }, [userId]);
+  }, [authHeaders, onUnauthorized]);
 
   useEffect(() => {
     fetchTodos();
@@ -97,11 +112,15 @@ function useTodos({ userId }: { userId: string }): UseTodosResult {
         ApiResponses<typeof TODOS_SPEC_PATH, "post">["201"]
       >(TODOS_API_PATH, {
         body: { title, ...(text && { text }) },
-        headers: { "x-user-id": userId },
+        headers: authHeaders,
       });
       setTodos((prev) => [created, ...prev]);
       return true;
     } catch (err) {
+      if (err instanceof HttpError && err.status === 401) {
+        onUnauthorized();
+        return false;
+      }
       setError(extractErrorMessage(err, GENERIC_MUTATION_ERROR_MESSAGE));
       return false;
     }
@@ -118,6 +137,10 @@ function useTodos({ userId }: { userId: string }): UseTodosResult {
       const { success } = await mutate(id, fields);
       return success;
     } catch (err) {
+      if (err instanceof HttpError && err.status === 401) {
+        onUnauthorized();
+        return false;
+      }
       // 404 means the item is already gone server-side — remove from list
       if (err instanceof HttpError && err.status === 404) {
         setTodos((prev) => prev.filter((t) => t.id !== id));
@@ -134,11 +157,15 @@ function useTodos({ userId }: { userId: string }): UseTodosResult {
 
     try {
       await httpClient.del(`${TODOS_API_PATH}/${id}`, {
-        headers: { "x-user-id": userId },
+        headers: authHeaders,
       });
       setTodos((prev) => prev.filter((t) => t.id !== id));
       return true;
     } catch (err) {
+      if (err instanceof HttpError && err.status === 401) {
+        onUnauthorized();
+        return false;
+      }
       // 404 means the item is already gone server-side — treat as success
       if (err instanceof HttpError && err.status === 404) {
         setTodos((prev) => prev.filter((t) => t.id !== id));

@@ -9,7 +9,17 @@ export const requestHeadersSchema = {
       description:
         "Optional correlation ID for request tracing. If provided, the API echoes it back in the response; otherwise a new UUID is generated.",
     },
+    authorization: {
+      type: "string",
+      description: "Bearer JWT token",
+    },
   },
+} as const;
+
+/** Request headers for routes behind JWT auth — authorization is required. */
+export const authenticatedRequestHeadersSchema = {
+  ...requestHeadersSchema,
+  required: ["authorization"],
 } as const;
 
 export const responseHeadersSchema = {

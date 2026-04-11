@@ -2,7 +2,7 @@
 
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { DEFAULT_USER_ID, MAX_TODO_TITLE_LENGTH, type Todo } from "shared";
+import { MAX_TODO_TITLE_LENGTH, type Todo } from "shared";
 import { describe, expect, it, vi } from "vitest";
 import type { TodoUpdatableFields } from "../contracts";
 import { TodoItem } from "./TodoItem";
@@ -12,7 +12,7 @@ const incompleteTodo: Todo = {
   title: "Buy milk",
   text: "",
   completed: false,
-  userId: DEFAULT_USER_ID,
+  userId: "test-user-id",
   createdAt: "2026-03-01T10:00:00.000Z",
   updatedAt: "2026-03-01T10:00:00.000Z",
 };
@@ -22,7 +22,7 @@ const incompleteTodoWithDescription: Todo = {
   title: "Buy milk",
   text: "Whole milk from the store",
   completed: false,
-  userId: DEFAULT_USER_ID,
+  userId: "test-user-id",
   createdAt: "2026-03-01T10:00:00.000Z",
   updatedAt: "2026-03-01T10:00:00.000Z",
 };
@@ -32,7 +32,7 @@ const completedTodo: Todo = {
   title: "Walk the dog",
   text: "Take the usual route through the park",
   completed: true,
-  userId: DEFAULT_USER_ID,
+  userId: "test-user-id",
   createdAt: "2026-03-02T12:00:00.000Z",
   updatedAt: "2026-03-02T14:00:00.000Z",
 };
