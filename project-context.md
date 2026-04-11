@@ -215,6 +215,7 @@ update all relevant documentation before considering the task complete.
 - `CLAUDE.md / constitution.md / project-context.md / architecture.md` — if workflows, commands, or project structure changed
 - `README.md` — if setup, usage, or architecture overview is affected
 - `docs/` — any affected design docs, ADRs, or diagrams
+- `docs/mockups/` — if any UI layout or screen design changed (see UX Mockups section below)
 - Other agent-specific files (e.g. `AGENTS.md`, `CONTEXT.md`, system prompts)
 
 **For architectural decisions specifically:**
@@ -246,6 +247,58 @@ An agent task is complete only when:
 - [ ] No lint, formatting, or type errors
 - [ ] No dead code, unused imports, or leftover debug statements
 - [ ] Commit message follows Conventional Commits spec
+
+---
+
+## UX Mockups
+
+`docs/mockups/` is the canonical home for UI mockup sources and their rendered screenshots.
+
+### Structure
+
+```
+docs/mockups/
+  auth-ui.html          ← self-contained HTML mockup using real design tokens (no build needed)
+  screenshots/
+    auth-ui-login.png
+    auth-ui-login-error.png
+    auth-ui-register.png
+    auth-ui-todo-authenticated.png
+    auth-ui-all-screens.png
+```
+
+### Rules
+
+- Mockup HTML files use the **actual design tokens** from `packages/web/src/tokens/` — inlined verbatim so they render correctly without a build step.
+- Screenshots are committed alongside the HTML source and referenced from the relevant ADR (`docs/decisions/`).
+- One HTML file per feature area (e.g. `auth-ui.html`, `todo-list.html`). Do not merge unrelated screens into a single file.
+
+### When to update mockups
+
+Mockups **must** be kept in sync with design decisions. Update them when:
+
+- A UX layout ADR is created or revised
+- New screens or states are added to a flow
+- Design tokens change in a way that visually affects a mocked screen
+- Implementation reveals a gap between the mockup and the final UI (update the mockup to match intent, or file a decision if the gap reflects a deliberate change)
+
+### How to update and re-screenshot
+
+1. Edit `docs/mockups/<name>.html` directly — it is plain HTML/CSS, no build required.
+2. Serve it temporarily via the dev server:
+   ```
+   cp docs/mockups/<name>.html packages/web/public/<name>.html
+   npm run dev
+   # open http://localhost:5173/<name>.html in Playwright or browser
+   ```
+3. Take screenshots and save them to `docs/mockups/screenshots/`.
+4. Remove the temp copy from `packages/web/public/`.
+5. Update any ADRs or UX spec sections that reference the screenshots.
+
+### Never
+
+- Store mockup sources in `.debug/` — that folder is git-ignored. Mockups are documentation and must be committed.
+- Use real app screenshots as design references — they show the current state, not the design intent.
 
 ---
 

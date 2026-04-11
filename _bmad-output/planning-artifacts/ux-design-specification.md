@@ -12,6 +12,8 @@ inputDocuments:
 **Author:** Andrea
 **Date:** 2026-03-26
 
+> **Rendered mockups:** [`docs/mockups/`](../../docs/mockups/) — self-contained HTML files using the real design tokens, with committed screenshots. Update mockups whenever a screen layout or design decision changes. See `project-context.md § UX Mockups` for the full workflow.
+
 ---
 
 ## Executive Summary
@@ -93,19 +95,84 @@ The core loop is:
 
 ## Information Architecture
 
-### Primary Screen
+### App Shell
 
-- **Todo List Screen** (single route/view)
-  - Header/title
+All screens share a persistent `AppHeader` component (see [ADR: Auth UI Layout](../../docs/decisions/adr-auth-ui-layout.md)):
+
+```
+Unauthenticated:   [Todos]          [Log in]  [Register]
+Authenticated:     [Todos]                      [Log out]
+```
+
+The header right-hand content adapts to auth state. Below the header, the active screen is rendered conditionally.
+
+### Screens
+
+- **Login Screen** — shown when no auth token is present (default unauthenticated landing)
+  - Persistent `AppHeader` with `Log in` active
+  - Email and password fields
+  - "Don't have an account? Register" link (navigates to Register screen)
+
+- **Register Screen** — reachable from the Login screen
+  - Persistent `AppHeader` with `Register` active
+  - Name, email, and password fields
+  - "Already have an account? Log in" link (navigates to Login screen)
+
+- **Todo List Screen** — shown when a valid auth token is present
+  - Persistent `AppHeader` with `Log out` button
   - Global error region (persistent until dismissed or resolved)
   - Add todo form
   - List state region (loading | empty | list)
 
 **Create/edit are contextual:** there is **no dedicated page** for creating or editing tasks. The user stays on the Todo List screen; creation happens in the Add form and editing happens in-context.
 
-No secondary screens in MVP.
+### Horizontal Alignment System
+
+All page-level content aligns to a single horizontal edge: `var(--s-space-4)` (16px) margin from each side of the `#root` container. This applies to:
+
+- Header elements (`margin: 0 var(--s-space-4)`)
+- Auth form fields (form uses the same margin)
+- Todo list and add form (existing convention)
+- Error banners (full-width background, inner content respects the margin)
+
+Do not use padding on the `main` element for horizontal alignment — it prevents full-width background fills from reaching the container edges.
 
 ## Core Screens (Wireframe-Level)
+
+### Screen: Login (Default unauthenticated)
+
+**Header area**
+
+- `AppHeader`: "Todos" title left, "Log in" (active/bold) + "Register" links right
+
+**Form area**
+
+- Email field (type="email", required)
+- Password field (type="password", required)
+- Submit button "Log in" (disabled + "Logging in…" during request)
+- Inline error region (role="alert") — displays 401 errors from the server; not the GlobalErrorBanner
+
+**Footer link**
+
+- "Don't have an account? Register" — switches to Register screen
+
+### Screen: Register
+
+**Header area**
+
+- `AppHeader`: "Todos" title left, "Log in" + "Register" (active/bold) links right
+
+**Form area**
+
+- Name field (type="text", required)
+- Email field (type="email", required)
+- Password field (type="password", required, min 8 chars)
+- Submit button "Create account" (disabled + "Creating account…" during request)
+- Inline error region (role="alert") — displays 409 errors from the server
+
+**Footer link**
+
+- "Already have an account? Log in" — switches to Login screen
 
 ### Screen: Todo List (Default)
 
@@ -271,12 +338,35 @@ A consistent global error surface used for:
 - After delete:
   - Move focus to the next logical control (next item’s toggle) or back to add input if list becomes empty.
 - After global error appears: do not steal focus; announce via aria-live.
+- After auth screen switch (login ↔ register): move focus to the first field of the new form.
 
 ### Ordering Feedback
 
 - After successful create, the new todo appears at the **top** of the list.
 
 ## User Journey Flows
+
+### Journey 0 — Register and log in for the first time
+
+```mermaid
+flowchart TD
+  A[Open app, no token] --> B[Show Login screen]
+  B --> C[User clicks Register]
+  C --> D[Show Register screen, focus on Name field]
+  D --> E[User fills name, email, password]
+  E --> F{Valid?}
+  F -->|No| G[Inline validation, preserve inputs]
+  F -->|Yes| H[POST /api/auth/register]
+  H -->|201 success| I[Store token, show Todo list]
+  H -->|409 email taken| J[Inline error on form]
+  I --> K[User works on todos]
+  K --> L[User clicks Log out]
+  L --> M[Clear token, show Login screen]
+  M --> N[User fills email + password]
+  N --> O[POST /api/auth/login]
+  O -->|200 success| P[Store token, show Todo list]
+  O -->|401 invalid credentials| Q[Inline error on form]
+```
 
 ### Journey 1 — Capture a task immediately (Happy path)
 
@@ -342,8 +432,14 @@ flowchart TD
 
 ## Component Strategy (Implementation-facing)
 
-### Core UI Components (MVP)
+### Core UI Components (MVP + Auth — Story 6.4)
 
+- **AppHeader** — persistent adaptive header (see [ADR: Auth UI Layout](../../docs/decisions/adr-auth-ui-layout.md))
+  - Title ("Todos") — always present
+  - Right slot: `Log in` + `Register` nav links (unauthenticated) or `Log out` button (authenticated)
+  - Active nav link is visually distinguished (bold or accent underline)
+- **LoginForm** — email + password fields, submit, inline server error
+- **RegisterForm** — name + email + password fields, submit, inline server error
 - App shell (single page)
 - Global error banner
 - AddTodoForm

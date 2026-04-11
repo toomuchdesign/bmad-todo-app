@@ -1208,6 +1208,19 @@ So that I can access my todos securely on any device without losing my data.
 - Auth errors are form-level, not routed through the `GlobalErrorBanner`
 - The `useAuth` hook (introduced in Story 6.3) is unchanged — `login(token)` and `logout()` stay the same
 
+**UI refactoring scope (decided in `docs/decisions/adr-auth-ui-layout.md`):**
+
+This story includes a structural refactor of the app shell — not just new form components. An implementor must:
+
+- Extract a shared `AppHeader` component from `TodoApp` (currently an inline `<div class="header">`).
+  - Unauthenticated: renders "Log in" and "Register" nav links; active view is visually distinguished (accent colour + underline).
+  - Authenticated: renders the "Log out" button (styled as a ghost button with border, replacing the current unstyled `<button>`).
+- Retire `AuthGate` entirely. `App` renders `<AppHeader>` at the top of every screen, then conditionally renders `<LoginForm>`, `<RegisterForm>`, or `<TodoApp>` below.
+- Apply the horizontal alignment system across all screens: all page-level content (header, form fields, todo list) aligns to a `var(--s-space-4)` (16px) margin from each side of the `#root` container. Auth form fields must match this edge — not be narrower or offset differently.
+- `TodoApp` no longer renders its own header div — it receives `onLogout` and passes it up to `App`, which passes it to `AppHeader`.
+
+Rendered mockups are in [`docs/mockups/auth-ui.html`](../../docs/mockups/auth-ui.html) with screenshots in [`docs/mockups/screenshots/`](../../docs/mockups/screenshots/). Update them if the implementation deviates from the design.
+
 ### Backlog: GET /api/auth/me
 
 Deferred. Returns the currently authenticated user. Not needed until the UI requires displaying user profile info. Can be added when profile features are introduced.

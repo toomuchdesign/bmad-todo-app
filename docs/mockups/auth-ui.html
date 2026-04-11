@@ -1,0 +1,553 @@
+<!--
+  UX Mockup — Auth UI (Story 6.4)
+  ================================
+  This file is the living source for all auth screen mockups.
+  It uses the real design tokens from packages/web/src/tokens/ inlined
+  so it renders accurately without a build step.
+
+  HOW TO UPDATE
+  -------------
+  1. Edit the HTML/CSS in this file to reflect design changes.
+  2. Serve it via the dev server:
+       npm run dev
+       open http://localhost:5173/ux-mockups.html   (copy file to packages/web/public/ first)
+     OR open it via any static file server.
+  3. Take fresh screenshots and save them to docs/mockups/screenshots/:
+       - auth-ui-login.png
+       - auth-ui-login-error.png
+       - auth-ui-register.png
+       - auth-ui-todo-authenticated.png
+       - auth-ui-all-screens.png
+  4. Update docs/decisions/adr-auth-ui-layout.md if the decision changed.
+  5. Update _bmad-output/planning-artifacts/ux-design-specification.md
+     if the information architecture or component strategy changed.
+
+  WHEN TO UPDATE
+  --------------
+  - Any UX layout decision changes (ADR must be updated too)
+  - New screens or states added to the auth flow
+  - Design token changes that visually affect auth screens
+  - Story 6.4 implementation reveals a gap between mockup and final UI
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>bmad-todo — UX Mockups (Story 6.4)</title>
+    <style>
+      /* ── Primitives ── */
+      :root {
+        --p-gray-100: #f3f4f6;
+        --p-gray-400: #9ca3af;
+        --p-gray-500: #6b6375;
+        --p-gray-900: #08060d;
+        --p-purple-400: #c084fc;
+        --p-purple-600: #aa3bff;
+        --p-red-600: #dc2626;
+        --p-indigo-400: #818cf8;
+        --p-indigo-500: #6366f1;
+        --p-indigo-600: #4f46e5;
+        --p-white: #fff;
+        --p-dark-bg: #16171d;
+        --p-dark-surface: #1f2028;
+        --p-dark-border: #2e303a;
+        --p-font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+      }
+
+      /* ── Semantic tokens ── */
+      :root {
+        --s-text: var(--p-gray-500);
+        --s-text-heading: var(--p-gray-900);
+        --s-text-error: var(--p-red-600);
+        --s-bg: var(--p-white);
+        --s-bg-accent: rgba(170, 59, 255, 0.1);
+        --s-bg-error: #fef2f2;
+        --s-border: #e5e4e7;
+        --s-border-accent: rgba(170, 59, 255, 0.5);
+        --s-border-focus: var(--p-indigo-500);
+        --s-border-error: #fecaca;
+        --s-accent: var(--p-purple-600);
+        --s-accent-hover: var(--p-indigo-600);
+        --s-focus-ring: rgba(99, 102, 241, 0.15);
+        --s-space-0-5: 2px;
+        --s-space-1: 4px;
+        --s-space-1-5: 6px;
+        --s-space-2: 8px;
+        --s-space-2-5: 10px;
+        --s-space-3: 12px;
+        --s-space-4: 16px;
+        --s-space-5: 20px;
+        --s-space-8: 32px;
+        --s-space-12: 48px;
+        --s-radius-sm: 4px;
+        --s-radius-md: 6px;
+        --s-radius-lg: 8px;
+        --s-font-size-xs: 12px;
+        --s-font-size-sm: 13px;
+        --s-font-size-base: 14px;
+        --s-font-size-md: 16px;
+        --s-font-size-xl: 28px;
+        --s-font-size-2xl: 32px;
+        --s-font-body: var(--p-font-sans);
+        --s-font-heading: var(--p-font-sans);
+      }
+
+      /* ── Base ── */
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font: 18px / 145% var(--s-font-body);
+        letter-spacing: 0.18px;
+        color: var(--s-text);
+        background: #f0eef4;
+      }
+      h1,
+      h2 {
+        font-family: var(--s-font-heading);
+        font-weight: 500;
+        color: var(--s-text-heading);
+        margin: 0;
+      }
+      p {
+        margin: 0;
+      }
+      label {
+        display: block;
+        font-size: var(--s-font-size-sm);
+        color: var(--s-text);
+        margin-bottom: var(--s-space-1);
+      }
+
+      /* ── Gallery layout ── */
+      .gallery {
+        display: flex;
+        gap: 40px;
+        padding: 48px 40px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .screen-label {
+        text-align: center;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: #888;
+        margin-bottom: 12px;
+        font-family: system-ui;
+      }
+
+      /* ── App shell ── */
+      .app-shell {
+        width: 380px;
+        background: var(--s-bg);
+        border: 1px solid var(--s-border);
+        min-height: 520px;
+        display: flex;
+        flex-direction: column;
+        border-radius: 2px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+      }
+
+      /* ── AppHeader ── */
+      .app-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        padding: var(--s-space-8) var(--s-space-4) var(--s-space-4);
+      }
+      .app-title {
+        font-size: var(--s-font-size-xl);
+        letter-spacing: -0.5px;
+      }
+      .header-nav {
+        display: flex;
+        gap: var(--s-space-4);
+        align-items: baseline;
+      }
+      .nav-link {
+        font-size: var(--s-font-size-base);
+        color: var(--s-text);
+        text-decoration: none;
+        padding-bottom: 2px;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+      }
+      .nav-link.active {
+        color: var(--s-accent);
+        border-bottom-color: var(--s-accent);
+        font-weight: 500;
+      }
+      .btn-logout {
+        font-size: var(--s-font-size-base);
+        color: var(--s-text);
+        background: none;
+        border: 1px solid var(--s-border);
+        border-radius: var(--s-radius-md);
+        padding: var(--s-space-1) var(--s-space-3);
+        cursor: pointer;
+      }
+
+      /* ── Auth form ── */
+      .auth-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-space-4);
+        padding: var(--s-space-4) var(--s-space-4) var(--s-space-8);
+      }
+      .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-space-3);
+      }
+      .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-space-1);
+      }
+      .form-input {
+        padding: var(--s-space-2-5) var(--s-space-3);
+        font-size: var(--s-font-size-base);
+        border: 1px solid var(--s-border);
+        border-radius: var(--s-radius-md);
+        background: var(--s-bg);
+        color: var(--s-text);
+        outline: none;
+        width: 100%;
+      }
+      .form-input.error-field {
+        border-color: var(--s-border-error);
+      }
+      .field-error {
+        font-size: var(--s-font-size-sm);
+        color: var(--s-text-error);
+      }
+      .inline-server-error {
+        font-size: var(--s-font-size-sm);
+        color: var(--s-text-error);
+        background: var(--s-bg-error);
+        border: 1px solid var(--s-border-error);
+        border-radius: var(--s-radius-md);
+        padding: var(--s-space-2) var(--s-space-3);
+      }
+      .submit-btn {
+        padding: var(--s-space-2-5) var(--s-space-5);
+        font-size: var(--s-font-size-base);
+        font-weight: 500;
+        border: none;
+        border-radius: var(--s-radius-md);
+        background: var(--s-accent);
+        color: #fff;
+        cursor: pointer;
+        width: 100%;
+        margin-top: var(--s-space-1);
+      }
+      .auth-switch {
+        font-size: var(--s-font-size-sm);
+        color: var(--s-text);
+        text-align: center;
+        margin-top: var(--s-space-2);
+      }
+      .auth-switch a {
+        color: var(--s-accent);
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      /* ── Todo app ── */
+      .todo-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-space-4);
+        padding-bottom: var(--s-space-4);
+      }
+      .add-form {
+        display: flex;
+        gap: var(--s-space-2);
+        align-items: flex-start;
+        margin: 0 var(--s-space-4);
+      }
+      .add-input-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .add-input {
+        padding: var(--s-space-2-5) var(--s-space-3);
+        font-size: var(--s-font-size-base);
+        border: 1px solid var(--s-border);
+        border-radius: var(--s-radius-md);
+        background: var(--s-bg);
+        color: var(--s-text);
+        outline: none;
+        width: 100%;
+      }
+      .add-textarea {
+        padding: var(--s-space-2-5) var(--s-space-3);
+        font-size: var(--s-font-size-base);
+        font-family: inherit;
+        border: 1px solid var(--s-border);
+        border-radius: var(--s-radius-md);
+        background: var(--s-bg);
+        color: var(--s-text);
+        outline: none;
+        resize: none;
+        margin-top: var(--s-space-1-5);
+        height: 48px;
+      }
+      .add-btn {
+        padding: var(--s-space-2-5) var(--s-space-5);
+        font-size: var(--s-font-size-base);
+        font-weight: 500;
+        border: 1px solid var(--s-border);
+        border-radius: var(--s-radius-md);
+        background: var(--s-accent);
+        color: #fff;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .todo-list {
+        display: flex;
+        flex-direction: column;
+      }
+      .todo-item {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--s-space-3);
+        padding: var(--s-space-3) var(--s-space-4);
+        border-top: 1px solid var(--s-border);
+      }
+      .todo-item:last-child {
+        border-bottom: 1px solid var(--s-border);
+      }
+      .todo-check {
+        margin-top: 2px;
+        accent-color: var(--s-accent);
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+      }
+      .todo-text-col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .todo-title {
+        font-size: var(--s-font-size-base);
+        color: var(--s-text-heading);
+        line-height: 1.4;
+      }
+      .todo-title.done {
+        text-decoration: line-through;
+        color: var(--s-text);
+        opacity: 0.6;
+      }
+      .todo-desc {
+        font-size: var(--s-font-size-sm);
+        color: var(--s-text);
+        opacity: 0.8;
+      }
+      .todo-delete {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--s-text);
+        opacity: 0.4;
+        font-size: 16px;
+        padding: 0 var(--s-space-1);
+        line-height: 1;
+        margin-top: 1px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="gallery">
+      <!-- ── Screen 1: Login ── -->
+      <div>
+        <div class="screen-label">Login screen</div>
+        <div class="app-shell">
+          <header class="app-header">
+            <h1 class="app-title">Todos</h1>
+            <nav class="header-nav">
+              <a class="nav-link active">Log in</a>
+              <a class="nav-link">Register</a>
+            </nav>
+          </header>
+          <main class="auth-main">
+            <form class="auth-form" onsubmit="return false;">
+              <div class="form-field">
+                <label for="login-email">Email</label>
+                <input
+                  class="form-input"
+                  type="email"
+                  id="login-email"
+                  placeholder="you@example.com"
+                />
+              </div>
+              <div class="form-field">
+                <label for="login-password">Password</label>
+                <input
+                  class="form-input"
+                  type="password"
+                  id="login-password"
+                  placeholder="••••••••"
+                />
+              </div>
+              <button class="submit-btn" type="submit">Log in</button>
+            </form>
+            <p class="auth-switch">Don't have an account? <a>Register</a></p>
+          </main>
+        </div>
+      </div>
+
+      <!-- ── Screen 2: Login — validation error state ── -->
+      <div>
+        <div class="screen-label">Login — error state</div>
+        <div class="app-shell">
+          <header class="app-header">
+            <h1 class="app-title">Todos</h1>
+            <nav class="header-nav">
+              <a class="nav-link active">Log in</a>
+              <a class="nav-link">Register</a>
+            </nav>
+          </header>
+          <main class="auth-main">
+            <form class="auth-form" onsubmit="return false;">
+              <div class="form-field">
+                <label for="login-email-err">Email</label>
+                <input
+                  class="form-input error-field"
+                  type="email"
+                  id="login-email-err"
+                  value="wrong@example.com"
+                />
+              </div>
+              <div class="form-field">
+                <label for="login-password-err">Password</label>
+                <input
+                  class="form-input error-field"
+                  type="password"
+                  id="login-password-err"
+                  value="badpass"
+                />
+              </div>
+              <p class="inline-server-error" role="alert">
+                Incorrect email or password. Please try again.
+              </p>
+              <button class="submit-btn" type="submit">Log in</button>
+            </form>
+            <p class="auth-switch">Don't have an account? <a>Register</a></p>
+          </main>
+        </div>
+      </div>
+
+      <!-- ── Screen 3: Register ── -->
+      <div>
+        <div class="screen-label">Register screen</div>
+        <div class="app-shell">
+          <header class="app-header">
+            <h1 class="app-title">Todos</h1>
+            <nav class="header-nav">
+              <a class="nav-link">Log in</a>
+              <a class="nav-link active">Register</a>
+            </nav>
+          </header>
+          <main class="auth-main">
+            <form class="auth-form" onsubmit="return false;">
+              <div class="form-field">
+                <label for="reg-name">Name</label>
+                <input
+                  class="form-input"
+                  type="text"
+                  id="reg-name"
+                  placeholder="Your name"
+                />
+              </div>
+              <div class="form-field">
+                <label for="reg-email">Email</label>
+                <input
+                  class="form-input"
+                  type="email"
+                  id="reg-email"
+                  placeholder="you@example.com"
+                />
+              </div>
+              <div class="form-field">
+                <label for="reg-password">Password</label>
+                <input
+                  class="form-input"
+                  type="password"
+                  id="reg-password"
+                  placeholder="Min. 8 characters"
+                />
+              </div>
+              <button class="submit-btn" type="submit">Create account</button>
+            </form>
+            <p class="auth-switch">Already have an account? <a>Log in</a></p>
+          </main>
+        </div>
+      </div>
+
+      <!-- ── Screen 4: Todo list (authenticated) ── -->
+      <div>
+        <div class="screen-label">Todo list (authenticated)</div>
+        <div class="app-shell">
+          <header class="app-header">
+            <h1 class="app-title">Todos</h1>
+            <button type="button" class="btn-logout">Log out</button>
+          </header>
+          <main class="todo-main">
+            <form class="add-form" onsubmit="return false;">
+              <div class="add-input-wrapper">
+                <input
+                  class="add-input"
+                  type="text"
+                  placeholder="What needs to be done?"
+                />
+                <textarea
+                  class="add-textarea"
+                  placeholder="Add details… (optional)"
+                ></textarea>
+              </div>
+              <button class="add-btn" type="submit">Add</button>
+            </form>
+            <ul
+              class="todo-list"
+              style="list-style: none; margin: 0; padding: 0"
+            >
+              <li class="todo-item">
+                <input class="todo-check" type="checkbox" />
+                <div class="todo-text-col">
+                  <span class="todo-title">Buy groceries</span>
+                  <span class="todo-desc">Milk, eggs, bread</span>
+                </div>
+                <button type="button" class="todo-delete">✕</button>
+              </li>
+              <li class="todo-item">
+                <input class="todo-check" type="checkbox" checked />
+                <div class="todo-text-col">
+                  <span class="todo-title done">Book dentist appointment</span>
+                </div>
+                <button type="button" class="todo-delete">✕</button>
+              </li>
+              <li class="todo-item">
+                <input class="todo-check" type="checkbox" />
+                <div class="todo-text-col">
+                  <span class="todo-title">Finish the auth UI</span>
+                </div>
+                <button type="button" class="todo-delete">✕</button>
+              </li>
+            </ul>
+          </main>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
