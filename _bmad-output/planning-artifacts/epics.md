@@ -1064,87 +1064,149 @@ So that the suite runs faster as auth adds more test scenarios.
 - Split follows the existing `describe` groupings: initial load, create, inline edit, toggle, delete, persistence
 - DB reset script runs once before the suite; per-user cleanup handles inter-file isolation
 
-### Story 6.3: Web auth — login/register UI, routing, and legacy auth removal
+### Story 6.3: Web auth — Bearer token adoption, legacy auth removal, and temporary auth UI
+
+As a maintainer,
+I want the web app to authenticate via JWT Bearer tokens and all legacy auth scaffolding removed,
+So that the codebase has no placeholder auth and is ready for a proper login/register UI in Story 6.4.
+
+**Acceptance Criteria:**
+
+**AC1 — Temporary auth UI**
+
+**Given** no `auth_token` in `localStorage`
+**When** the app loads
+**Then** a "Create user & start" button is shown
+**And** clicking it calls `POST /api/auth/register` with auto-generated credentials, stores the returned token in `localStorage`, and renders the todo list
+
+**Given** a valid `auth_token` in `localStorage`
+**When** the app loads
+**Then** the todo list renders immediately and a "Log out" button is visible
+**And** clicking "Log out" clears the token and shows the "Create user & start" button
+
+**AC2 — Bearer token auth in `useTodos`**
+
+**Given** any todo API call
+**When** it is made
+**Then** it carries `Authorization: Bearer <token>` — no `x-user-id` header
+
+**Given** a 401 response from any todo API call
+**When** the error is received
+**Then** the token is cleared and the auth UI is shown
+
+**AC3 — Dual-mode removed from `jwtAuthPlugin`**
+
+**Given** a request to any protected route
+**When** it carries no valid Bearer token
+**Then** the API returns `401` immediately — no `x-user-id` fallback
+
+**AC4 — Legacy API surface removed**
+
+**Given** the cutover is complete
+**When** this story is merged
+**Then** `POST /users` route is deleted
+**And** `x-user-id` is removed from `todoRequestHeadersSchema`
+
+**AC5 — Default user removed everywhere**
+
+**Given** `DEFAULT_USER_ID` no longer exists in `packages/shared`
+**When** any code runs
+**Then** it is not imported or referenced anywhere in the codebase
+**And** `cleanupTestDatabase()` only truncates `todos` then `users` — no re-seeding
+**And** `users.post.test.ts` is deleted
+
+**AC6 — E2E and unit tests updated**
+
+**Given** the updated test infrastructure
+**When** the full suite runs
+**Then** E2E spec files use `page.addInitScript` to set `localStorage("auth_token")` instead of `x-user-id` header injection
+**And** `registerTestUser` returns `{ userId, token }`
+**And** all existing web unit tests pass with a token set in `localStorage` via `beforeEach`
+**And** all 26 E2E tests pass
+
+**Technical notes:**
+
+- Token is stored in `localStorage` and sent as `Authorization: Bearer <token>` — the API returns `{ user, token }` in the response body (no httpOnly cookies; Story 6.1 deviation from the ADR)
+- The "Create user & start" button is intentionally temporary — replaced by proper login/register forms in Story 6.4
+- `DEFAULT_USER_ID` removal also requires simplifying `cleanupTestDatabase` and updating `makeSeedTodo` (require `userId` explicitly)
+
+### Story 6.4: Login and register forms
 
 As a user,
-I want to log in and register from the app,
-So that my todos are tied to my real identity.
+I want to log in with my email and password and create a real account,
+So that I can access my todos securely on any device without losing my data.
 
 **Acceptance Criteria:**
 
 **AC1 — Login form**
 
 **Given** an unauthenticated user
-**When** they visit the login page
-**Then** they see email and password fields
-**And** client-side validation enforces required fields and email format
-**And** server errors (wrong credentials) are displayed clearly
-**And** submit sends `POST /api/auth/login`; on success, redirects to `/` (todo list)
+**When** they see the login screen (replacing the "Create user & start" button from Story 6.3)
+**Then** they see email and password fields and a "Log in" button
+**And** client-side validation enforces required fields and email format (only on submit attempt)
+**And** a 401 server error is displayed inline on the form (not the global banner)
+**And** on success, the token is stored in `localStorage` and the todo list is shown
 
 **AC2 — Register form**
 
 **Given** an unauthenticated user
-**When** they visit the register page
-**Then** they see name, email, and password fields
-**And** client-side validation enforces required fields, email format, and password min length
-**And** server errors (email taken) are displayed clearly
-**And** submit sends `POST /api/auth/register`; on success, redirects to `/` (auto-logged-in)
+**When** they navigate to the register view (reachable from the login screen)
+**Then** they see name, email, and password fields and a "Register" button
+**And** client-side validation enforces required fields, valid email format, and password minimum 8 characters
+**And** a 409 (email taken) error is displayed inline on the form
+**And** on success, the token is stored and the todo list is shown (auto-logged-in)
 
-**AC3 — Auth-aware routing**
+**AC3 — Navigation between login and register**
 
-**Given** an unauthenticated user visiting `/`
-**When** no valid auth cookie exists
-**Then** the user is redirected to `/login`
+**Given** a user on the login screen
+**When** they click "Don't have an account? Register"
+**Then** the register form is shown
+
+**Given** a user on the register screen
+**When** they click "Already have an account? Log in"
+**Then** the login form is shown
+
+**AC4 — Auth routing**
+
+**Given** no `auth_token` in `localStorage`
+**When** the app loads
+**Then** the login screen is shown
 
 **Given** a successful login or register
-**When** the auth cookie is set
-**Then** the user is redirected to `/` (todo list)
+**When** the token is stored
+**Then** the todo list is shown
 
 **Given** a 401 response from any API call
 **When** the error is received
-**Then** the user is redirected to `/login`
+**Then** the token is cleared and the login screen is shown
 
-**Given** a page refresh
-**When** the httpOnly cookie is still valid
-**Then** the user remains authenticated (session persists)
+**AC5 — Session persistence**
 
-**AC4 — Logout**
-
-**Given** an authenticated user
-**When** they click the logout button
-**Then** `POST /api/auth/logout` is called, the cookie is cleared, and the user is redirected to `/login`
-
-**AC5 — Remove legacy auth**
-
-**Given** the auth cutover is complete
-**When** all legacy auth code is removed
-**Then** `DEFAULT_USER_ID` is removed from `packages/shared`
-**And** `x-user-id` header is removed from all fetch calls
-**And** the dual-mode fallback is removed from the auth middleware (JWT only)
-**And** `POST /users` route is removed (replaced by register)
-**And** `useTodos` no longer accepts a `userId` parameter — the server identifies the user from the JWT cookie
+**Given** a valid token in `localStorage`
+**When** the user refreshes the page
+**Then** the todo list is shown immediately (no re-login required)
 
 **AC6 — Web component tests**
 
-**Given** the new auth components
-**When** web tests run
-**Then** login and register forms are tested (validation, submit, error states)
-**And** auth routing is tested (redirect behavior)
-**And** `useTodos` tests are updated (no `userId` param, cookie-based)
+**Given** the new `LoginForm` and `RegisterForm` components
+**When** tests run
+**Then** login form: validation (empty fields, invalid email), submit success (token stored, onSuccess called), 401 inline error
+**And** register form: validation (all required, email format, password min length), submit success, 409 inline error
+**And** auth routing: no token → login screen; token present → todo list; 401 from todo API → login screen
 
-**AC7 — E2E tests**
+**AC7 — E2E auth flow test**
 
-**Given** the full auth flow
-**When** E2E tests run
-**Then** auth flow is covered: register → see todos → logout → redirected to login → login → see todos
-**And** all existing todo CRUD E2E tests pass with auth
+**Given** the real login/register UI
+**When** an E2E auth spec runs
+**Then** it covers: register → see todos → logout → login screen shown → login → see todos
 
 **Technical notes:**
 
-- This is the "flip the switch" story — after this, `x-user-id` is fully gone
-- Login/register are new routes in the React app (not Fastify routes) — consider simple client-side routing or a lightweight router
-- All `fetch()` calls automatically include the httpOnly cookie (same-origin) — no JS token management needed
-- The `x-user-id` header removal and dual-mode cleanup must happen atomically in this story to keep the app consistent
+- Replaces the temporary `AuthGate` ("Create user & start" button) introduced in Story 6.3
+- State-based routing (conditional rendering) — no routing library required for two screens
+- `LoginForm` and `RegisterForm` are separate components with their own `.module.css` files
+- Auth errors are form-level, not routed through the `GlobalErrorBanner`
+- The `useAuth` hook (introduced in Story 6.3) is unchanged — `login(token)` and `logout()` stay the same
 
 ### Backlog: GET /api/auth/me
 
