@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-26 19:38:27
-last_updated: 2026-04-11 # story 6.3 done
+last_updated: 2026-04-12 # story 6.4 ready-for-dev
 project: bmad-todo
 project_key: NOKEY
 tracking_system: file-system
@@ -91,4 +91,4 @@ development_status:
   6-2-auth-middleware-jwt-verification-and-test-infrastructure-migration: done
   6-2-1-parallelize-e2e-tests-with-per-user-isolation: done
   6-3-web-auth-login-register-ui-routing-and-legacy-auth-removal: done
-  6-4-login-and-register-forms: backlog
+  6-4-login-and-register-forms: ready-for-dev
