@@ -5,21 +5,3 @@
   padding: var(--s-space-8) 0 var(--s-space-4);
   flex-grow: 1;
 }
-
-.header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin: 0 var(--s-space-4);
-}
-
-.title {
-  font-size: var(--s-font-size-2xl);
-  letter-spacing: -0.5px;
-  margin: 0 var(--s-space-4) var(--s-space-2);
-
-  @media (max-width: 1024px) {
-    font-size: var(--s-font-size-xl);
-    margin: 0 var(--s-space-4) var(--s-space-1);
-  }
-}

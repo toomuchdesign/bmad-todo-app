@@ -2,57 +2,20 @@ import { useCallback, useRef, useState } from "react";
 
 import styles from "./App.module.css";
 import { AddTodoForm } from "./components/AddTodoForm";
+import { AppHeader } from "./components/AppHeader";
 import { GlobalErrorBanner } from "./components/GlobalErrorBanner";
+import { LoginForm } from "./components/LoginForm";
+import { RegisterForm } from "./components/RegisterForm";
 import { TodoList } from "./components/TodoList";
 import { useAuth } from "./hooks/useAuth";
 import { useTodos } from "./hooks/useTodos";
 
-function AuthGate({
-  onRegister,
-}: {
-  onRegister: (data: {
-    email: string;
-    password: string;
-    name: string;
-  }) => Promise<void>;
-}) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleCreateUser(): Promise<void> {
-    setLoading(true);
-    setError(null);
-    try {
-      await onRegister({
-        email: `user-${crypto.randomUUID()}@local.dev`,
-        password: crypto.randomUUID(),
-        name: `User ${crypto.randomUUID().slice(0, 8)}`,
-      });
-    } catch {
-      setError("Couldn't create user. Please try again.");
-      setLoading(false);
-    }
-  }
-
-  return (
-    <main className={styles.app}>
-      <h1 className={styles.title}>Todos</h1>
-      {error && <p role="alert">{error}</p>}
-      <button type="button" onClick={handleCreateUser} disabled={loading}>
-        {loading ? "Creating\u2026" : "Create user & start"}
-      </button>
-    </main>
-  );
-}
-
 function TodoApp({
   token,
   onUnauthorized,
-  onLogout,
 }: {
   token: string;
   onUnauthorized: () => void;
-  onLogout: () => void;
 }) {
   const { todos, loading, error, retry, createTodo, updateTodo, deleteTodo } =
     useTodos({ token, onUnauthorized });
@@ -78,13 +41,7 @@ function TodoApp({
   );
 
   return (
-    <main className={styles.app}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Todos</h1>
-        <button type="button" onClick={onLogout}>
-          Log out
-        </button>
-      </div>
+    <>
       {error && (
         <GlobalErrorBanner message={error} onRetry={retry} loading={loading} />
       )}
@@ -96,18 +53,45 @@ function TodoApp({
         onDelete={handleDelete}
         focusTodoId={focusTodoId}
       />
-    </main>
+    </>
   );
 }
 
 function App() {
-  const { token, register, logout } = useAuth();
+  const { token, login, register, logout } = useAuth();
+  const [authView, setAuthView] = useState<"login" | "register">("login");
 
-  if (!token) {
-    return <AuthGate onRegister={register} />;
-  }
-
-  return <TodoApp token={token} onUnauthorized={logout} onLogout={logout} />;
+  return (
+    <main className={styles.app}>
+      <AppHeader
+        authView={token ? "app" : authView}
+        onNavigate={setAuthView}
+        onLogout={() => {
+          logout();
+          setAuthView("login");
+        }}
+      />
+      {token ? (
+        <TodoApp
+          token={token}
+          onUnauthorized={() => {
+            logout();
+            setAuthView("login");
+          }}
+        />
+      ) : authView === "login" ? (
+        <LoginForm
+          onLogin={login}
+          onNavigateRegister={() => setAuthView("register")}
+        />
+      ) : (
+        <RegisterForm
+          onRegister={register}
+          onNavigateLogin={() => setAuthView("login")}
+        />
+      )}
+    </main>
+  );
 }
 
 export { App };

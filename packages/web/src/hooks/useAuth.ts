@@ -1,9 +1,21 @@
 import { useCallback, useState } from "react";
 
-import { AUTH_LOGOUT_API_PATH, AUTH_REGISTER_API_PATH } from "../contracts";
-import { httpClient } from "../utils";
+import {
+  AUTH_LOGIN_API_PATH,
+  AUTH_LOGOUT_API_PATH,
+  AUTH_REGISTER_API_PATH,
+} from "../contracts";
+import { HttpError, httpClient } from "../utils";
 
 const AUTH_TOKEN_KEY = "auth_token";
+
+type AuthResult = { ok: true } | { ok: false; status?: number };
+
+type LoginCredentials = { email: string; password: string };
+
+type RegisterCredentials = { name: string; email: string; password: string };
+
+type AuthResponse = { user: { id: string }; token: string };
 
 /**
  * Manages JWT auth state and all auth API touchpoints.
@@ -15,31 +27,48 @@ function useAuth() {
     localStorage.getItem(AUTH_TOKEN_KEY),
   );
 
-  const login = useCallback((newToken: string): void => {
-    localStorage.setItem(AUTH_TOKEN_KEY, newToken);
-    setToken(newToken);
-  }, []);
+  const login = useCallback(
+    async ({ email, password }: LoginCredentials): Promise<AuthResult> => {
+      try {
+        const { token: newToken } = await httpClient.post<AuthResponse>(
+          AUTH_LOGIN_API_PATH,
+          { body: { email, password } },
+        );
+        localStorage.setItem(AUTH_TOKEN_KEY, newToken);
+        setToken(newToken);
+        return { ok: true };
+      } catch (caught) {
+        if (caught instanceof HttpError) {
+          return { ok: false, status: caught.status };
+        }
+        return { ok: false };
+      }
+    },
+    [],
+  );
 
-  /** Registers a new user and stores the returned token. */
   const register = useCallback(
     async ({
+      name,
       email,
       password,
-      name,
-    }: {
-      email: string;
-      password: string;
-      name: string;
-    }): Promise<void> => {
-      const { token: newToken } = await httpClient.post<{
-        user: { id: string };
-        token: string;
-      }>(AUTH_REGISTER_API_PATH, {
-        body: { email, password, name },
-      });
-      login(newToken);
+    }: RegisterCredentials): Promise<AuthResult> => {
+      try {
+        const { token: newToken } = await httpClient.post<AuthResponse>(
+          AUTH_REGISTER_API_PATH,
+          { body: { name, email, password } },
+        );
+        localStorage.setItem(AUTH_TOKEN_KEY, newToken);
+        setToken(newToken);
+        return { ok: true };
+      } catch (caught) {
+        if (caught instanceof HttpError) {
+          return { ok: false, status: caught.status };
+        }
+        return { ok: false };
+      }
     },
-    [login],
+    [],
   );
 
   const logout = useCallback(async (): Promise<void> => {
@@ -53,7 +82,8 @@ function useAuth() {
     setToken(null);
   }, []);
 
-  return { token, register, login, logout };
+  return { token, login, register, logout };
 }
 
+export type { AuthResult, LoginCredentials, RegisterCredentials };
 export { useAuth };

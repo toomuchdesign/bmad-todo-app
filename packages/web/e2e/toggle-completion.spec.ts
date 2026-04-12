@@ -1,20 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-import { createDeferred, registerTestUser } from "./test-utils";
+import { createDeferred, withFreshAuthenticatedUser } from "./test-utils";
 
-// Module-scoped: shared across all tests within this spec file
-let authToken: string;
-
-test.beforeAll(async ({ request }) => {
-  const { token } = await registerTestUser({ request });
-  authToken = token;
-});
-
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(
-    `localStorage.setItem("auth_token", ${JSON.stringify(authToken)})`,
-  );
-});
+withFreshAuthenticatedUser(test);
 
 test.describe("toggle completion", () => {
   test("toggles completion on and off via checkbox", async ({ page }) => {

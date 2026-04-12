@@ -19,6 +19,7 @@
   /* Interactive */
   --s-accent: var(--p-purple-600);
   --s-accent-hover: var(--p-indigo-600);
+  --s-text-on-accent: var(--p-white);
   --s-focus-ring: rgba(99, 102, 241, 0.15);
 
   /* Spacing */

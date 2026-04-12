@@ -606,6 +606,18 @@ bmad-todo/
 │       │   ├── test-utils/
 │       │   │   └── index.ts                # shared fixtures + fetch mock helpers
 │       │   ├── components/
+│       │   │   ├── AppHeader/
+│       │   │   │   ├── index.tsx           # persistent header — nav links or logout
+│       │   │   │   ├── AppHeader.module.css
+│       │   │   │   └── AppHeader.test.tsx
+│       │   │   ├── LoginForm/
+│       │   │   │   ├── index.tsx           # login form with email/password
+│       │   │   │   ├── LoginForm.module.css
+│       │   │   │   └── LoginForm.test.tsx
+│       │   │   ├── RegisterForm/
+│       │   │   │   ├── index.tsx           # register form with name/email/password
+│       │   │   │   ├── RegisterForm.module.css
+│       │   │   │   └── RegisterForm.test.tsx
 │       │   │   ├── AddTodoForm.tsx
 │       │   │   ├── AddTodoForm.module.css
 │       │   │   ├── AddTodoForm.test.tsx
@@ -614,6 +626,7 @@ bmad-todo/
 │       │   │   ├── TodoList.tsx
 │       │   │   └── TodoList.module.css
 │       └── e2e/
+│           ├── auth-flow.spec.ts           # auth flow E2E tests (register, login, logout)
 │           ├── initial-load.spec.ts        # initial load E2E tests
 │           ├── create-todo.spec.ts         # create todo E2E tests
 │           ├── inline-edit.spec.ts         # inline edit E2E tests

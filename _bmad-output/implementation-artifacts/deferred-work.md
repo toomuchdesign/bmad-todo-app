@@ -127,6 +127,17 @@
 - Hardcoded `"test-password-123"` in `createTestUser` — test-only, intentional; if the auth endpoint ever enforces password strength, test setup breaks with a misleading error.
 - `Authorization: Bearer ` (empty after prefix) silently falls through to x-user-id fallback — spec-compliant dual-mode behavior, untested edge case.
 
+## Deferred from: code review of 6-4-login-and-register-forms (2026-04-12)
+
+- Whitespace-only inputs cause silent early return with no user feedback — HTML5 `type="email"` + `required` attribute covers the common case; full trim-guard is speculative for now.
+- setState on unmounted component during pending form submission — React 18 handles this gracefully; no warning or memory leak.
+- Logout race with in-flight login/register request — if user triggers logout while a login fetch is in flight, the response token could re-write localStorage after logout clears it. Pre-existing architecture concern.
+- `localStorage.getItem` / `localStorage.setItem` can throw in storage-blocked or quota-exceeded contexts — all three `useAuth.ts` touch points are unguarded. Speculative; pre-existing pattern.
+- `page.goto('/')` in E2E `beforeEach` may fire before dev server is ready — handled by existing global setup infrastructure; not a regression.
+- `JSON.parse` in `httpClient` throws on malformed response body — propagates uncaught past `HttpError instanceof` checks. Pre-existing utility concern.
+- `outline: none` on form inputs removes native focus ring; only `:focus-visible` restores it — acceptable modern CSS practice, consistent with rest of codebase.
+- `LoginForm.test.tsx` does not assert that error CSS class is applied to inputs on 401 — CSS module class application is opaque in JSDOM; visual behaviour covered by acceptance testing.
+
 ## Deferred from: code review of 6-3-web-auth-login-register-ui-routing-and-legacy-auth-removal (2026-04-11)
 
 - JWT stored in `localStorage` is XSS-vulnerable — architectural decision documented in ADR; Bearer token over httpOnly cookies was a deliberate Story 6.1 deviation. Address in a future auth hardening story.

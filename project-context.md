@@ -150,12 +150,30 @@ Keep tested scenarios to a reasonable minimum. Avoid exhaustive or redundant tes
 
 - Every implementation change must include or update tests for the affected behavior
 - All tests use nested `describe` → `it` blocks — no top-level `it()`
-- `describe`: the subject or condition being tested (imperative: "given an expired token")
-- `it`: the expected outcome ("returns 401 with error message")
-- If an `it` contains a condition like "when", "if", "for", ":", or "on" — that condition belongs in a `describe` block
+
+## describe blocks
+
+- Represent a **subject** or a **condition/branch** — never an outcome
+- Use imperative phrasing: "given an expired token", "with no items in cart"
+- Forbidden prefixes: "when", "on" — strip them and rephrase imperatively
+- **Nest as deeply as the logic requires**: each branch, guard clause, or state
+  variation gets its own `describe` layer
+  - e.g. `describe("authenticated") > describe("given an expired token") > it("returns 401")`
+  - Never collapse two conditions into one `describe` label
+
+## it blocks
+
+- Describe the **outcome only** — never include a condition
+- ❌ Fails: `it("returns 401 when token is expired")`
+- ✅ Passes: `describe("given an expired token") > it("returns 401 with error message")`
+- Litmus test: if the `it` string contains "when", "if", "for", "given", "with",
+  "on", or a colon — extract that fragment into a wrapping `describe` block
+
+## other rules
+
 - Prefer `.each` test loops when implementing 2+ structurally identical tests
-- Prepend assertions that are not self-explanatory with a brief 1 line comment
-- Test file-wide `beforeEach`/`afterAll` hooks go at the top level, outside the root `describe` block. Exception: API test files use `createTestContext()` from `packages/api/test/test-utils/db.ts`, which registers these hooks as a deliberate side effect — this factory pattern is the canonical setup for API integration tests
+- Prepend assertions that are not self-explanatory with a brief 1-line comment
+- File-wide `beforeEach`/`afterAll` hooks go at the top level, outside the root `describe` block
 - Tests must be typed as strictly as source code — type errors in tests are expected to surface bugs before execution
 
 ### AAA Pattern

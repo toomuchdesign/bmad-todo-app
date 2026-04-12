@@ -5,7 +5,11 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { Todo } from "shared";
 import { beforeEach, describe, expect, it } from "vitest";
 import { App } from "./App";
-import { TODO_FIXTURES } from "./test-utils";
+import {
+  getAddTodoButton,
+  getNewTodoTitleInput,
+  TODO_FIXTURES,
+} from "./test-utils";
 
 const TEST_USER_ID = "test-user-id";
 
@@ -38,9 +42,9 @@ describe("App", () => {
           expect(screen.getByText("Buy milk")).toBeInTheDocument();
         });
 
-        const input = screen.getByRole("textbox", { name: "New todo title" });
+        const input = getNewTodoTitleInput();
         fireEvent.change(input, { target: { value: "New task" } });
-        fireEvent.click(screen.getByRole("button", { name: "Add" }));
+        fireEvent.click(getAddTodoButton());
 
         await waitFor(() => {
           expect(screen.getByText("New task")).toBeInTheDocument();
@@ -67,9 +71,9 @@ describe("App", () => {
           expect(screen.getByText("Buy milk")).toBeInTheDocument();
         });
 
-        const input = screen.getByRole("textbox", { name: "New todo title" });
+        const input = getNewTodoTitleInput();
         fireEvent.change(input, { target: { value: "New task" } });
-        fireEvent.click(screen.getByRole("button", { name: "Add" }));
+        fireEvent.click(getAddTodoButton());
 
         await waitFor(() => {
           expect(screen.getByText("Database error")).toBeInTheDocument();
@@ -88,7 +92,7 @@ describe("App", () => {
         expect(screen.getByText("Buy milk")).toBeInTheDocument();
       });
 
-      fireEvent.click(screen.getByRole("button", { name: "Add" }));
+      fireEvent.click(getAddTodoButton());
 
       expect(screen.getByText("Title must not be empty.")).toBeInTheDocument();
       expect(fetchMock).toHaveFetchedTimes(1);
@@ -103,9 +107,9 @@ describe("App", () => {
         expect(screen.getByText("Buy milk")).toBeInTheDocument();
       });
 
-      const input = screen.getByRole("textbox", { name: "New todo title" });
+      const input = getNewTodoTitleInput();
       fireEvent.change(input, { target: { value: "a".repeat(101) } });
-      fireEvent.click(screen.getByRole("button", { name: "Add" }));
+      fireEvent.click(getAddTodoButton());
 
       expect(
         screen.getByText("Title must be between 1 and 100 characters."),

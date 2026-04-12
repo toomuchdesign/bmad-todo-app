@@ -3,7 +3,12 @@ import fetchMock from "@fetch-mock/vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { App } from "./App";
-import { createDeferred, TODO_FIXTURES } from "./test-utils";
+import {
+  createDeferred,
+  getAddTodoButton,
+  getNewTodoTitleInput,
+  TODO_FIXTURES,
+} from "./test-utils";
 
 beforeEach(() => {
   localStorage.setItem("auth_token", "test-token");
@@ -151,9 +156,9 @@ describe("App", () => {
       });
 
       // Trigger error banner via failed create
-      const titleInput = screen.getByLabelText("New todo title");
+      const titleInput = getNewTodoTitleInput();
       fireEvent.change(titleInput, { target: { value: "New todo" } });
-      fireEvent.click(screen.getByRole("button", { name: "Add" }));
+      fireEvent.click(getAddTodoButton());
 
       await waitFor(() => {
         expect(screen.getByRole("alert")).toBeInTheDocument();

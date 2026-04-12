@@ -1,20 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-import { registerTestUser } from "./test-utils";
+import { withFreshAuthenticatedUser } from "./test-utils";
 
-// Module-scoped: shared across all tests within this spec file
-let authToken: string;
-
-test.beforeAll(async ({ request }) => {
-  const { token } = await registerTestUser({ request });
-  authToken = token;
-});
-
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(
-    `localStorage.setItem("auth_token", ${JSON.stringify(authToken)})`,
-  );
-});
+withFreshAuthenticatedUser(test);
 
 test.describe("initial load", () => {
   test("renders heading, form, and empty state", async ({ page }) => {

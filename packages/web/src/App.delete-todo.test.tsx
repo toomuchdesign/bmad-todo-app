@@ -5,7 +5,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { App } from "./App";
-import { createDeferred, TODO_FIXTURES } from "./test-utils";
+import {
+  createDeferred,
+  getNewTodoTitleInput,
+  TODO_FIXTURES,
+} from "./test-utils";
 
 beforeEach(() => {
   localStorage.setItem("auth_token", "test-token");
@@ -117,9 +121,7 @@ describe("App", () => {
         });
 
         // Focus returns to the add title input
-        expect(
-          screen.getByRole("textbox", { name: "New todo title" }),
-        ).toHaveFocus();
+        expect(getNewTodoTitleInput()).toHaveFocus();
       });
     });
 
