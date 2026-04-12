@@ -85,6 +85,8 @@ No navigation chrome on auth screens. Each form has a contextual `"Don't have an
 Extract a standalone `AppHeader` component from `TodoApp`. It receives the current auth view state and renders the appropriate right-hand content:
 
 - No token: renders `Log in` and `Register` links, with the active view visually distinguished
+  - Active nav: `text-decoration: underline; text-underline-offset: 7px; text-decoration-thickness: 2px; color: --s-accent`
+  - Inactive nav: `color: --s-text`, no decoration
 - Token present: renders a styled `Log out` button
 
 The `AppHeader` component must be self-contained — it takes only the props it needs to render correctly, with no knowledge of todo state.

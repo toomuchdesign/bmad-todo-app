@@ -1,0 +1,1543 @@
+<!doctype html>
+<!--
+  UX Component Library — bmad-todo Design System
+  ================================================
+  This file documents every reusable UI primitive and component
+  that the application should be refactored to use consistently.
+
+  It is NOT an implementation — it is a visual specification.
+  Each section shows the component's visual states alongside
+  the exact token values and CSS rules that should govern it.
+
+  STRUCTURE
+  ---------
+  1. Color tokens (semantic palette)
+  2. Typography scale
+  3. Spacing scale
+  4. Interactive atoms: Input, Textarea, Checkbox, Button variants
+  5. Molecules: FormField, AuthForm, AddTodoForm, TodoItem, ErrorBanner
+  6. Layout: AppShell, AppHeader
+  7. State matrix: every component × every state
+
+  This file is referenced from:
+    - docs/decisions/adr-auth-ui-layout.md
+    - docs/mockups/auth-ui.html
+    - docs/mockups/todo-list.html
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>bmad-todo — Design System</title>
+    <style>
+      /* ─── Design tokens ─── */
+      :root {
+        --p-gray-100: #f3f4f6;
+        --p-gray-400: #9ca3af;
+        --p-gray-500: #6b6375;
+        --p-gray-900: #08060d;
+        --p-purple-400: #c084fc;
+        --p-purple-600: #aa3bff;
+        --p-red-600: #dc2626;
+        --p-indigo-400: #818cf8;
+        --p-indigo-500: #6366f1;
+        --p-indigo-600: #4f46e5;
+        --p-white: #fff;
+        --p-dark-bg: #16171d;
+        --p-dark-surface: #1f2028;
+        --p-dark-border: #2e303a;
+        --p-font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+
+        --s-text: var(--p-gray-500);
+        --s-text-heading: var(--p-gray-900);
+        --s-text-error: var(--p-red-600);
+        --s-bg: var(--p-white);
+        --s-bg-accent: rgba(170, 59, 255, 0.07);
+        --s-bg-error: #fef2f2;
+        --s-border: #e5e4e7;
+        --s-border-accent: rgba(170, 59, 255, 0.4);
+        --s-border-focus: var(--p-indigo-500);
+        --s-border-error: #fecaca;
+        --s-accent: var(--p-purple-600);
+        --s-accent-hover: var(--p-indigo-600);
+        --s-text-on-accent: var(--p-white);
+        --s-focus-ring: rgba(99, 102, 241, 0.15);
+
+        /* Spacing */
+        --s-space-0-5: 2px;
+        --s-space-1: 4px;
+        --s-space-1-5: 6px;
+        --s-space-2: 8px;
+        --s-space-2-5: 10px;
+        --s-space-3: 12px;
+        --s-space-4: 16px;
+        --s-space-5: 20px;
+        --s-space-6: 24px;
+        --s-space-8: 32px;
+        --s-space-12: 48px;
+
+        /* Radii */
+        --s-radius-sm: 4px;
+        --s-radius-md: 6px;
+        --s-radius-lg: 8px;
+
+        /* Type */
+        --s-font-size-xs: 11px;
+        --s-font-size-sm: 13px;
+        --s-font-size-base: 14px;
+        --s-font-size-md: 15px;
+        --s-font-size-lg: 16px;
+        --s-font-size-xl: 28px;
+        --s-font-size-2xl: 32px;
+        --s-font-body: var(--p-font-sans);
+        --s-font-heading: var(--p-font-sans);
+      }
+
+      /* ─── Page chrome ─── */
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        background: #ece9f3;
+        font: 14px / 1.5 var(--s-font-body);
+        color: var(--s-text);
+        padding-bottom: 80px;
+      }
+
+      /* Page nav */
+      .ds-nav {
+        position: sticky;
+        top: 0;
+        background: rgba(36, 28, 52, 0.97);
+        backdrop-filter: blur(8px);
+        display: flex;
+        gap: 24px;
+        padding: 12px 40px;
+        z-index: 10;
+        flex-wrap: wrap;
+      }
+      .ds-nav a {
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.4px;
+        color: rgba(255,255,255,0.65);
+        text-decoration: none;
+      }
+      .ds-nav a:hover { color: #fff; }
+
+      /* Section */
+      .ds-section {
+        padding: 48px 40px 0;
+      }
+
+      .ds-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: #9a8caf;
+        margin-bottom: 6px;
+      }
+
+      .ds-section-heading {
+        font-size: 22px;
+        font-weight: 600;
+        color: #2a1e40;
+        margin-bottom: 4px;
+      }
+
+      .ds-section-desc {
+        font-size: 13px;
+        color: #7c6e8f;
+        margin-bottom: 32px;
+        max-width: 600px;
+        line-height: 1.6;
+      }
+
+      /* Row layout */
+      .ds-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        align-items: flex-start;
+        margin-bottom: 32px;
+      }
+
+      /* White card for isolated components */
+      .ds-card {
+        background: var(--s-bg);
+        border: 1px solid var(--s-border);
+        border-radius: 6px;
+        padding: 24px;
+        box-shadow: 0 2px 16px rgba(100, 60, 160, 0.08);
+        min-width: 0;
+      }
+
+      .ds-card-label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: #aaa;
+        margin-bottom: 14px;
+      }
+
+      /* Token annotation */
+      .ds-token {
+        font: 11px / 1.4 monospace;
+        color: #9a8caf;
+        background: rgba(150, 100, 220, 0.08);
+        padding: 1px 5px;
+        border-radius: 3px;
+        white-space: nowrap;
+      }
+
+      .ds-spec {
+        font: 11px / 1.8 monospace;
+        color: #7c6e8f;
+        margin-top: 8px;
+      }
+
+
+      /* ══════════════════════════════
+         1. COLOR TOKENS
+      ══════════════════════════════ */
+      .color-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+      }
+
+      .color-swatch {
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.07);
+      }
+
+      .color-swatch-body {
+        height: 56px;
+      }
+
+      .color-swatch-meta {
+        background: #fff;
+        padding: 8px 10px;
+        border-top: 1px solid rgba(0,0,0,0.07);
+      }
+
+      .color-swatch-name {
+        font: 600 11px / 1 monospace;
+        color: #333;
+      }
+
+      .color-swatch-value {
+        font: 11px / 1.6 monospace;
+        color: #999;
+      }
+
+
+      /* ══════════════════════════════
+         2. TYPOGRAPHY
+      ══════════════════════════════ */
+      .type-scale-row {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        background: var(--s-bg);
+        border: 1px solid var(--s-border);
+        border-radius: 6px;
+        padding: 24px 28px;
+        box-shadow: 0 2px 16px rgba(100, 60, 160, 0.08);
+      }
+
+      .type-item {
+        display: flex;
+        align-items: baseline;
+        gap: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #f0eef4;
+      }
+      .type-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+      .type-sample { flex: 1; min-width: 0; }
+      .type-meta { width: 260px; flex-shrink: 0; }
+      .type-meta-name {
+        font: 600 11px / 1 monospace;
+        color: #888;
+        margin-bottom: 4px;
+      }
+      .type-meta-spec {
+        font: 11px / 1.6 monospace;
+        color: #bbb;
+      }
+
+
+      /* ══════════════════════════════
+         3. SPACING
+      ══════════════════════════════ */
+      .spacing-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        background: var(--s-bg);
+        border: 1px solid var(--s-border);
+        border-radius: 6px;
+        padding: 20px 24px;
+        box-shadow: 0 2px 16px rgba(100, 60, 160, 0.08);
+      }
+
+      .spacing-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 8px 0;
+        border-bottom: 1px solid #f5f4f8;
+      }
+      .spacing-row:last-child { border-bottom: none; }
+
+      .spacing-bar {
+        background: rgba(170, 59, 255, 0.18);
+        border-radius: 2px;
+        height: 12px;
+        flex-shrink: 0;
+      }
+
+      .spacing-label {
+        font: 600 11px / 1 monospace;
+        color: #7c6e8f;
+        width: 120px;
+      }
+
+      .spacing-value {
+        font: 11px / 1 monospace;
+        color: #bbb;
+      }
+
+
+      /* ══════════════════════════════
+         4. ATOMS
+      ══════════════════════════════ */
+
+      /* --- Input --- */
+      .input-base {
+        padding: var(--s-space-2-5) var(--s-space-3);
+        font-size: var(--s-font-size-base);
+        font-family: inherit;
+        border: 1px solid var(--s-border);
+        border-radius: var(--s-radius-md);
+        background: var(--s-bg);
+        color: var(--s-text);
+        outline: none;
+        width: 100%;
+        transition: border-color 0.2s;
+      }
+      .input-base::placeholder { color: var(--s-text); opacity: 0.45; }
+
+      .input--focus {
+        border-color: var(--s-border-focus);
+        box-shadow: 0 0 0 2px var(--s-focus-ring);
+      }
+
+      .input--error {
+        border-color: var(--s-border-error);
+      }
+
+      .input--disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: #fafafa;
+      }
+
+      /* --- Textarea --- */
+      .textarea-base {
+        padding: var(--s-space-2-5) var(--s-space-3);
+        font-size: var(--s-font-size-sm);
+        font-family: inherit;
+        line-height: 1.5;
+        border: 1px solid var(--s-border);
+        border-radius: var(--s-radius-md);
+        background: var(--s-bg);
+        color: var(--s-text);
+        outline: none;
+        resize: vertical;
+        min-height: 52px;
+        width: 100%;
+        transition: border-color 0.2s;
+      }
+      .textarea-base::placeholder { color: var(--s-text); opacity: 0.45; }
+
+      /* --- Checkbox --- */
+      .checkbox-base {
+        accent-color: var(--s-accent);
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+      }
+
+      /* --- Buttons --- */
+      .btn-base {
+        font-family: inherit;
+        font-size: var(--s-font-size-base);
+        font-weight: 500;
+        border-radius: var(--s-radius-md);
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+        white-space: nowrap;
+        outline: none;
+      }
+
+      /* Primary — purple filled */
+      .btn-primary {
+        padding: var(--s-space-2-5) var(--s-space-5);
+        background: var(--s-accent);
+        color: var(--s-text-on-accent);
+        border: 1px solid transparent;
+      }
+      .btn-primary:hover { background: var(--s-accent-hover); }
+
+      /* Primary full-width (auth forms) */
+      .btn-primary-block {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding: var(--s-space-2-5) var(--s-space-5);
+        background: var(--s-accent);
+        color: var(--s-text-on-accent);
+        border: 1px solid transparent;
+      }
+
+      /* Ghost — outline, no fill */
+      .btn-ghost {
+        padding: var(--s-space-1-5) var(--s-space-4);
+        background: none;
+        color: var(--s-text);
+        border: 1px solid var(--s-border);
+      }
+      .btn-ghost:hover { border-color: var(--s-border-accent); }
+
+      /* Text link — no border */
+      .btn-link {
+        padding: 0;
+        background: none;
+        color: var(--s-accent);
+        border: none;
+        text-decoration: underline;
+        font-weight: 400;
+      }
+      .btn-link:hover { color: var(--s-accent-hover); }
+
+      /* Danger — delete (circular icon button) */
+      .btn-delete {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border-radius: 50%;
+        border: 1px solid transparent;
+        background: none;
+        color: var(--s-text);
+        opacity: 0.35;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: border-color 0.15s, color 0.15s, opacity 0.15s, background 0.15s;
+      }
+      .btn-delete:hover {
+        border-color: rgba(239, 68, 68, 0.45);
+        color: var(--s-text-error);
+        background: rgba(239, 68, 68, 0.06);
+        opacity: 1;
+      }
+      .btn-delete--pending {
+        opacity: 0.2;
+        cursor: not-allowed;
+      }
+
+      /* Disabled modifier — applies to any button */
+      .btn--disabled { opacity: 0.55; cursor: not-allowed; }
+
+      /* NavLink variants (AppHeader) */
+      .nav-btn {
+        background: none;
+        border: none;
+        padding: 0;
+        font-size: var(--s-font-size-base);
+        color: var(--s-text);
+        cursor: pointer;
+      }
+      .nav-btn:hover { color: var(--s-accent); }
+
+      .nav-btn--active {
+        background: none;
+        border: none;
+        padding: 0;
+        font-size: var(--s-font-size-base);
+        color: var(--s-accent);
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
+
+
+      /* ══════════════════════════════
+         5. MOLECULES
+      ══════════════════════════════ */
+
+      /* --- FormField (label + input + optional error) --- */
+      .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-space-1);
+        text-align: left;
+      }
+
+      .form-label {
+        font-size: var(--s-font-size-sm);
+        font-weight: 500;
+        color: var(--s-text);
+        letter-spacing: 0.2px;
+      }
+
+      .form-field-error {
+        font-size: var(--s-font-size-sm);
+        color: var(--s-text-error);
+        margin-top: 2px;
+      }
+
+      /* --- Auth form layout --- */
+      .auth-form-demo {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-space-4);
+        text-align: left;
+        width: 320px;
+      }
+
+      /* --- Error box (form-level server error) --- */
+      .form-error-box {
+        padding: var(--s-space-2) var(--s-space-3);
+        font-size: var(--s-font-size-sm);
+        color: var(--s-text-error);
+        background: var(--s-bg-error);
+        border-radius: var(--s-radius-md);
+      }
+
+      /* --- GlobalErrorBanner --- */
+      .error-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--s-space-3);
+        padding: var(--s-space-3) var(--s-space-4);
+        background: var(--s-bg-error);
+        border-top: 1px solid var(--s-border-error);
+        border-bottom: 1px solid var(--s-border-error);
+      }
+      .error-banner p {
+        color: var(--s-text-error);
+        font-size: var(--s-font-size-base);
+        flex: 1;
+      }
+      .btn-retry {
+        padding: var(--s-space-1-5) var(--s-space-4);
+        font-size: var(--s-font-size-base);
+        font-weight: 500;
+        font-family: inherit;
+        border: 1px solid var(--s-border-error);
+        border-radius: var(--s-radius-md);
+        background: var(--s-bg);
+        color: var(--s-text-error);
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      /* --- TodoItem --- */
+      .todo-item {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto auto;
+        column-gap: var(--s-space-3);
+        padding: 14px var(--s-space-4);
+        border-bottom: 1px solid var(--s-border);
+        background: var(--s-bg);
+      }
+      .todo-item:last-child { border-bottom: none; }
+
+      .todo-checkbox {
+        grid-column: 1;
+        grid-row: 1 / span 3;
+        align-self: start;
+        margin-top: 3px; /* optical alignment — level with title cap-height */
+        accent-color: var(--s-accent);
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+        cursor: pointer;
+      }
+
+      .todo-title-btn {
+        all: unset;
+        grid-column: 2;
+        grid-row: 1;
+        font-size: var(--s-font-size-md);
+        font-weight: 500;
+        color: var(--s-text-heading);
+        line-height: 1.4;
+        cursor: pointer;
+        border-radius: var(--s-radius-sm);
+      }
+
+      .todo-title-span {
+        grid-column: 2;
+        grid-row: 1;
+        font-size: var(--s-font-size-base);
+        font-weight: 400;
+        color: var(--s-text);
+        opacity: 0.65;
+        line-height: 1.4;
+        text-decoration: line-through;
+        text-decoration-color: rgba(0,0,0,0.22);
+        text-decoration-thickness: 1px;
+      }
+
+      .todo-desc-btn {
+        all: unset;
+        grid-column: 2;
+        grid-row: 2;
+        font-size: var(--s-font-size-sm);
+        color: var(--s-text);
+        opacity: 0.75;
+        line-height: 1.45;
+        cursor: pointer;
+        margin-top: var(--s-space-0-5);
+        border-radius: var(--s-radius-sm);
+      }
+
+      .todo-desc-span {
+        grid-column: 2;
+        grid-row: 2;
+        font-size: var(--s-font-size-sm);
+        color: var(--s-text);
+        opacity: 0.45;
+        line-height: 1.45;
+        margin-top: var(--s-space-0-5);
+      }
+
+      .todo-meta {
+        grid-column: 2;
+        grid-row: 3;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: var(--s-space-2);
+        gap: var(--s-space-2);
+      }
+
+      .todo-date {
+        font-size: var(--s-font-size-xs);
+        color: var(--s-text);
+        opacity: 0.45;
+        white-space: nowrap;
+      }
+
+      .todo-item--completed { background: rgba(170, 59, 255, 0.035); }
+
+      /* Edit mode */
+      .todo-item--editing {
+        border-left: 3px solid var(--s-border-accent);
+        background: rgba(170, 59, 255, 0.05);
+        padding-left: calc(var(--s-space-4) - 3px);
+      }
+
+      .edit-title-input {
+        width: 100%;
+        padding: 2px 0;
+        font-size: var(--s-font-size-md);
+        font-weight: 500;
+        font-family: inherit;
+        color: var(--s-text-heading);
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid var(--s-border-focus);
+        border-radius: 0;
+        outline: none;
+      }
+
+      .edit-textarea {
+        width: 100%;
+        padding: var(--s-space-1-5) var(--s-space-2);
+        font-size: var(--s-font-size-sm);
+        font-family: inherit;
+        color: var(--s-text);
+        background: var(--s-bg);
+        border: 1px solid var(--s-border-focus);
+        border-radius: var(--s-radius-sm);
+        outline: none;
+        resize: vertical;
+        min-height: 48px;
+        margin-top: var(--s-space-2);
+      }
+
+
+      /* --- AppHeader --- */
+      .app-header-demo {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        padding: var(--s-space-8) var(--s-space-4) var(--s-space-6);
+        background: var(--s-bg);
+        border-bottom: 1px solid var(--s-border);
+      }
+
+      .app-title-lg {
+        font-size: var(--s-font-size-2xl);
+        font-weight: 500;
+        letter-spacing: -0.5px;
+        color: var(--s-text-heading);
+      }
+
+      .app-title-sm {
+        font-size: var(--s-font-size-xl);
+        font-weight: 500;
+        letter-spacing: -0.5px;
+        color: var(--s-text-heading);
+      }
+
+      .header-nav {
+        display: flex;
+        gap: var(--s-space-4);
+      }
+
+      /* divider */
+      .ds-divider {
+        height: 1px;
+        background: linear-gradient(to right, transparent, #d8d3e4 20%, #d8d3e4 80%, transparent);
+        margin: 0 40px;
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- Sticky nav -->
+    <nav class="ds-nav">
+      <a href="#colors">Colors</a>
+      <a href="#typography">Typography</a>
+      <a href="#spacing">Spacing</a>
+      <a href="#atoms">Atoms</a>
+      <a href="#molecules">Molecules</a>
+      <a href="#layout">Layout</a>
+      <a href="#states">State matrix</a>
+    </nav>
+
+
+    <!-- ══════════════════════════════
+         1. COLOR TOKENS
+    ══════════════════════════════ -->
+    <div class="ds-section" id="colors">
+      <p class="ds-section-title">Foundation</p>
+      <h2 class="ds-section-heading">Color tokens</h2>
+      <p class="ds-section-desc">
+        All colors are accessed via semantic tokens (<code class="ds-token">--s-*</code>).
+        Never use primitives (<code class="ds-token">--p-*</code>) directly in components —
+        only in the token definitions themselves. This ensures dark-mode overrides work automatically.
+      </p>
+
+      <div class="color-grid">
+        <!-- Backgrounds -->
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#fff; border-bottom:1px solid #e5e4e7;"></div>
+          <div class="color-swatch-meta">
+            <div class="color-swatch-name">--s-bg</div>
+            <div class="color-swatch-value">#ffffff · page / component bg</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#ece9f3;"></div>
+          <div class="color-swatch-meta">
+            <div class="color-swatch-name">page bg</div>
+            <div class="color-swatch-value">#ece9f3 · warm lavender-gray</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:rgba(170,59,255,0.07);"></div>
+          <div class="color-swatch-meta">
+            <div class="color-swatch-name">--s-bg-accent</div>
+            <div class="color-swatch-value">purple 7% · edit mode bg</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#fef2f2;"></div>
+          <div class="color-swatch-meta">
+            <div class="color-swatch-name">--s-bg-error</div>
+            <div class="color-swatch-value">#fef2f2 · error bg</div>
+          </div>
+        </div>
+        <!-- Text -->
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#08060d;"></div>
+          <div class="color-swatch-meta">
+            <div class="color-swatch-name">--s-text-heading</div>
+            <div class="color-swatch-value">#08060d · titles, todo text</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#6b6375;"></div>
+          <div class="color-swatch-meta">
+            <div class="color-swatch-name">--s-text</div>
+            <div class="color-swatch-value">#6b6375 · body, labels</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#dc2626;"></div>
+          <div class="color-swatch-meta">
+            <div class="color-swatch-name">--s-text-error</div>
+            <div class="color-swatch-value">#dc2626 · errors</div>
+          </div>
+        </div>
+        <!-- Borders -->
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#e5e4e7;"></div>
+          <div class="color-swatch-meta">
+            <div class="color-swatch-name">--s-border</div>
+            <div class="color-swatch-value">#e5e4e7 · default border</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#6366f1;"></div>
+          <div class="color-swatch-meta">
+            <div class="color-swatch-name">--s-border-focus</div>
+            <div class="color-swatch-value">#6366f1 · focus ring border</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:rgba(170,59,255,0.4);"></div>
+          <div class="color-swatch-meta">
+            <div class="color-swatch-name">--s-border-accent</div>
+            <div class="color-swatch-value">purple 40% · edit mode bar</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#fecaca;"></div>
+          <div class="color-swatch-meta">
+            <div class="color-swatch-name">--s-border-error</div>
+            <div class="color-swatch-value">#fecaca · error border</div>
+          </div>
+        </div>
+        <!-- Interactive -->
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#aa3bff;"></div>
+          <div class="color-swatch-meta">
+            <div class="color-swatch-name">--s-accent</div>
+            <div class="color-swatch-value">#aa3bff · primary action</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:#4f46e5;"></div>
+          <div class="color-swatch-meta">
+            <div class="color-swatch-name">--s-accent-hover</div>
+            <div class="color-swatch-value">#4f46e5 · hover state</div>
+          </div>
+        </div>
+        <div class="color-swatch">
+          <div class="color-swatch-body" style="background:rgba(99,102,241,0.15);"></div>
+          <div class="color-swatch-meta">
+            <div class="color-swatch-name">--s-focus-ring</div>
+            <div class="color-swatch-value">indigo 15% · box-shadow</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ds-divider" style="margin-top:48px;"></div>
+
+
+    <!-- ══════════════════════════════
+         2. TYPOGRAPHY
+    ══════════════════════════════ -->
+    <div class="ds-section" id="typography">
+      <p class="ds-section-title">Foundation</p>
+      <h2 class="ds-section-heading">Typography scale</h2>
+      <p class="ds-section-desc">
+        Seven sizes, three weights. The key hierarchy rule:
+        <strong>todo titles are heavier than descriptions</strong>,
+        and metadata (dates) is almost invisible — it should not compete with content.
+      </p>
+
+      <div class="type-scale-row">
+
+        <div class="type-item">
+          <div class="type-sample">
+            <span style="font-size:32px;font-weight:500;color:#08060d;letter-spacing:-0.5px;">Todos</span>
+          </div>
+          <div class="type-meta">
+            <div class="type-meta-name">app-title (desktop)</div>
+            <div class="type-meta-spec">--s-font-size-2xl  · 32px · weight 500
+token: --s-text-heading
+usage: AppHeader h1</div>
+          </div>
+        </div>
+
+        <div class="type-item">
+          <div class="type-sample">
+            <span style="font-size:28px;font-weight:500;color:#08060d;letter-spacing:-0.5px;">Todos</span>
+          </div>
+          <div class="type-meta">
+            <div class="type-meta-name">app-title (mobile ≤ 1024px)</div>
+            <div class="type-meta-spec">--s-font-size-xl   · 28px · weight 500
+token: --s-text-heading
+usage: AppHeader h1 @media ≤1024px</div>
+          </div>
+        </div>
+
+        <div class="type-item">
+          <div class="type-sample">
+            <span style="font-size:15px;font-weight:500;color:#08060d;">Buy groceries</span>
+          </div>
+          <div class="type-meta">
+            <div class="type-meta-name">todo-title (incomplete)</div>
+            <div class="type-meta-spec">--s-font-size-md   · 15px · weight 500
+token: --s-text-heading
+usage: TodoItem title (read + edit)</div>
+          </div>
+        </div>
+
+        <div class="type-item">
+          <div class="type-sample">
+            <span style="font-size:14px;font-weight:400;color:#6b6375;opacity:0.65;text-decoration:line-through;text-decoration-color:rgba(0,0,0,0.22);text-decoration-thickness:1px;">Book dentist appointment</span>
+          </div>
+          <div class="type-meta">
+            <div class="type-meta-name">todo-title (completed)</div>
+            <div class="type-meta-spec">--s-font-size-base · 14px · weight 400
+token: --s-text · opacity 0.65
+text-decoration: line-through, 1px,
+  rgba(0,0,0,0.22) — subtle, not harsh</div>
+          </div>
+        </div>
+
+        <div class="type-item">
+          <div class="type-sample">
+            <span style="font-size:13px;color:#6b6375;opacity:0.75;">Milk, eggs, bread, coffee</span>
+          </div>
+          <div class="type-meta">
+            <div class="type-meta-name">todo-description</div>
+            <div class="type-meta-spec">--s-font-size-sm   · 13px · weight 400
+token: --s-text · opacity 0.75
+usage: TodoItem description</div>
+          </div>
+        </div>
+
+        <div class="type-item">
+          <div class="type-sample">
+            <span style="font-size:14px;color:#6b6375;">you@example.com</span>
+          </div>
+          <div class="type-meta">
+            <div class="type-meta-name">input / body</div>
+            <div class="type-meta-spec">--s-font-size-base · 14px · weight 400
+token: --s-text
+usage: all form inputs, body text</div>
+          </div>
+        </div>
+
+        <div class="type-item">
+          <div class="type-sample">
+            <span style="font-size:13px;font-weight:500;color:#6b6375;letter-spacing:0.2px;">Email</span>
+          </div>
+          <div class="type-meta">
+            <div class="type-meta-name">form-label</div>
+            <div class="type-meta-spec">--s-font-size-sm   · 13px · weight 500
+token: --s-text · letter-spacing: 0.2px
+usage: FormField label</div>
+          </div>
+        </div>
+
+        <div class="type-item">
+          <div class="type-sample">
+            <span style="font-size:13px;color:#dc2626;">Title cannot be empty</span>
+          </div>
+          <div class="type-meta">
+            <div class="type-meta-name">error-text</div>
+            <div class="type-meta-spec">--s-font-size-sm   · 13px · weight 400
+token: --s-text-error
+usage: inline validation errors</div>
+          </div>
+        </div>
+
+        <div class="type-item">
+          <div class="type-sample">
+            <span style="font-size:11px;color:#6b6375;opacity:0.45;">Apr 12, 2026</span>
+          </div>
+          <div class="type-meta">
+            <div class="type-meta-name">meta / timestamp</div>
+            <div class="type-meta-spec">--s-font-size-xs   · 11px · weight 400
+token: --s-text · opacity 0.45
+usage: TodoItem date, edit hints</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="ds-divider" style="margin-top:48px;"></div>
+
+
+    <!-- ══════════════════════════════
+         3. SPACING
+    ══════════════════════════════ -->
+    <div class="ds-section" id="spacing">
+      <p class="ds-section-title">Foundation</p>
+      <h2 class="ds-section-heading">Spacing scale</h2>
+      <p class="ds-section-desc">
+        Base unit is 2px. All layout distances are multiples of this unit.
+        Use these token names, never raw pixel values.
+      </p>
+
+      <div class="spacing-grid" style="max-width:520px;">
+        <div class="spacing-row">
+          <span class="spacing-label">--s-space-0-5</span>
+          <div class="spacing-bar" style="width:2px;"></div>
+          <span class="spacing-value">2px · micro: icon padding, tiny gaps</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-label">--s-space-1</span>
+          <div class="spacing-bar" style="width:4px;"></div>
+          <span class="spacing-value">4px · label↔input gap</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-label">--s-space-1-5</span>
+          <div class="spacing-bar" style="width:6px;"></div>
+          <span class="spacing-value">6px · ghost button padding-y, textarea gap</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-label">--s-space-2</span>
+          <div class="spacing-bar" style="width:8px;"></div>
+          <span class="spacing-value">8px · inline element gaps, meta margin-top</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-label">--s-space-2-5</span>
+          <div class="spacing-bar" style="width:10px;"></div>
+          <span class="spacing-value">10px · input/button padding-y</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-label">--s-space-3</span>
+          <div class="spacing-bar" style="width:12px;"></div>
+          <span class="spacing-value">12px · input padding-x, item column gap</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-label">--s-space-4</span>
+          <div class="spacing-bar" style="width:16px;"></div>
+          <span class="spacing-value">16px · side margins, form field gap</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-label">--s-space-5</span>
+          <div class="spacing-bar" style="width:20px;"></div>
+          <span class="spacing-value">20px · button padding-x</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-label">--s-space-6</span>
+          <div class="spacing-bar" style="width:24px;"></div>
+          <span class="spacing-value">24px · header bottom gap, section spacing</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-label">--s-space-8</span>
+          <div class="spacing-bar" style="width:32px;"></div>
+          <span class="spacing-value">32px · app padding-top, form padding-bottom</span>
+        </div>
+        <div class="spacing-row">
+          <span class="spacing-label">--s-space-12</span>
+          <div class="spacing-bar" style="width:48px;"></div>
+          <span class="spacing-value">48px · empty/loading state padding</span>
+        </div>
+      </div>
+
+      <div class="ds-spec" style="margin-top:24px;">
+        Todo item vertical padding: 14px top + 14px bottom (between --s-space-3 and --s-space-4)
+        App container: padding-top --s-space-8 (32px), no side padding — components own their margins
+        Component side margin: always --s-space-4 (16px) from the app shell edge
+      </div>
+    </div>
+
+    <div class="ds-divider" style="margin-top:48px;"></div>
+
+
+    <!-- ══════════════════════════════
+         4. ATOMS
+    ══════════════════════════════ -->
+    <div class="ds-section" id="atoms">
+      <p class="ds-section-title">UI Atoms</p>
+      <h2 class="ds-section-heading">Interactive elements</h2>
+      <p class="ds-section-desc">
+        Atoms are the smallest reusable pieces. Every state is enumerated.
+        Each atom has one job — compose them into molecules, never modify atoms for layout purposes.
+      </p>
+
+      <div class="ds-row">
+
+        <!-- Input states -->
+        <div class="ds-card" style="width:300px;">
+          <p class="ds-card-label">Input · all states</p>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div>
+              <input class="input-base" type="text" placeholder="Default" />
+              <p class="ds-spec">default: 1px --s-border, 6px radius</p>
+            </div>
+            <div>
+              <input class="input-base input--focus" type="text" value="focused@example.com" />
+              <p class="ds-spec">focus: 1px --s-border-focus + box-shadow --s-focus-ring</p>
+            </div>
+            <div>
+              <input class="input-base input--error" type="text" value="wrong@example.com" />
+              <p class="ds-spec">error: 1px --s-border-error</p>
+            </div>
+            <div>
+              <input class="input-base input--disabled" type="text" value="Disabled" disabled />
+              <p class="ds-spec">disabled: opacity 0.5, bg #fafafa</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Textarea states -->
+        <div class="ds-card" style="width:300px;">
+          <p class="ds-card-label">Textarea · all states</p>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div>
+              <textarea class="textarea-base" placeholder="Add details… (optional)"></textarea>
+              <p class="ds-spec">default: same border as Input, 13px text</p>
+            </div>
+            <div>
+              <textarea class="textarea-base input--focus">Details here…</textarea>
+              <p class="ds-spec">focus: same as Input focus state</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="ds-card" style="width:280px;">
+          <p class="ds-card-label">Button variants</p>
+          <div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start;">
+            <div>
+              <button type="button" class="btn-base btn-primary">Add</button>
+              <p class="ds-spec" style="margin-top:4px;">btn-primary: accent bg · hover accent-hover</p>
+            </div>
+            <div style="width:100%;">
+              <button type="button" class="btn-base btn-primary-block">Log in</button>
+              <p class="ds-spec" style="margin-top:4px;">btn-primary-block: full-width, auth forms</p>
+            </div>
+            <div>
+              <button type="button" class="btn-base btn-ghost">Log out</button>
+              <p class="ds-spec" style="margin-top:4px;">btn-ghost: no bg · 1px border · hover accent border</p>
+            </div>
+            <div>
+              <button type="button" class="btn-base btn-link">Register</button>
+              <p class="ds-spec" style="margin-top:4px;">btn-link: underlined · no border · accent color</p>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px;">
+              <button type="button" class="btn-base btn-delete" aria-label="Delete">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+              </button>
+              <p class="ds-spec">btn-delete: 28×28 circle · opacity 0.35 · red border+bg on hover</p>
+            </div>
+            <div>
+              <button type="button" class="btn-base btn-primary btn--disabled" disabled>Logging in…</button>
+              <p class="ds-spec" style="margin-top:4px;">--disabled modifier: opacity 0.55 on any btn</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nav links (AppHeader) -->
+        <div class="ds-card" style="width:220px;">
+          <p class="ds-card-label">NavLink (AppHeader)</p>
+          <div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start;">
+            <div>
+              <button type="button" class="nav-btn">Log in</button>
+              <p class="ds-spec" style="margin-top:4px;">inactive: --s-text · hover: --s-accent</p>
+            </div>
+            <div>
+              <button type="button" class="nav-btn--active">Log in</button>
+              <p class="ds-spec" style="margin-top:4px;">active: --s-accent · underline 4px offset</p>
+            </div>
+            <div>
+              <button type="button" class="nav-btn">Register</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Checkbox -->
+        <div class="ds-card" style="width:200px;">
+          <p class="ds-card-label">Checkbox</p>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="checkbox" class="checkbox-base" />
+              <span style="font-size:14px;color:#08060d;font-weight:500;">Buy groceries</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="checkbox" class="checkbox-base" checked />
+              <span style="font-size:14px;color:#6b6375;opacity:0.65;text-decoration:line-through;text-decoration-color:rgba(0,0,0,0.22);">Book dentist</span>
+            </div>
+          </div>
+          <p class="ds-spec" style="margin-top:8px;">accent-color: --s-accent (purple)
+16×16px · click target: padding 8px</p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="ds-divider" style="margin-top:16px;"></div>
+
+
+    <!-- ══════════════════════════════
+         5. MOLECULES
+    ══════════════════════════════ -->
+    <div class="ds-section" id="molecules">
+      <p class="ds-section-title">UI Molecules</p>
+      <h2 class="ds-section-heading">Composed components</h2>
+      <p class="ds-section-desc">
+        Molecules compose atoms into single-responsibility components.
+        Each has a single clear API: props in, visual state out.
+      </p>
+
+      <div class="ds-row">
+
+        <!-- FormField -->
+        <div class="ds-card" style="width:300px;">
+          <p class="ds-card-label">FormField — default / error</p>
+          <div style="display:flex;flex-direction:column;gap:20px;">
+            <div class="form-field">
+              <label class="form-label">Email</label>
+              <input class="input-base" type="email" placeholder="you@example.com" />
+              <p class="ds-spec">Props: label, type, placeholder, value
+Structure: label (13px/500) + 4px gap + input</p>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Password</label>
+              <input class="input-base input--focus" type="password" placeholder="Min. 8 characters" />
+              <p class="ds-spec">focus state shown on mount (auto-focus)</p>
+            </div>
+            <div class="form-field">
+              <label class="form-label">Email</label>
+              <input class="input-base input--error" type="email" value="bad@" />
+              <p class="form-field-error">Enter a valid email address</p>
+              <p class="ds-spec">error: red border + error text below input</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- AuthForm layout -->
+        <div class="ds-card" style="width:360px;">
+          <p class="ds-card-label">AuthForm — structure (login shown)</p>
+          <div class="auth-form-demo">
+            <div class="form-field">
+              <label class="form-label">Email</label>
+              <input class="input-base input--focus" type="email" placeholder="you@example.com" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Password</label>
+              <input class="input-base" type="password" placeholder="••••••••" />
+            </div>
+            <!-- Server error box — shown above submit -->
+            <div class="form-error-box" role="alert">Incorrect email or password</div>
+            <button type="button" class="btn-base btn-primary-block">Log in</button>
+            <p style="text-align:center;font-size:13px;color:#6b6375;">
+              Don't have an account?
+              <button type="button" class="btn-base btn-link">Register</button>
+            </p>
+          </div>
+          <p class="ds-spec" style="margin-top:16px;">Layout: flex-col, 16px gap (--s-space-4)
+Margin: 0 --s-space-4 · text-align: left (override global center)
+Error box: appears above submit — keeps button position stable
+Footer: centered, 13px, link is btn-link</p>
+        </div>
+
+        <!-- GlobalErrorBanner -->
+        <div class="ds-card" style="width:460px;padding:0;overflow:hidden;">
+          <p class="ds-card-label" style="padding:16px 20px 8px;">GlobalErrorBanner</p>
+          <div class="error-banner">
+            <p>Couldn't load your todos. Check your connection and try again.</p>
+            <button type="button" class="btn-retry">Retry</button>
+          </div>
+          <p class="ds-spec" style="padding:10px 20px 16px;">
+            Position: full-width, below add-form separator, above list
+            bg: --s-bg-error · border-top + border-bottom: --s-border-error
+            No border-radius (spans full width of app shell)
+            Retry button: only shown for retryable failures (GET /todos)
+          </p>
+        </div>
+
+      </div>
+
+      <!-- TodoItem states -->
+      <h3 style="font-size:15px;font-weight:600;color:#2a1e40;margin:24px 0 16px;">TodoItem — all states</h3>
+      <p class="ds-section-desc" style="margin-bottom:20px;">
+        2-column grid: <code class="ds-token">auto | 1fr</code>.
+        Checkbox in col 1 spanning all rows (align-self: start).
+        Col 2 stacks: title (row 1) → description (row 2, optional) → meta row (row 3).
+        The meta row uses flexbox with <code class="ds-token">justify-content: space-between</code>
+        so the date stays left and the Delete button stays right at all widths.
+      </p>
+
+      <div class="ds-row" style="flex-direction:column;gap:0;">
+        <div style="background:var(--s-bg);border:1px solid var(--s-border);border-radius:6px;overflow:hidden;max-width:600px;box-shadow:0 2px 16px rgba(100,60,160,0.08);">
+
+          <!-- Incomplete, no description -->
+          <div class="todo-item">
+            <input type="checkbox" class="todo-checkbox" />
+            <button type="button" class="todo-title-btn">Finish the UI refactor</button>
+            <div class="todo-meta">
+              <time class="todo-date">Apr 12, 2026</time>
+              <button type="button" class="btn-base btn-delete" aria-label="Delete"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg></button>
+            </div>
+          </div>
+
+          <!-- Incomplete, with description -->
+          <div class="todo-item">
+            <input type="checkbox" class="todo-checkbox" />
+            <button type="button" class="todo-title-btn">Buy groceries</button>
+            <button type="button" class="todo-desc-btn">Milk, eggs, bread, coffee</button>
+            <div class="todo-meta">
+              <time class="todo-date">Apr 12, 2026</time>
+              <button type="button" class="btn-base btn-delete" aria-label="Delete"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg></button>
+            </div>
+          </div>
+
+          <!-- Completed, no description (purple tint) -->
+          <div class="todo-item todo-item--completed">
+            <input type="checkbox" class="todo-checkbox" checked />
+            <span class="todo-title-span">Book dentist appointment</span>
+            <div class="todo-meta">
+              <time class="todo-date">Apr 11, 2026</time>
+              <button type="button" class="btn-base btn-delete" aria-label="Delete"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg></button>
+            </div>
+          </div>
+
+          <!-- Completed, with description -->
+          <div class="todo-item todo-item--completed">
+            <input type="checkbox" class="todo-checkbox" checked />
+            <span class="todo-title-span">Research new laptop models</span>
+            <span class="todo-desc-span">Compare ThinkPad X1 vs MacBook Pro</span>
+            <div class="todo-meta">
+              <time class="todo-date">Apr 10, 2026</time>
+              <button type="button" class="btn-base btn-delete" aria-label="Delete"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg></button>
+            </div>
+          </div>
+
+          <!-- Edit mode — title focused (accent bar) -->
+          <div class="todo-item todo-item--editing">
+            <input type="checkbox" class="todo-checkbox" />
+            <div style="grid-column:2;grid-row:1;">
+              <input class="edit-title-input" type="text" value="Buy groceries" />
+            </div>
+            <div style="grid-column:2;grid-row:2;display:flex;flex-direction:column;">
+              <textarea class="edit-textarea">Milk, eggs, bread, coffee</textarea>
+            </div>
+            <div class="todo-meta" style="margin-top:12px;">
+              <time class="todo-date">Apr 12, 2026</time>
+              <button type="button" class="btn-base btn-delete" aria-label="Delete"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg></button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <p class="ds-spec" style="margin-top:16px;max-width:600px;">
+        Read mode:  title = btn-base (all:unset) + 15px/500 + --s-text-heading
+        Completed:  title = span + 14px/400 + --s-text opacity 0.65 + line-through rgba(0,0,0,0.22)
+        Edit mode:  item border-left 3px --s-border-accent + bg rgba(170,59,255,0.05)
+                    title input = transparent bg, border-bottom 2px --s-border-focus only
+                    textarea = full border 1px --s-border-focus, white bg
+        Delete btn: 28×28 circle · trash SVG icon · opacity 0.35 at rest
+                    hover: red border rgba(239,68,68,0.45) + red tint bg + opacity 1
+                    pending: opacity 0.2, cursor not-allowed
+      </p>
+    </div>
+
+    <div class="ds-divider" style="margin-top:48px;"></div>
+
+
+    <!-- ══════════════════════════════
+         6. LAYOUT
+    ══════════════════════════════ -->
+    <div class="ds-section" id="layout">
+      <p class="ds-section-title">Layout</p>
+      <h2 class="ds-section-heading">AppShell &amp; AppHeader</h2>
+      <p class="ds-section-desc">
+        The app shell is a centered column, max-width 640px, with inline borders.
+        All components use <code class="ds-token">margin: 0 --s-space-4</code> for horizontal alignment
+        (never padding on the root). The only exception is the GlobalErrorBanner which is truly full-width.
+      </p>
+
+      <div class="ds-row">
+
+        <!-- AppHeader authenticated -->
+        <div class="ds-card" style="width:480px;padding:0;overflow:hidden;">
+          <p class="ds-card-label" style="padding:16px 20px 8px;">AppHeader — authenticated</p>
+          <div class="app-header-demo">
+            <span class="app-title-lg">Todos</span>
+            <button type="button" class="btn-base btn-ghost">Log out</button>
+          </div>
+          <p class="ds-spec" style="padding:10px 20px 16px;">
+            Desktop title: 32px (--s-font-size-2xl) / weight 500
+            margin-bottom: --s-space-6 (24px) — more breathing room than current 8px
+            Log out = btn-ghost (outlined, no fill)
+          </p>
+        </div>
+
+        <!-- AppHeader mobile -->
+        <div class="ds-card" style="width:375px;padding:0;overflow:hidden;">
+          <p class="ds-card-label" style="padding:16px 20px 8px;">AppHeader — mobile (≤ 1024px)</p>
+          <div class="app-header-demo">
+            <span class="app-title-sm">Todos</span>
+            <div class="header-nav">
+              <button type="button" class="nav-btn--active">Log in</button>
+              <button type="button" class="nav-btn">Register</button>
+            </div>
+          </div>
+          <p class="ds-spec" style="padding:10px 20px 16px;">
+            Mobile title: 28px (--s-font-size-xl)
+            Nav: active = underline 4px offset · inactive = --s-text, no decoration
+            Nav gap: --s-space-4 (16px)
+          </p>
+        </div>
+
+      </div>
+
+      <!-- AppShell structure diagram -->
+      <div class="ds-card" style="max-width:640px;">
+        <p class="ds-card-label">AppShell structure</p>
+        <pre style="font:12px/1.8 monospace;color:#7c6e8f;background:#f9f8ff;padding:20px;border-radius:4px;overflow-x:auto;">
+&lt;body&gt;                             bg: #ece9f3
+
+  &lt;div id="root"&gt;                  max-width: 640px, centered, border-inline
+                                   min-height: 100svh, flex-col
+
+    &lt;main class="app"&gt;             padding-top: 32px, gap: 16px, flex-col
+
+      &lt;AppHeader /&gt;                margin: 0 16px, margin-bottom: 24px
+                                   ┌ h1 (title left)
+                                   └ nav / logout (right)
+
+      [GlobalErrorBanner /]        full-width, no margin — only when error present
+                                   border-top + border-bottom: --s-border-error
+
+      &lt;AddTodoCard /&gt;              margin: 0 16px
+                                   border-radius: 8px, border: 1px --s-border
+                                   prop: expandOnFocus (bool, default: true)
+                                   ┌ collapsed (blur):
+                                   │   [.add-card-body] title input only
+                                   └ expanded (focus):
+                                       [.add-card-body] title + desc textarea
+                                       [.add-card-footer] Cancel | Add (purple tint bg)
+
+      &lt;div.list-separator /&gt;       1px solid --s-border, 0 margin
+
+      &lt;TodoList /&gt;                 no margin — list spans full width
+        ┌ empty state              centered, --s-space-12 top/bottom padding
+        ├ loading state            same
+        └ ul.todo-list
+            &lt;TodoItem /&gt; × N      grid: auto|1fr, 14px top/bottom, 16px sides
+                                   border-bottom: 1px --s-border
+                                   :last-child: no border-bottom
+
+    &lt;/main&gt;
+
+  &lt;/div&gt;
+
+&lt;/body&gt;</pre>
+      </div>
+    </div>
+
+    <div class="ds-divider" style="margin-top:48px;"></div>
+
+
+    <!-- ══════════════════════════════
+         7. STATE MATRIX
+    ══════════════════════════════ -->
+    <div class="ds-section" id="states">
+      <p class="ds-section-title">Reference</p>
+      <h2 class="ds-section-heading">Component × state matrix</h2>
+      <p class="ds-section-desc">
+        Every component and every state it can exist in. Use this as a checklist
+        when implementing and as a test coverage guide.
+      </p>
+
+      <div class="ds-card" style="max-width:800px;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr style="border-bottom:2px solid #e5e4e7;">
+              <th style="text-align:left;padding:8px 12px;color:#2a1e40;font-size:11px;letter-spacing:0.5px;text-transform:uppercase;width:180px;">Component</th>
+              <th style="text-align:left;padding:8px 12px;color:#2a1e40;font-size:11px;letter-spacing:0.5px;text-transform:uppercase;">States</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #f0eef4;">
+              <td style="padding:10px 12px;font-weight:600;color:#2a1e40;vertical-align:top;">AppHeader</td>
+              <td style="padding:10px 12px;color:#6b6375;line-height:1.7;">
+                unauthenticated (nav: Log in active, Register inactive) ·
+                unauthenticated register (nav: Log in inactive, Register active) ·
+                authenticated (Log out ghost button)
+              </td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0eef4;">
+              <td style="padding:10px 12px;font-weight:600;color:#2a1e40;vertical-align:top;">LoginForm</td>
+              <td style="padding:10px 12px;color:#6b6375;line-height:1.7;">
+                default (email auto-focused) ·
+                filled (values present) ·
+                pending (fields + button disabled, "Logging in…") ·
+                error 401 (error box, both fields error-bordered)
+              </td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0eef4;">
+              <td style="padding:10px 12px;font-weight:600;color:#2a1e40;vertical-align:top;">RegisterForm</td>
+              <td style="padding:10px 12px;color:#6b6375;line-height:1.7;">
+                default (name auto-focused) ·
+                filled ·
+                pending (disabled, "Creating account…") ·
+                error 409 (duplicate email — error box, email field error-bordered)
+              </td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0eef4;">
+              <td style="padding:10px 12px;font-weight:600;color:#2a1e40;vertical-align:top;">AddTodoCard</td>
+              <td style="padding:10px 12px;color:#6b6375;line-height:1.7;">
+                <em style="font-style:normal;color:#7c4fa8;font-size:11px;font-weight:600;letter-spacing:0.4px;">prop: expandOnFocus (default true)</em><br/>
+                collapsed · blur (title input only, quiet border) ·
+                expanded · focus (title + desc textarea + footer: Cancel | Add) ·
+                expanded · typing title (title input active) ·
+                expanded · typing description (textarea focus ring) ·
+                expanded · validation error (title empty — error text + error color) ·
+                expanded · pending (Add button disabled, "Adding…") ·
+                collapsed · after submit (fields cleared, card collapses)
+              </td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0eef4;">
+              <td style="padding:10px 12px;font-weight:600;color:#2a1e40;vertical-align:top;">TodoList</td>
+              <td style="padding:10px 12px;color:#6b6375;line-height:1.7;">
+                loading (spinner/text, aria-busy, inputs disabled) ·
+                empty (centered message, call-to-action secondary text) ·
+                populated (list of TodoItem × N)
+              </td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0eef4;">
+              <td style="padding:10px 12px;font-weight:600;color:#2a1e40;vertical-align:top;">TodoItem</td>
+              <td style="padding:10px 12px;color:#6b6375;line-height:1.7;">
+                read · incomplete (title btn, optional desc btn, date, delete) ·
+                read · completed (title span + strikethrough, purple tint bg, optional desc span) ·
+                read · delete pending (delete button opacity 0.4, cursor not-allowed) ·
+                edit · title focused (accent bar, transparent bg, underline input) ·
+                edit · desc focused (same accent bar, textarea focus ring) ·
+                edit · validation error (underline input error state + red error text) ·
+                edit · save pending (inputs disabled)
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:10px 12px;font-weight:600;color:#2a1e40;vertical-align:top;">GlobalErrorBanner</td>
+              <td style="padding:10px 12px;color:#6b6375;line-height:1.7;">
+                load error with Retry (GET /todos failed) ·
+                mutation error without Retry (create/update/delete failed)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="height:80px;"></div>
+
+  </body>
+</html>

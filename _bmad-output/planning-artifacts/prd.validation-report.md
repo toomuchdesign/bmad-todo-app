@@ -1,10 +1,14 @@
 ---
 validationTarget: "_bmad-output/planning-artifacts/prd.md"
 validationDate: "2026-03-26"
+lastDeltaValidation: "2026-04-12"
 inputDocuments:
   - "_bmad-output/planning-artifacts/prd.md"
   - "docs/initial-product-requirements.md"
   - "docs/initial-product-requirements.prd.md"
+  - "docs/ui-overview.md"
+  - "docs/mockups/design-system.html"
+  - "docs/decisions/adr-add-todo-card.md"
 validationStepsCompleted:
   - step-v-01-discovery
   - step-v-02-format-detection
@@ -18,6 +22,7 @@ validationStepsCompleted:
   - step-v-10-smart-validation
   - step-v-11-holistic-quality-validation
   - step-v-12-completeness-validation
+  - delta-validation-2026-04-12
 validationStatus: COMPLETE
 holisticQualityRating: "4/5 - Good"
 overallStatus: Warning
@@ -439,6 +444,65 @@ No template variables remaining ✓
 
 **Recommendation:** PRD is structurally complete and usable. For maximal downstream automation, add a frontmatter date field and specify a measurement profile for NFR performance targets.
 
+## Delta Validation — 2026-04-12 (Post-Edit)
+
+**Scope:** Targeted re-validation of changes applied in the 2026-04-12 PRD edit session.
+**Changes validated:** FR27, FR28, FR29 (new); Component Architecture subsection (new); Journey 1 rising action (updated); MVP scope bullet (updated).
+
+### Delta Density Check
+
+All new content passes density standards:
+- FR27/28/29: precise, no filler, each sentence carries specification weight ✓
+- Component Architecture subsection: layered hierarchy stated concisely; external reference provided ✓
+- Journey 1 update: replaces vague "types and submits" with card-expand interaction specifics ✓
+
+### Delta Measurability Check
+
+| New FR | Measurable | Test Criteria |
+|--------|-----------|---------------|
+| FR27 | ✓ | Focus event triggers card expansion; blur with empty title collapses |
+| FR28 | ✓ | `expandOnFocus` prop exercises both collapsed-default and always-expanded variants |
+| FR29 | ✓ | Description field present; value saved; preserved on validation failure |
+
+### Delta Traceability Check
+
+| New FR | Journey Trace | Scope Trace | Status |
+|--------|--------------|-------------|--------|
+| FR27 | Journey 1 (updated) | MVP scope (updated) | ✓ |
+| FR28 | None — no user journey covers A/B testing | MVP scope (indirect) | ⚠️ Weak |
+| FR29 | Journey 1 (optional description) | MVP scope | ✓ |
+
+**FR28 note:** The A/B testing / `expandOnFocus` prop is a product analytics requirement with no backing user journey. The traceability chain is weak (T=3 in SMART). Recommend adding a note in Success Criteria or Journey 1 that acknowledges the A/B variant if analytics measurement is a genuine success metric, or accept this as a low-severity implementation convenience.
+
+### Delta SMART Scores
+
+| FR | S | M | A | R | T | Avg | Status |
+|----|---|---|---|---|---|-----|--------|
+| FR27 | 5 | 5 | 5 | 5 | 5 | 5.0 | Pass |
+| FR28 | 5 | 4 | 5 | 4 | 3 | 4.2 | Warning (T=3) |
+| FR29 | 4 | 4 | 5 | 5 | 4 | 4.4 | Pass |
+
+### Delta Implementation Leakage Check
+
+**Component Architecture subsection:** Names design-system component types (`Input`, `Button`, `AddTodoCard`, etc.). These are design-specification vocabulary equivalent to the HTTP method names already accepted in the prior validation. **Not a violation — informational note only.**
+
+### Previous Warnings — Resolution Status
+
+| Warning | Status |
+|---------|--------|
+| FR7 missing explicit length constraint | ⚠️ Still unresolved in PRD (addressed in architecture via `MAX_TODO_TEXT_LENGTH = 200`) |
+| NFR1–NFR3 measurement profile underspecified | ⚠️ Still unresolved |
+| Frontmatter missing `date` field | ✓ Resolved — `lastEdited: 2026-04-12` added |
+
+### Delta Summary
+
+**New issues introduced:** 1 (FR28 weak traceability — low severity)
+**Previous warnings resolved:** 1 (frontmatter date)
+**Previous warnings persisting:** 2 (FR7 constraint, NFR baseline)
+**Net change in quality:** +0 critical, +0 new warnings worth blocking on
+
+**Overall delta assessment:** The 2026-04-12 edits are high quality. FR27 and FR29 are clean additions. FR28's traceability gap is worth a one-line acknowledgment in Journey 1 or Success Criteria but is not a blocker.
+
 ## Validation Summary
 
 **Overall Status:** Warning
@@ -467,7 +531,8 @@ None.
 
 - Define todo text length constraint(s) referenced by FR7.
 - Define a lightweight measurement profile for NFR1–NFR3 (baseline device/network/env).
-- (Optional) Add a `date` field to PRD frontmatter for tooling consistency.
+- ~~Add a `date` field to PRD frontmatter for tooling consistency.~~ ✓ Resolved 2026-04-12.
+- (Optional) Add a one-line A/B testing acknowledgment in Journey 1 or Success Criteria to back FR28's traceability.
 
 ### Strengths
 

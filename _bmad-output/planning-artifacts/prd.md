@@ -14,10 +14,20 @@ stepsCompleted:
   - step-10-nonfunctional
   - step-11-polish
   - step-12-complete
+  - step-e-01-discovery
+  - step-e-02-review
+  - step-e-03-edit
 workflowType: "prd"
+lastEdited: "2026-04-12"
+editHistory:
+  - date: "2026-04-12"
+    changes: "Added FR27/28/29 for AddTodoCard progressive disclosure and expandOnFocus A/B prop. Added Component Architecture subsection to Web App Specific Requirements. Updated MVP scope and User Journey 1 to reflect AddTodoCard card expand-on-focus UX. Sources: docs/ui-overview.md, docs/mockups/design-system.html, docs/decisions/adr-add-todo-card.md."
 inputDocuments:
   - docs/initial-product-requirements.md
   - docs/initial-product-requirements.prd.md
+  - docs/ui-overview.md
+  - docs/mockups/design-system.html
+  - docs/decisions/adr-add-todo-card.md
 documentCounts:
   productBriefs: 0
   research: 0
@@ -93,6 +103,7 @@ The MVP differentiator is restraint: “just enough” task management with no f
 - Newest created first ordering (`createdAt` desc)
 - Soft delete (deleted items not returned by default)
 - Empty/loading/error states + global error surface for network/server failures
+- Structured UI component hierarchy (atoms/molecules/layout) per design system specification (`docs/ui-overview.md`)
 - Modern browsers support
 
 ### Growth Features (Post-MVP)
@@ -117,7 +128,7 @@ The MVP differentiator is restraint: “just enough” task management with no f
 **Rising action:**
 
 - Sam opens the app and immediately sees their todo list (or an empty state with a clear add call to action).
-- Sam types a short task and submits.
+- Sam taps the add field; the card expands to reveal a description textarea and Cancel/Add actions. Sam types a title (and optionally a description) and submits.
 - The new todo appears instantly as active.
 - Sam repeats this a few times, building a small list.
 
@@ -252,6 +263,16 @@ Explicitly out of scope for MVP:
 - Focus behavior remains predictable after add/edit/delete.
 - No formal compliance target in MVP.
 
+### Component Architecture
+
+The UI is structured as a layered component hierarchy specified in the design system (`docs/ui-overview.md`, `docs/mockups/design-system.html`):
+
+- **Atoms:** `Input`, `Button` (primary / ghost variants), `Checkbox`, `NavLink`
+- **Molecules:** `FormField`, `AuthForm`, `AddTodoCard`, `TodoItem`, `GlobalErrorBanner`
+- **Layout:** `AppShell`, `AppHeader`
+
+Atomic components are extracted as standalone, reusable units with no duplicated structural markup between them. Higher-level components compose atoms exclusively.
+
 ### Real-Time / Sync
 
 - No real-time requirements in MVP (no collaboration, no live sync across clients).
@@ -318,6 +339,12 @@ Explicitly out of scope for MVP:
 - **FR21:** The API does not return soft-deleted todos in `GET /todos`.
 - **FR22:** API error responses include a stable machine-readable error code and a human-readable message suitable for display.
 - **FR23:** API error responses can optionally include structured details for validation errors (e.g., field + limits) and a requestId for debugging.
+
+### Add Todo Card Behavior
+
+- **FR27:** The add todo form (`AddTodoCard`) collapses to a title-only input at rest and expands to show a description textarea and Cancel/Add action buttons when the title input receives focus (`expandOnFocus=true` default behavior).
+- **FR28:** `AddTodoCard` exposes an `expandOnFocus` boolean prop, enabling A/B testing between progressive-disclosure (default: `true`) and always-expanded (`false`) variants without branching application logic.
+- **FR29:** Users can optionally provide a description when creating a todo; description is preserved on validation failure alongside the title.
 
 ### Testability (Flow Coverage)
 

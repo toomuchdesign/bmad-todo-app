@@ -1,0 +1,1326 @@
+<!doctype html>
+<!--
+  UX Mockup — Todo List (all states, all breakpoints)
+  =====================================================
+  Covers:
+    · Empty state
+    · Loading state
+    · Populated list (mix of incomplete / completed / with description)
+    · Add-todo card — collapsed (idle), expanded (typing), validation error
+    · Inline edit mode — title focused, description focused, validation error
+    · Global error banner (load failure + retry)
+
+  Breakpoints: Desktop (640px app shell) · Mobile (375px app shell)
+
+  DESIGN DECISIONS (intended for refactor)
+  -----------------------------------------
+  1. TODO ITEM LAYOUT — single 2-column grid (auto | 1fr) for ALL sizes.
+     The checkbox occupies col 1 (rows 1–3, align-self: start).
+     Col 2 stacks: title (row 1) → description (row 2, optional) →
+     meta row (row 3: date left / delete button right).
+     This eliminates the cramped col-3 layout on narrow screens where
+     the title and date competed for the same horizontal space.
+
+  2. TYPOGRAPHY HIERARCHY — three distinct levels:
+     · Title (incomplete): 15px / weight 500 / --s-text-heading
+     · Title (complete):   14px / weight 400 / --s-text / opacity 0.65
+     · Description:        13px / weight 400 / --s-text / opacity 0.75
+     · Meta (date):        11px / weight 400 / --s-text / opacity 0.45
+
+  3. COMPLETED TODOS — elegant treatment:
+     · No harsh full-opacity strikethrough.
+     · text-decoration: line-through; text-decoration-color: rgba(0,0,0,0.22)
+     · Item background: very light purple tint (rgba(170,59,255,0.035))
+     · Checkbox accent fills to signal "done".
+
+  4. EDIT MODE — neat, contextual:
+     · The editing item gets border-left: 3px solid --s-border-accent (accent bar).
+     · Its background shifts to rgba(170,59,255,0.05).
+     · Title input: underline-style (border-bottom only, transparent bg).
+     · Textarea keeps a subtle full border.
+
+  5. ADD FORM — Option C: Card with footer button.
+     Feature flag: expandOnFocus (prop, default: true)
+     Collapsed (blur): card shows only the title input — clean, minimal.
+     Expanded (focus): card grows to show description textarea +
+                       footer row with Cancel and Add buttons.
+     A/B test: expandOnFocus={false} → card always renders expanded.
+     The card has a lightly elevated border on expansion and a tinted footer.
+
+  6. DELETE BUTTON — circular icon button with trash SVG.
+     28×28px circle, transparent border that reveals on hover with a red tint.
+     Visible but quiet at rest (opacity 0.35); danger-state on hover.
+
+  7. BACKGROUND CONTRAST — page bg is #ece9f3 (warm lavender-gray);
+     the app shell is pure white. This gives the shell clear visual lift.
+
+  8. SPACING — item padding 14px vertical / 16px horizontal.
+     Gap between header and form: 24px. Form card margin: 0 16px.
+
+  HOW TO SCREENSHOT
+  -----------------
+  1. cp docs/mockups/todo-list.html packages/web/public/todo-list.html
+  2. npm run dev → open http://localhost:5173/todo-list.html
+  3. Take screenshots → docs/mockups/screenshots/
+  4. rm packages/web/public/todo-list.html
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>bmad-todo — Todo List Mockups</title>
+    <style>
+      /* ─── Design tokens (verbatim from packages/web/src/tokens/) ─── */
+      :root {
+        --p-gray-100: #f3f4f6;
+        --p-gray-400: #9ca3af;
+        --p-gray-500: #6b6375;
+        --p-gray-900: #08060d;
+        --p-purple-400: #c084fc;
+        --p-purple-600: #aa3bff;
+        --p-red-600: #dc2626;
+        --p-indigo-400: #818cf8;
+        --p-indigo-500: #6366f1;
+        --p-indigo-600: #4f46e5;
+        --p-white: #fff;
+        --p-dark-bg: #16171d;
+        --p-dark-surface: #1f2028;
+        --p-dark-border: #2e303a;
+        --p-font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+
+        --s-text: var(--p-gray-500);
+        --s-text-heading: var(--p-gray-900);
+        --s-text-error: var(--p-red-600);
+        --s-bg: var(--p-white);
+        --s-bg-accent: rgba(170, 59, 255, 0.07);
+        --s-bg-error: #fef2f2;
+        --s-border: #e5e4e7;
+        --s-border-accent: rgba(170, 59, 255, 0.4);
+        --s-border-focus: var(--p-indigo-500);
+        --s-border-error: #fecaca;
+        --s-accent: var(--p-purple-600);
+        --s-accent-hover: var(--p-indigo-600);
+        --s-text-on-accent: var(--p-white);
+        --s-focus-ring: rgba(99, 102, 241, 0.15);
+        --s-space-0-5: 2px;
+        --s-space-1: 4px;
+        --s-space-1-5: 6px;
+        --s-space-2: 8px;
+        --s-space-2-5: 10px;
+        --s-space-3: 12px;
+        --s-space-4: 16px;
+        --s-space-5: 20px;
+        --s-space-6: 24px;
+        --s-space-8: 32px;
+        --s-space-12: 48px;
+        --s-radius-sm: 4px;
+        --s-radius-md: 6px;
+        --s-radius-lg: 8px;
+        --s-font-size-xs: 11px;   /* metadata, timestamps */
+        --s-font-size-sm: 13px;   /* descriptions, labels, secondary */
+        --s-font-size-base: 14px; /* body, inputs */
+        --s-font-size-md: 15px;   /* todo titles */
+        --s-font-size-lg: 16px;   /* large inputs, nav */
+        --s-font-size-xl: 28px;
+        --s-font-size-2xl: 32px;
+        --s-font-body: var(--p-font-sans);
+        --s-font-heading: var(--p-font-sans);
+      }
+
+      /* ─── Mockup chrome ─── */
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        background: #ece9f3; /* warm lavender-gray — more contrast with white app shell */
+        font: 14px / 1.5 var(--s-font-body);
+        color: var(--s-text);
+      }
+
+      .page-title {
+        padding: 32px 40px 0;
+        font: 600 11px / 1 var(--s-font-body);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #999;
+      }
+
+      .section-heading {
+        padding: 32px 40px 12px;
+        font: 500 17px / 1 var(--s-font-heading);
+        color: #555;
+        border-top: 1px solid #d8d3e4;
+        margin-top: 32px;
+      }
+      .section-heading:first-of-type { border-top: none; margin-top: 0; }
+
+      .gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 32px;
+        padding: 16px 40px 48px;
+        align-items: flex-start;
+      }
+
+      .frame {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .frame-label {
+        font: 600 11px / 1 var(--s-font-body);
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        color: #888;
+      }
+
+      /* Feature-flag annotation badge shown in frame-label */
+      .flag-badge {
+        display: inline-block;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        color: #7c4fa8;
+        background: rgba(124, 79, 168, 0.1);
+        border: 1px solid rgba(124, 79, 168, 0.3);
+        padding: 2px 6px;
+        border-radius: 3px;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
+
+      /* ─── App shells ─── */
+      .shell {
+        background: var(--s-bg);
+        border: 1px solid var(--s-border);
+        border-radius: 2px;
+        box-shadow: 0 2px 20px rgba(100, 60, 160, 0.1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .shell--desktop { width: 640px; }
+      .shell--mobile  { width: 375px; }
+
+      /* ─── App container ─── */
+      .app {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        padding: var(--s-space-8) 0 var(--s-space-4);
+      }
+
+      /* ─── AppHeader ─── */
+      .app-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin: 0 var(--s-space-4);
+        margin-bottom: var(--s-space-6); /* 24px gap below header */
+      }
+
+      .app-title {
+        font-size: var(--s-font-size-2xl);
+        font-weight: 500;
+        letter-spacing: -0.5px;
+        color: var(--s-text-heading);
+      }
+      .shell--mobile .app-title {
+        font-size: var(--s-font-size-xl);
+      }
+
+      .btn-logout {
+        padding: var(--s-space-1-5) var(--s-space-4);
+        font-size: var(--s-font-size-base);
+        font-family: inherit;
+        background: none;
+        border: 1px solid var(--s-border);
+        border-radius: var(--s-radius-md);
+        color: var(--s-text);
+        cursor: pointer;
+        transition: border-color 0.2s;
+      }
+      .btn-logout:hover { border-color: var(--s-border-accent); }
+
+
+      /* ─── Global Error Banner ─── */
+      .error-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--s-space-3);
+        padding: var(--s-space-3) var(--s-space-4);
+        background: var(--s-bg-error);
+        border-top: 1px solid var(--s-border-error);
+        border-bottom: 1px solid var(--s-border-error);
+        margin-bottom: var(--s-space-3);
+      }
+      .error-banner p {
+        color: var(--s-text-error);
+        font-size: var(--s-font-size-base);
+        flex: 1;
+      }
+      .btn-retry {
+        padding: var(--s-space-1-5) var(--s-space-4);
+        font-size: var(--s-font-size-base);
+        font-weight: 500;
+        font-family: inherit;
+        border: 1px solid var(--s-border-error);
+        border-radius: var(--s-radius-md);
+        background: var(--s-bg);
+        color: var(--s-text-error);
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+
+      /* ─── Add-todo card ─── */
+      /*
+       * Feature flag: expandOnFocus (prop, default: true)
+       *
+       * Collapsed (blur / idle):
+       *   Only the title input is visible inside the card.
+       *   The card border is quiet (--s-border). No footer.
+       *
+       * Expanded (focus):
+       *   Card border shifts to --s-border-accent (purple tint).
+       *   A subtle box-shadow lifts the card off the page.
+       *   Description textarea appears below the title.
+       *   Footer row: Cancel (ghost) | Add (primary) — right-aligned.
+       *
+       * A/B variant: expandOnFocus={false}
+       *   Always renders the expanded layout. Allows comparing
+       *   discoverability vs. cleanliness in production traffic.
+       */
+      .add-form-section {
+        padding: 0 var(--s-space-4);
+      }
+
+      .add-card {
+        border: 1px solid var(--s-border);
+        border-radius: var(--s-radius-lg);  /* 8px */
+        background: var(--s-bg);
+        overflow: hidden;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+
+      .add-card--expanded {
+        border-color: var(--s-border-accent);
+        box-shadow: 0 2px 16px rgba(100, 60, 160, 0.1);
+      }
+
+      .add-card--disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      .add-card-body {
+        padding: var(--s-space-3) var(--s-space-4);
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-space-2);
+      }
+
+      /* Tinted footer — scopes Add action to the whole card */
+      .add-card-footer {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: var(--s-space-2);
+        padding: var(--s-space-2) var(--s-space-4);
+        background: rgba(170, 59, 255, 0.04);
+        border-top: 1px solid rgba(170, 59, 255, 0.1);
+      }
+
+      .add-title-input {
+        padding: var(--s-space-2) 0;
+        font-size: var(--s-font-size-base);
+        font-family: inherit;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: var(--s-text-heading);
+        width: 100%;
+      }
+      .add-title-input::placeholder {
+        color: var(--s-text);
+        opacity: 0.45;
+      }
+      .add-title-input--error {
+        color: var(--s-text-error);
+      }
+
+      .add-desc-textarea {
+        padding: var(--s-space-2) var(--s-space-2-5);
+        font-size: var(--s-font-size-sm);
+        font-family: inherit;
+        line-height: 1.5;
+        border: 1px solid var(--s-border);
+        border-radius: var(--s-radius-sm);
+        background: rgba(170, 59, 255, 0.02);
+        color: var(--s-text);
+        outline: none;
+        resize: vertical;
+        min-height: 52px;
+        width: 100%;
+        transition: border-color 0.2s;
+      }
+      .add-desc-textarea--focus {
+        border-color: var(--s-border-focus);
+        box-shadow: 0 0 0 2px var(--s-focus-ring);
+      }
+
+      .add-validation-error {
+        font-size: var(--s-font-size-sm);
+        color: var(--s-text-error);
+      }
+
+      /* Primary action in the card footer */
+      .btn-save {
+        padding: var(--s-space-2) var(--s-space-4);
+        font-size: var(--s-font-size-sm);
+        font-weight: 500;
+        font-family: inherit;
+        border: 1px solid transparent;
+        border-radius: var(--s-radius-md);
+        background: var(--s-accent);
+        color: var(--s-text-on-accent);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.2s;
+      }
+      .btn-save:hover { background: var(--s-accent-hover); }
+      .btn-save--disabled { opacity: 0.55; cursor: not-allowed; }
+
+      /* Ghost cancel in footer */
+      .btn-cancel {
+        padding: var(--s-space-2) var(--s-space-3);
+        font-size: var(--s-font-size-sm);
+        font-family: inherit;
+        border: 1px solid transparent;
+        border-radius: var(--s-radius-md);
+        background: none;
+        color: var(--s-text);
+        opacity: 0.6;
+        cursor: pointer;
+        transition: opacity 0.15s, border-color 0.15s;
+      }
+      .btn-cancel:hover { opacity: 1; border-color: var(--s-border); }
+
+
+      /* ─── List separator ─── */
+      .list-separator {
+        height: 1px;
+        background: var(--s-border);
+        margin: var(--s-space-3) 0 0;
+      }
+
+
+      /* ─── Todo list ─── */
+      .todo-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+
+      /* ─── Empty / Loading states ─── */
+      .list-empty-state {
+        padding: var(--s-space-12) var(--s-space-4);
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-space-2);
+      }
+      .list-empty-state .primary-msg {
+        font-size: var(--s-font-size-md);
+        font-weight: 500;
+        color: var(--s-text-heading);
+        opacity: 0.6;
+      }
+      .list-empty-state .secondary-msg {
+        font-size: var(--s-font-size-sm);
+        color: var(--s-text);
+        opacity: 0.5;
+      }
+
+      .list-loading-state {
+        padding: var(--s-space-12) var(--s-space-4);
+        text-align: center;
+        font-size: var(--s-font-size-sm);
+        color: var(--s-text);
+        opacity: 0.5;
+        letter-spacing: 0.2px;
+      }
+
+
+      /* ─── Todo item — READ MODE ─── */
+      /*
+       * 2-column grid:  auto | 1fr
+       * Row 1: [checkbox]  [title]
+       * Row 2:             [description]  (optional)
+       * Row 3:             [meta: date ←→ delete button]
+       *
+       * Checkbox spans all rows, aligned to the top of row 1.
+       * This layout works identically on mobile and desktop:
+       * the title always gets the full remaining width.
+       */
+      .todo-item {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto auto;
+        column-gap: var(--s-space-3);
+        padding: 14px var(--s-space-4);
+        border-bottom: 1px solid var(--s-border);
+      }
+      .todo-item:last-child { border-bottom: none; }
+
+      /* Subtle hover to indicate interactivity */
+      .todo-item:hover { background: rgba(0, 0, 0, 0.01); }
+
+      .todo-checkbox {
+        grid-column: 1;
+        grid-row: 1 / span 3;
+        align-self: start;
+        margin-top: 3px; /* optical alignment — sits level with title cap-height */
+        cursor: pointer;
+        accent-color: var(--s-accent);
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+      }
+
+      /* Title — button in read mode (clickable to enter edit) */
+      .todo-title-btn {
+        all: unset;
+        grid-column: 2;
+        grid-row: 1;
+        font-size: var(--s-font-size-md);  /* 15px */
+        font-weight: 500;
+        color: var(--s-text-heading);
+        line-height: 1.4;
+        cursor: pointer;
+        border-radius: var(--s-radius-sm);
+        min-width: 0;
+        word-break: break-word;
+      }
+      .todo-title-btn:focus-visible {
+        outline: 2px solid var(--s-border-focus);
+        outline-offset: 2px;
+      }
+
+      /* Title — span (non-clickable, for completed items) */
+      .todo-title-span {
+        grid-column: 2;
+        grid-row: 1;
+        font-size: var(--s-font-size-base);  /* 14px — one step down */
+        font-weight: 400;
+        color: var(--s-text);
+        opacity: 0.65;
+        line-height: 1.4;
+        text-decoration: line-through;
+        text-decoration-color: rgba(0, 0, 0, 0.22); /* subtle, not harsh */
+        text-decoration-thickness: 1px;
+        word-break: break-word;
+      }
+
+      /* Description — button (clickable to enter edit focused on desc) */
+      .todo-desc-btn {
+        all: unset;
+        grid-column: 2;
+        grid-row: 2;
+        font-size: var(--s-font-size-sm);  /* 13px */
+        color: var(--s-text);
+        opacity: 0.75;
+        line-height: 1.45;
+        cursor: pointer;
+        margin-top: var(--s-space-0-5);
+        word-break: break-word;
+        border-radius: var(--s-radius-sm);
+      }
+      .todo-desc-btn:focus-visible {
+        outline: 2px solid var(--s-border-focus);
+        outline-offset: 2px;
+      }
+
+      /* Description — span (for completed items) */
+      .todo-desc-span {
+        grid-column: 2;
+        grid-row: 2;
+        font-size: var(--s-font-size-sm);
+        color: var(--s-text);
+        opacity: 0.45;
+        line-height: 1.45;
+        margin-top: var(--s-space-0-5);
+        word-break: break-word;
+      }
+
+      /* Meta row (date + delete) — always bottom of the item content */
+      .todo-meta {
+        grid-column: 2;
+        grid-row: 3;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: var(--s-space-2);
+        gap: var(--s-space-2);
+      }
+
+      .todo-date {
+        font-size: var(--s-font-size-xs);  /* 11px — very quiet */
+        color: var(--s-text);
+        opacity: 0.45;
+        white-space: nowrap;
+      }
+
+      /*
+       * Delete button — circular icon button
+       * 28×28 circle, transparent border at rest (opacity 0.35).
+       * On hover: border + background reveal red tint.
+       */
+      .btn-delete {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border-radius: 50%;
+        border: 1px solid transparent;
+        background: none;
+        color: var(--s-text);
+        opacity: 0.35;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: border-color 0.15s, color 0.15s, opacity 0.15s, background 0.15s;
+      }
+      .btn-delete:hover {
+        border-color: rgba(239, 68, 68, 0.45);
+        color: var(--s-text-error);
+        background: rgba(239, 68, 68, 0.06);
+        opacity: 1;
+      }
+      .btn-delete--pending {
+        opacity: 0.2;
+        cursor: not-allowed;
+      }
+
+      /* Completed item — very subtle tint on the whole row */
+      .todo-item--completed {
+        background: rgba(170, 59, 255, 0.035);
+      }
+
+      /* ─── Todo item — EDIT MODE ─── */
+      /*
+       * The editing item gets an accent bar on its left edge and a very
+       * light purple background to clearly signal "this item is being edited".
+       * Inputs use an underline-style (border-bottom only) for a clean,
+       * minimal look that doesn't add visual noise to the list.
+       */
+      .todo-item--editing {
+        border-left: 3px solid var(--s-border-accent);
+        background: rgba(170, 59, 255, 0.05);
+        padding-left: calc(var(--s-space-4) - 3px); /* compensate for border */
+      }
+
+      .edit-title-wrapper {
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      .edit-title-input {
+        width: 100%;
+        padding: 2px 0;
+        font-size: var(--s-font-size-md);  /* matches read-mode title */
+        font-weight: 500;
+        font-family: inherit;
+        color: var(--s-text-heading);
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid var(--s-border-focus);
+        border-radius: 0;
+        outline: none;
+        transition: border-color 0.15s;
+      }
+      .edit-title-input--invalid {
+        border-bottom-color: var(--s-border-error);
+      }
+
+      .edit-desc-wrapper {
+        grid-column: 2;
+        grid-row: 2;
+        display: flex;
+        flex-direction: column;
+        margin-top: var(--s-space-2);
+      }
+
+      .edit-desc-textarea {
+        width: 100%;
+        padding: var(--s-space-1-5) var(--s-space-2);
+        font-size: var(--s-font-size-sm);
+        font-family: inherit;
+        line-height: 1.45;
+        color: var(--s-text);
+        background: var(--s-bg);
+        border: 1px solid var(--s-border-focus);
+        border-radius: var(--s-radius-sm);
+        outline: none;
+        resize: vertical;
+        min-height: 52px;
+        transition: border-color 0.15s;
+      }
+
+      .edit-validation-error {
+        font-size: var(--s-font-size-sm);
+        color: var(--s-text-error);
+        margin-top: var(--s-space-1);
+      }
+
+      /* In edit mode, the meta row keeps delete accessible */
+      .todo-item--editing .todo-meta {
+        margin-top: var(--s-space-3);
+      }
+    </style>
+  </head>
+  <body>
+
+    <p class="page-title">bmad-todo · Todo List · All states · All breakpoints</p>
+
+
+    <!-- ══════════════════════════════════════════
+         SECTION A: DESKTOP (640px)
+    ══════════════════════════════════════════ -->
+    <p class="section-heading">Desktop — 640px</p>
+
+    <div class="gallery">
+
+      <!-- ── A1. Empty state ── -->
+      <div class="frame">
+        <span class="frame-label">Empty state</span>
+        <div class="shell shell--desktop">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <button type="button" class="btn-logout">Log out</button>
+            </header>
+            <div class="add-form-section">
+              <div class="add-card">
+                <div class="add-card-body">
+                  <input class="add-title-input" type="text" placeholder="What needs to be done?" />
+                </div>
+              </div>
+            </div>
+            <div class="list-separator"></div>
+            <div class="list-empty-state">
+              <p class="primary-msg">No todos yet.</p>
+              <p class="secondary-msg">Add your first one above.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── A2. Loading state ── -->
+      <div class="frame">
+        <span class="frame-label">Loading state</span>
+        <div class="shell shell--desktop">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <button type="button" class="btn-logout">Log out</button>
+            </header>
+            <div class="add-form-section">
+              <div class="add-card add-card--disabled">
+                <div class="add-card-body">
+                  <input class="add-title-input" type="text" placeholder="What needs to be done?" disabled />
+                </div>
+              </div>
+            </div>
+            <div class="list-separator"></div>
+            <div class="list-loading-state" aria-busy="true" role="status">
+              Loading…
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── A3. Populated list ── -->
+      <div class="frame">
+        <span class="frame-label">Populated list</span>
+        <div class="shell shell--desktop">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <button type="button" class="btn-logout">Log out</button>
+            </header>
+            <div class="add-form-section">
+              <div class="add-card">
+                <div class="add-card-body">
+                  <input class="add-title-input" type="text" placeholder="What needs to be done?" />
+                </div>
+              </div>
+            </div>
+            <div class="list-separator"></div>
+            <ul class="todo-list">
+              <!-- Item: incomplete, no description -->
+              <li class="todo-item">
+                <input type="checkbox" class="todo-checkbox" />
+                <button type="button" class="todo-title-btn">Finish the UI refactor</button>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 12, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+              <!-- Item: incomplete, with description -->
+              <li class="todo-item">
+                <input type="checkbox" class="todo-checkbox" />
+                <button type="button" class="todo-title-btn">Buy groceries</button>
+                <button type="button" class="todo-desc-btn">Milk, eggs, bread, coffee</button>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 12, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+              <!-- Item: completed -->
+              <li class="todo-item todo-item--completed">
+                <input type="checkbox" class="todo-checkbox" checked />
+                <span class="todo-title-span">Book dentist appointment</span>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 11, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+              <!-- Item: completed, with description -->
+              <li class="todo-item todo-item--completed">
+                <input type="checkbox" class="todo-checkbox" checked />
+                <span class="todo-title-span">Research new laptop</span>
+                <span class="todo-desc-span">Compare ThinkPad X1 vs MacBook Pro</span>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 10, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── A4. Add form — expanded (typing) ── -->
+      <div class="frame">
+        <span class="frame-label">Add form — expanded <span class="flag-badge">expandOnFocus</span></span>
+        <div class="shell shell--desktop">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <button type="button" class="btn-logout">Log out</button>
+            </header>
+            <div class="add-form-section">
+              <div class="add-card add-card--expanded">
+                <div class="add-card-body">
+                  <input class="add-title-input" type="text" value="Call the bank about fraud alert" />
+                  <textarea class="add-desc-textarea add-desc-textarea--focus">Need to dispute the charge from Apr 9</textarea>
+                </div>
+                <div class="add-card-footer">
+                  <button type="button" class="btn-cancel">Cancel</button>
+                  <button type="button" class="btn-save">Add</button>
+                </div>
+              </div>
+            </div>
+            <div class="list-separator"></div>
+            <ul class="todo-list">
+              <li class="todo-item">
+                <input type="checkbox" class="todo-checkbox" />
+                <button type="button" class="todo-title-btn">Finish the UI refactor</button>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 12, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── A5. Add form — validation error ── -->
+      <div class="frame">
+        <span class="frame-label">Add form — validation error <span class="flag-badge">expandOnFocus</span></span>
+        <div class="shell shell--desktop">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <button type="button" class="btn-logout">Log out</button>
+            </header>
+            <div class="add-form-section">
+              <div class="add-card add-card--expanded">
+                <div class="add-card-body">
+                  <input class="add-title-input add-title-input--error" type="text" placeholder="What needs to be done?" />
+                  <p class="add-validation-error" role="alert">Title cannot be empty</p>
+                  <textarea class="add-desc-textarea" placeholder="Add details… (optional)"></textarea>
+                </div>
+                <div class="add-card-footer">
+                  <button type="button" class="btn-cancel">Cancel</button>
+                  <button type="button" class="btn-save btn-save--disabled" disabled>Add</button>
+                </div>
+              </div>
+            </div>
+            <div class="list-separator"></div>
+            <div class="list-empty-state">
+              <p class="primary-msg">No todos yet.</p>
+              <p class="secondary-msg">Add your first one above.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── A6. Inline edit — title focused ── -->
+      <div class="frame">
+        <span class="frame-label">Inline edit — title focused</span>
+        <div class="shell shell--desktop">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <button type="button" class="btn-logout">Log out</button>
+            </header>
+            <div class="add-form-section">
+              <div class="add-card">
+                <div class="add-card-body">
+                  <input class="add-title-input" type="text" placeholder="What needs to be done?" />
+                </div>
+              </div>
+            </div>
+            <div class="list-separator"></div>
+            <ul class="todo-list">
+              <!-- Editing item -->
+              <li class="todo-item todo-item--editing">
+                <input type="checkbox" class="todo-checkbox" />
+                <div class="edit-title-wrapper">
+                  <input class="edit-title-input" type="text" value="Buy groceries" />
+                </div>
+                <div class="edit-desc-wrapper">
+                  <textarea class="edit-desc-textarea">Milk, eggs, bread, coffee</textarea>
+                </div>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 12, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+              <!-- Other items in read mode -->
+              <li class="todo-item">
+                <input type="checkbox" class="todo-checkbox" />
+                <button type="button" class="todo-title-btn">Finish the UI refactor</button>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 12, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+              <li class="todo-item todo-item--completed">
+                <input type="checkbox" class="todo-checkbox" checked />
+                <span class="todo-title-span">Book dentist appointment</span>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 11, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── A7. Inline edit — validation error ── -->
+      <div class="frame">
+        <span class="frame-label">Inline edit — validation error</span>
+        <div class="shell shell--desktop">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <button type="button" class="btn-logout">Log out</button>
+            </header>
+            <div class="add-form-section">
+              <div class="add-card">
+                <div class="add-card-body">
+                  <input class="add-title-input" type="text" placeholder="What needs to be done?" />
+                </div>
+              </div>
+            </div>
+            <div class="list-separator"></div>
+            <ul class="todo-list">
+              <li class="todo-item todo-item--editing">
+                <input type="checkbox" class="todo-checkbox" />
+                <div class="edit-title-wrapper">
+                  <input class="edit-title-input edit-title-input--invalid" type="text" value="" placeholder="What needs to be done?" />
+                  <p class="edit-validation-error" role="alert">Title cannot be empty</p>
+                </div>
+                <div class="edit-desc-wrapper">
+                  <textarea class="edit-desc-textarea">Milk, eggs, bread, coffee</textarea>
+                </div>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 12, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── A8. Global error banner (load failure) ── -->
+      <div class="frame">
+        <span class="frame-label">Global error — load failure + retry</span>
+        <div class="shell shell--desktop">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <button type="button" class="btn-logout">Log out</button>
+            </header>
+            <div class="add-form-section">
+              <div class="add-card">
+                <div class="add-card-body">
+                  <input class="add-title-input" type="text" placeholder="What needs to be done?" />
+                </div>
+              </div>
+            </div>
+            <div class="list-separator"></div>
+            <div class="error-banner" role="alert">
+              <p>Couldn't load your todos. Check your connection and try again.</p>
+              <button type="button" class="btn-retry">Retry</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /gallery desktop -->
+
+
+    <!-- ══════════════════════════════════════════
+         SECTION B: MOBILE (375px)
+    ══════════════════════════════════════════ -->
+    <p class="section-heading">Mobile — 375px</p>
+
+    <div class="gallery">
+
+      <!-- ── B1. Empty state ── -->
+      <div class="frame">
+        <span class="frame-label">Empty state</span>
+        <div class="shell shell--mobile">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <button type="button" class="btn-logout">Log out</button>
+            </header>
+            <div class="add-form-section">
+              <div class="add-card">
+                <div class="add-card-body">
+                  <input class="add-title-input" type="text" placeholder="What needs to be done?" />
+                </div>
+              </div>
+            </div>
+            <div class="list-separator"></div>
+            <div class="list-empty-state">
+              <p class="primary-msg">No todos yet.</p>
+              <p class="secondary-msg">Add your first one above.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── B2. Loading state ── -->
+      <div class="frame">
+        <span class="frame-label">Loading state</span>
+        <div class="shell shell--mobile">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <button type="button" class="btn-logout">Log out</button>
+            </header>
+            <div class="add-form-section">
+              <div class="add-card add-card--disabled">
+                <div class="add-card-body">
+                  <input class="add-title-input" type="text" placeholder="What needs to be done?" disabled />
+                </div>
+              </div>
+            </div>
+            <div class="list-separator"></div>
+            <div class="list-loading-state" aria-busy="true" role="status">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── B3. Populated list ── -->
+      <div class="frame">
+        <span class="frame-label">Populated list</span>
+        <div class="shell shell--mobile">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <button type="button" class="btn-logout">Log out</button>
+            </header>
+            <div class="add-form-section">
+              <div class="add-card">
+                <div class="add-card-body">
+                  <input class="add-title-input" type="text" placeholder="What needs to be done?" />
+                </div>
+              </div>
+            </div>
+            <div class="list-separator"></div>
+            <ul class="todo-list">
+              <li class="todo-item">
+                <input type="checkbox" class="todo-checkbox" />
+                <button type="button" class="todo-title-btn">Finish the UI refactor</button>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 12, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" class="todo-checkbox" />
+                <button type="button" class="todo-title-btn">Buy groceries</button>
+                <button type="button" class="todo-desc-btn">Milk, eggs, bread, coffee</button>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 12, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+              <li class="todo-item todo-item--completed">
+                <input type="checkbox" class="todo-checkbox" checked />
+                <span class="todo-title-span">Book dentist appointment</span>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 11, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+              <li class="todo-item todo-item--completed">
+                <input type="checkbox" class="todo-checkbox" checked />
+                <span class="todo-title-span">Research new laptop</span>
+                <span class="todo-desc-span">Compare ThinkPad X1 vs MacBook Pro</span>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 10, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── B4. Add form — expanded (typing) ── -->
+      <div class="frame">
+        <span class="frame-label">Add form — expanded <span class="flag-badge">expandOnFocus</span></span>
+        <div class="shell shell--mobile">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <button type="button" class="btn-logout">Log out</button>
+            </header>
+            <div class="add-form-section">
+              <div class="add-card add-card--expanded">
+                <div class="add-card-body">
+                  <input class="add-title-input" type="text" value="Call the bank" />
+                  <textarea class="add-desc-textarea add-desc-textarea--focus">Dispute the Apr 9 charge</textarea>
+                </div>
+                <div class="add-card-footer">
+                  <button type="button" class="btn-cancel">Cancel</button>
+                  <button type="button" class="btn-save">Add</button>
+                </div>
+              </div>
+            </div>
+            <div class="list-separator"></div>
+            <ul class="todo-list">
+              <li class="todo-item">
+                <input type="checkbox" class="todo-checkbox" />
+                <button type="button" class="todo-title-btn">Finish the UI refactor</button>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 12, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── B5. Add form — validation error ── -->
+      <div class="frame">
+        <span class="frame-label">Add form — validation error <span class="flag-badge">expandOnFocus</span></span>
+        <div class="shell shell--mobile">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <button type="button" class="btn-logout">Log out</button>
+            </header>
+            <div class="add-form-section">
+              <div class="add-card add-card--expanded">
+                <div class="add-card-body">
+                  <input class="add-title-input add-title-input--error" type="text" placeholder="What needs to be done?" />
+                  <p class="add-validation-error" role="alert">Title cannot be empty</p>
+                  <textarea class="add-desc-textarea" placeholder="Add details… (optional)"></textarea>
+                </div>
+                <div class="add-card-footer">
+                  <button type="button" class="btn-cancel">Cancel</button>
+                  <button type="button" class="btn-save btn-save--disabled" disabled>Add</button>
+                </div>
+              </div>
+            </div>
+            <div class="list-separator"></div>
+            <div class="list-empty-state">
+              <p class="primary-msg">No todos yet.</p>
+              <p class="secondary-msg">Add your first one above.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── B6. Inline edit — title focused ── -->
+      <div class="frame">
+        <span class="frame-label">Inline edit — title focused</span>
+        <div class="shell shell--mobile">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <button type="button" class="btn-logout">Log out</button>
+            </header>
+            <div class="add-form-section">
+              <div class="add-card">
+                <div class="add-card-body">
+                  <input class="add-title-input" type="text" placeholder="What needs to be done?" />
+                </div>
+              </div>
+            </div>
+            <div class="list-separator"></div>
+            <ul class="todo-list">
+              <li class="todo-item todo-item--editing">
+                <input type="checkbox" class="todo-checkbox" />
+                <div class="edit-title-wrapper">
+                  <input class="edit-title-input" type="text" value="Buy groceries" />
+                </div>
+                <div class="edit-desc-wrapper">
+                  <textarea class="edit-desc-textarea">Milk, eggs, bread, coffee</textarea>
+                </div>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 12, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+              <li class="todo-item">
+                <input type="checkbox" class="todo-checkbox" />
+                <button type="button" class="todo-title-btn">Finish the UI refactor</button>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 12, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+              <li class="todo-item todo-item--completed">
+                <input type="checkbox" class="todo-checkbox" checked />
+                <span class="todo-title-span">Book dentist appointment</span>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 11, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── B7. Inline edit — validation error ── -->
+      <div class="frame">
+        <span class="frame-label">Inline edit — validation error</span>
+        <div class="shell shell--mobile">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <button type="button" class="btn-logout">Log out</button>
+            </header>
+            <div class="add-form-section">
+              <div class="add-card">
+                <div class="add-card-body">
+                  <input class="add-title-input" type="text" placeholder="What needs to be done?" />
+                </div>
+              </div>
+            </div>
+            <div class="list-separator"></div>
+            <ul class="todo-list">
+              <li class="todo-item todo-item--editing">
+                <input type="checkbox" class="todo-checkbox" />
+                <div class="edit-title-wrapper">
+                  <input class="edit-title-input edit-title-input--invalid" type="text" value="" placeholder="What needs to be done?" />
+                  <p class="edit-validation-error" role="alert">Title cannot be empty</p>
+                </div>
+                <div class="edit-desc-wrapper">
+                  <textarea class="edit-desc-textarea">Milk, eggs, bread, coffee</textarea>
+                </div>
+                <div class="todo-meta">
+                  <time class="todo-date">Apr 12, 2026</time>
+                  <button type="button" class="btn-delete" aria-label="Delete">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5"/></svg>
+                  </button>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── B8. Global error banner ── -->
+      <div class="frame">
+        <span class="frame-label">Global error — load failure + retry</span>
+        <div class="shell shell--mobile">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <button type="button" class="btn-logout">Log out</button>
+            </header>
+            <div class="add-form-section">
+              <div class="add-card">
+                <div class="add-card-body">
+                  <input class="add-title-input" type="text" placeholder="What needs to be done?" />
+                </div>
+              </div>
+            </div>
+            <div class="list-separator"></div>
+            <div class="error-banner" role="alert">
+              <p>Couldn't load your todos. Check your connection.</p>
+              <button type="button" class="btn-retry">Retry</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /gallery mobile -->
+
+  </body>
+</html>

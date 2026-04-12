@@ -1,43 +1,40 @@
-<!--
-  UX Mockup — Auth UI (Story 6.4)
-  ================================
-  This file is the living source for all auth screen mockups.
-  It uses the real design tokens from packages/web/src/tokens/ inlined
-  so it renders accurately without a build step.
-
-  HOW TO UPDATE
-  -------------
-  1. Edit the HTML/CSS in this file to reflect design changes.
-  2. Serve it via the dev server:
-       npm run dev
-       open http://localhost:5173/ux-mockups.html   (copy file to packages/web/public/ first)
-     OR open it via any static file server.
-  3. Take fresh screenshots and save them to docs/mockups/screenshots/:
-       - auth-ui-login.png
-       - auth-ui-login-error.png
-       - auth-ui-register.png
-       - auth-ui-todo-authenticated.png
-       - auth-ui-all-screens.png
-  4. Update docs/decisions/adr-auth-ui-layout.md if the decision changed.
-  5. Update _bmad-output/planning-artifacts/ux-design-specification.md
-     if the information architecture or component strategy changed.
-
-  WHEN TO UPDATE
-  --------------
-  - Any UX layout decision changes (ADR must be updated too)
-  - New screens or states added to the auth flow
-  - Design token changes that visually affect auth screens
-  - Story 6.4 implementation reveals a gap between mockup and final UI
--->
 <!doctype html>
+<!--
+  UX Mockup — Auth UI (all states, all breakpoints)
+  ==================================================
+  Covers: Login · Login error · Register · Register duplicate-email error
+  Breakpoints: Desktop (640px app shell) · Mobile (375px app shell)
+
+  DESIGN DECISIONS (intended for refactor)
+  -----------------------------------------
+  1. Form labels are LEFT-aligned. The global `text-align: center` on #root
+     is appropriate for the app title but NOT for form labels. Each form
+     component should reset text-align to left.
+  2. Error messages appear ABOVE the submit button (not after) so the
+     button's position stays predictable as errors appear.
+  3. Navigation active link uses text-underline-offset: 4px (not a bottom
+     border), matching AppHeader.module.css navActive class.
+  4. App title: 32px (--s-font-size-2xl) on desktop, 28px
+     (--s-font-size-xl) at ≤1024px. Matches AppHeader.module.css.
+  5. The header block uses margin: 0 --s-space-4 (sides only). The App
+     container wraps with padding-top: --s-space-8, gap: --s-space-4.
+
+  HOW TO SCREENSHOT
+  -----------------
+  1. cp docs/mockups/auth-ui.html packages/web/public/auth-ui.html
+  2. npm run dev → open http://localhost:5173/auth-ui.html
+  3. Take screenshots → docs/mockups/screenshots/
+  4. rm packages/web/public/auth-ui.html
+-->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bmad-todo — UX Mockups (Story 6.4)</title>
+    <title>bmad-todo — Auth UI Mockups</title>
     <style>
-      /* ── Primitives ── */
+      /* ─── Design tokens (verbatim from packages/web/src/tokens/) ─── */
       :root {
+        /* Primitives */
         --p-gray-100: #f3f4f6;
         --p-gray-400: #9ca3af;
         --p-gray-500: #6b6375;
@@ -53,10 +50,8 @@
         --p-dark-surface: #1f2028;
         --p-dark-border: #2e303a;
         --p-font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
-      }
 
-      /* ── Semantic tokens ── */
-      :root {
+        /* Semantic */
         --s-text: var(--p-gray-500);
         --s-text-heading: var(--p-gray-900);
         --s-text-error: var(--p-red-600);
@@ -69,6 +64,7 @@
         --s-border-error: #fecaca;
         --s-accent: var(--p-purple-600);
         --s-accent-hover: var(--p-indigo-600);
+        --s-text-on-accent: var(--p-white);
         --s-focus-ring: rgba(99, 102, 241, 0.15);
         --s-space-0-5: 2px;
         --s-space-1: 4px;
@@ -93,202 +89,154 @@
         --s-font-heading: var(--p-font-sans);
       }
 
-      /* ── Base ── */
-      * {
-        box-sizing: border-box;
-      }
+      /* ─── Mockup gallery chrome ─── */
+      * { box-sizing: border-box; }
+
       body {
         margin: 0;
-        font: 18px / 145% var(--s-font-body);
-        letter-spacing: 0.18px;
+        background: #edeaf2;
+        font: 14px / 1.5 var(--s-font-body);
         color: var(--s-text);
-        background: #f0eef4;
-      }
-      h1,
-      h2 {
-        font-family: var(--s-font-heading);
-        font-weight: 500;
-        color: var(--s-text-heading);
-        margin: 0;
-      }
-      p {
-        margin: 0;
-      }
-      label {
-        display: block;
-        font-size: var(--s-font-size-sm);
-        color: var(--s-text);
-        margin-bottom: var(--s-space-1);
       }
 
-      /* ── Gallery layout ── */
+      .page-title {
+        padding: 32px 40px 0;
+        font: 600 11px / 1 var(--s-font-body);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #999;
+      }
+
+      .section-heading {
+        padding: 32px 40px 0;
+        font: 500 18px / 1 var(--s-font-heading);
+        color: #444;
+        border-top: 1px solid #d8d4e0;
+        margin-top: 32px;
+      }
+      .section-heading:first-of-type { border-top: none; margin-top: 0; }
+
       .gallery {
         display: flex;
-        gap: 40px;
-        padding: 48px 40px;
-        align-items: flex-start;
         flex-wrap: wrap;
-      }
-      .screen-label {
-        text-align: center;
-        font-size: 13px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-        color: #888;
-        margin-bottom: 12px;
-        font-family: system-ui;
+        gap: 40px;
+        padding: 24px 40px 48px;
+        align-items: flex-start;
       }
 
-      /* ── App shell ── */
-      .app-shell {
-        width: 380px;
-        background: var(--s-bg);
-        border: 1px solid var(--s-border);
-        min-height: 520px;
+      .frame {
         display: flex;
         flex-direction: column;
-        border-radius: 2px;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-        overflow: hidden;
+        align-items: center;
+        gap: 10px;
       }
 
-      /* ── AppHeader ── */
+      .frame-label {
+        font: 600 11px / 1 var(--s-font-body);
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        color: #888;
+      }
+
+      /* ─── App shells (light mode only — dark follows system pref in real app) ─── */
+      .shell {
+        background: var(--s-bg);
+        border: 1px solid var(--s-border);
+        border-radius: 2px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.09);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .shell--desktop { width: 640px; min-height: 520px; }
+      .shell--mobile  { width: 375px; min-height: 580px; }
+
+      /* ─── App container (matches App.module.css .app) ─── */
+      .app {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-space-4);
+        padding: var(--s-space-8) 0 var(--s-space-4);
+        flex-grow: 1;
+      }
+
+      /* ─── AppHeader (matches AppHeader.module.css) ─── */
       .app-header {
         display: flex;
         align-items: baseline;
         justify-content: space-between;
-        padding: var(--s-space-8) var(--s-space-4) var(--s-space-4);
+        margin: 0 var(--s-space-4);
       }
+
       .app-title {
-        font-size: var(--s-font-size-xl);
+        font-size: var(--s-font-size-2xl); /* 32px — desktop */
+        font-weight: 500;
         letter-spacing: -0.5px;
+        color: var(--s-text-heading);
+        margin: 0 0 var(--s-space-2);
       }
+      .shell--mobile .app-title {
+        font-size: var(--s-font-size-xl); /* 28px — mobile ≤1024px */
+        margin: 0 0 var(--s-space-1);
+      }
+
       .header-nav {
         display: flex;
         gap: var(--s-space-4);
-        align-items: baseline;
-      }
-      .nav-link {
-        font-size: var(--s-font-size-base);
-        color: var(--s-text);
-        text-decoration: none;
-        padding-bottom: 2px;
-        border-bottom: 2px solid transparent;
-        cursor: pointer;
-      }
-      .nav-link.active {
-        color: var(--s-accent);
-        border-bottom-color: var(--s-accent);
-        font-weight: 500;
-      }
-      .btn-logout {
-        font-size: var(--s-font-size-base);
-        color: var(--s-text);
-        background: none;
-        border: 1px solid var(--s-border);
-        border-radius: var(--s-radius-md);
-        padding: var(--s-space-1) var(--s-space-3);
-        cursor: pointer;
       }
 
-      /* ── Auth form ── */
-      .auth-main {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: var(--s-space-4);
-        padding: var(--s-space-4) var(--s-space-4) var(--s-space-8);
+      /* navLink (inactive) */
+      .nav-link {
+        background: none;
+        border: none;
+        padding: 0;
+        font-size: var(--s-font-size-base);
+        color: var(--s-text);
+        cursor: pointer;
       }
+      .nav-link:hover { color: var(--s-accent); }
+
+      /* navActive (current screen) */
+      .nav-link--active {
+        background: none;
+        border: none;
+        padding: 0;
+        font-size: var(--s-font-size-base);
+        color: var(--s-accent);
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 7px;
+        text-decoration-thickness: 2px;
+      }
+
+      /* ─── Auth form (matches LoginForm.module.css / RegisterForm.module.css) ─── */
+      /*
+       * REFACTOR INTENT: text-align is reset to LEFT here.
+       * The global #root has text-align: center which should NOT cascade
+       * into form fields. Each form component should explicitly set
+       * text-align: left on its root element.
+       */
       .auth-form {
         display: flex;
         flex-direction: column;
-        gap: var(--s-space-3);
+        gap: var(--s-space-4);
+        margin: 0 var(--s-space-4);
+        text-align: left;           /* ← IMPROVEMENT: explicit left-align for forms */
+        padding-bottom: var(--s-space-8);
       }
+
       .form-field {
         display: flex;
         flex-direction: column;
         gap: var(--s-space-1);
       }
-      .form-input {
-        padding: var(--s-space-2-5) var(--s-space-3);
+
+      .form-label {
         font-size: var(--s-font-size-base);
-        border: 1px solid var(--s-border);
-        border-radius: var(--s-radius-md);
-        background: var(--s-bg);
         color: var(--s-text);
-        outline: none;
-        width: 100%;
-      }
-      .form-input.error-field {
-        border-color: var(--s-border-error);
-      }
-      .field-error {
-        font-size: var(--s-font-size-sm);
-        color: var(--s-text-error);
-      }
-      .inline-server-error {
-        font-size: var(--s-font-size-sm);
-        color: var(--s-text-error);
-        background: var(--s-bg-error);
-        border: 1px solid var(--s-border-error);
-        border-radius: var(--s-radius-md);
-        padding: var(--s-space-2) var(--s-space-3);
-      }
-      .submit-btn {
-        padding: var(--s-space-2-5) var(--s-space-5);
-        font-size: var(--s-font-size-base);
-        font-weight: 500;
-        border: none;
-        border-radius: var(--s-radius-md);
-        background: var(--s-accent);
-        color: #fff;
-        cursor: pointer;
-        width: 100%;
-        margin-top: var(--s-space-1);
-      }
-      .auth-switch {
-        font-size: var(--s-font-size-sm);
-        color: var(--s-text);
-        text-align: center;
-        margin-top: var(--s-space-2);
-      }
-      .auth-switch a {
-        color: var(--s-accent);
-        text-decoration: none;
-        font-weight: 500;
       }
 
-      /* ── Todo app ── */
-      .todo-main {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: var(--s-space-4);
-        padding-bottom: var(--s-space-4);
-      }
-      .add-form {
-        display: flex;
-        gap: var(--s-space-2);
-        align-items: flex-start;
-        margin: 0 var(--s-space-4);
-      }
-      .add-input-wrapper {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-      }
-      .add-input {
-        padding: var(--s-space-2-5) var(--s-space-3);
-        font-size: var(--s-font-size-base);
-        border: 1px solid var(--s-border);
-        border-radius: var(--s-radius-md);
-        background: var(--s-bg);
-        color: var(--s-text);
-        outline: none;
-        width: 100%;
-      }
-      .add-textarea {
+      .form-input {
         padding: var(--s-space-2-5) var(--s-space-3);
         font-size: var(--s-font-size-base);
         font-family: inherit;
@@ -297,257 +245,405 @@
         background: var(--s-bg);
         color: var(--s-text);
         outline: none;
-        resize: none;
-        margin-top: var(--s-space-1-5);
-        height: 48px;
+        transition: border-color 0.2s;
+        width: 100%;
       }
-      .add-btn {
+      .form-input--focus {
+        border-color: var(--s-border-focus);
+        box-shadow: 0 0 0 2px var(--s-focus-ring);
+      }
+      .form-input--error {
+        border-color: var(--s-border-error);
+      }
+
+      /* Inline server error box (appears above the submit button) */
+      .form-error-box {
+        padding: var(--s-space-2) var(--s-space-3);
+        font-size: var(--s-font-size-sm);
+        color: var(--s-text-error);
+        background: var(--s-bg-error);
+        border-radius: var(--s-radius-md);
+        /* No border — keeps it subtle; border can be added if more prominence needed */
+      }
+
+      /* Primary submit button — full width */
+      .btn-primary {
+        display: block;
+        width: 100%;
         padding: var(--s-space-2-5) var(--s-space-5);
         font-size: var(--s-font-size-base);
         font-weight: 500;
-        border: 1px solid var(--s-border);
+        font-family: inherit;
+        border: 1px solid transparent;
         border-radius: var(--s-radius-md);
         background: var(--s-accent);
-        color: #fff;
+        color: var(--s-text-on-accent);
         cursor: pointer;
-        white-space: nowrap;
+        transition: background 0.2s, opacity 0.2s;
+        text-align: center;
       }
-      .todo-list {
-        display: flex;
-        flex-direction: column;
-      }
-      .todo-item {
-        display: flex;
-        align-items: flex-start;
-        gap: var(--s-space-3);
-        padding: var(--s-space-3) var(--s-space-4);
-        border-top: 1px solid var(--s-border);
-      }
-      .todo-item:last-child {
-        border-bottom: 1px solid var(--s-border);
-      }
-      .todo-check {
-        margin-top: 2px;
-        accent-color: var(--s-accent);
-        width: 16px;
-        height: 16px;
-        flex-shrink: 0;
-      }
-      .todo-text-col {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-      .todo-title {
-        font-size: var(--s-font-size-base);
-        color: var(--s-text-heading);
-        line-height: 1.4;
-      }
-      .todo-title.done {
-        text-decoration: line-through;
-        color: var(--s-text);
-        opacity: 0.6;
-      }
-      .todo-desc {
+      .btn-primary:hover { background: var(--s-accent-hover); }
+      .btn-primary--disabled { opacity: 0.6; cursor: not-allowed; }
+
+      /* Footer switch-screen link */
+      .form-footer {
+        text-align: center;
         font-size: var(--s-font-size-sm);
         color: var(--s-text);
-        opacity: 0.8;
       }
-      .todo-delete {
+      .form-footer-link {
         background: none;
         border: none;
+        padding: 0;
+        font-size: var(--s-font-size-sm);
+        color: var(--s-accent);
         cursor: pointer;
-        color: var(--s-text);
-        opacity: 0.4;
-        font-size: 16px;
-        padding: 0 var(--s-space-1);
-        line-height: 1;
-        margin-top: 1px;
+        text-decoration: underline;
+      }
+      .form-footer-link:hover { color: var(--s-accent-hover); }
+
+      /* ─── Spec annotation strip (not in real app — mockup only) ─── */
+      .spec-note {
+        font: 11px / 1.4 monospace;
+        color: #a07cc5;
+        margin: 2px 0 0;
       }
     </style>
   </head>
   <body>
+
+    <p class="page-title">bmad-todo · Auth UI · All states · All breakpoints</p>
+
+    <!-- ══════════════════════════════════════════
+         SECTION: DESKTOP (640px)
+    ══════════════════════════════════════════ -->
+    <p class="section-heading">Desktop — 640px (≥ 1024px viewport)</p>
+
     <div class="gallery">
-      <!-- ── Screen 1: Login ── -->
-      <div>
-        <div class="screen-label">Login screen</div>
-        <div class="app-shell">
-          <header class="app-header">
-            <h1 class="app-title">Todos</h1>
-            <nav class="header-nav">
-              <a class="nav-link active">Log in</a>
-              <a class="nav-link">Register</a>
-            </nav>
-          </header>
-          <main class="auth-main">
-            <form class="auth-form" onsubmit="return false;">
-              <div class="form-field">
-                <label for="login-email">Email</label>
-                <input
-                  class="form-input"
-                  type="email"
-                  id="login-email"
-                  placeholder="you@example.com"
-                />
-              </div>
-              <div class="form-field">
-                <label for="login-password">Password</label>
-                <input
-                  class="form-input"
-                  type="password"
-                  id="login-password"
-                  placeholder="••••••••"
-                />
-              </div>
-              <button class="submit-btn" type="submit">Log in</button>
-            </form>
-            <p class="auth-switch">Don't have an account? <a>Register</a></p>
-          </main>
-        </div>
-      </div>
 
-      <!-- ── Screen 2: Login — validation error state ── -->
-      <div>
-        <div class="screen-label">Login — error state</div>
-        <div class="app-shell">
-          <header class="app-header">
-            <h1 class="app-title">Todos</h1>
-            <nav class="header-nav">
-              <a class="nav-link active">Log in</a>
-              <a class="nav-link">Register</a>
-            </nav>
-          </header>
-          <main class="auth-main">
-            <form class="auth-form" onsubmit="return false;">
+      <!-- ── 1. Login — default ── -->
+      <div class="frame">
+        <span class="frame-label">Login · default</span>
+        <div class="shell shell--desktop">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <nav class="header-nav">
+                <button type="button" class="nav-link--active">Log in</button>
+                <button type="button" class="nav-link">Register</button>
+              </nav>
+            </header>
+            <form class="auth-form" onsubmit="return false">
               <div class="form-field">
-                <label for="login-email-err">Email</label>
-                <input
-                  class="form-input error-field"
-                  type="email"
-                  id="login-email-err"
-                  value="wrong@example.com"
-                />
+                <label class="form-label">Email</label>
+                <input class="form-input form-input--focus" type="email" placeholder="you@example.com" />
+                <!-- focus ring shown — email auto-focuses on mount -->
               </div>
               <div class="form-field">
-                <label for="login-password-err">Password</label>
-                <input
-                  class="form-input error-field"
-                  type="password"
-                  id="login-password-err"
-                  value="badpass"
-                />
+                <label class="form-label">Password</label>
+                <input class="form-input" type="password" placeholder="••••••••" />
               </div>
-              <p class="inline-server-error" role="alert">
-                Incorrect email or password. Please try again.
+              <button class="btn-primary" type="submit">Log in</button>
+              <p class="form-footer">
+                Don't have an account?
+                <button class="form-footer-link" type="button">Register</button>
               </p>
-              <button class="submit-btn" type="submit">Log in</button>
             </form>
-            <p class="auth-switch">Don't have an account? <a>Register</a></p>
-          </main>
+          </div>
         </div>
       </div>
 
-      <!-- ── Screen 3: Register ── -->
-      <div>
-        <div class="screen-label">Register screen</div>
-        <div class="app-shell">
-          <header class="app-header">
-            <h1 class="app-title">Todos</h1>
-            <nav class="header-nav">
-              <a class="nav-link">Log in</a>
-              <a class="nav-link active">Register</a>
-            </nav>
-          </header>
-          <main class="auth-main">
-            <form class="auth-form" onsubmit="return false;">
+      <!-- ── 2. Login — incorrect credentials error ── -->
+      <div class="frame">
+        <span class="frame-label">Login · error (401)</span>
+        <div class="shell shell--desktop">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <nav class="header-nav">
+                <button type="button" class="nav-link--active">Log in</button>
+                <button type="button" class="nav-link">Register</button>
+              </nav>
+            </header>
+            <form class="auth-form" onsubmit="return false">
               <div class="form-field">
-                <label for="reg-name">Name</label>
-                <input
-                  class="form-input"
-                  type="text"
-                  id="reg-name"
-                  placeholder="Your name"
-                />
+                <label class="form-label">Email</label>
+                <input class="form-input form-input--error" type="email" value="wrong@example.com" />
               </div>
               <div class="form-field">
-                <label for="reg-email">Email</label>
-                <input
-                  class="form-input"
-                  type="email"
-                  id="reg-email"
-                  placeholder="you@example.com"
-                />
+                <label class="form-label">Password</label>
+                <input class="form-input form-input--error" type="password" value="badpassword" />
               </div>
-              <div class="form-field">
-                <label for="reg-password">Password</label>
-                <input
-                  class="form-input"
-                  type="password"
-                  id="reg-password"
-                  placeholder="Min. 8 characters"
-                />
+              <!-- Error appears ABOVE the submit button so button position stays stable -->
+              <div class="form-error-box" role="alert">
+                Incorrect email or password
               </div>
-              <button class="submit-btn" type="submit">Create account</button>
+              <button class="btn-primary" type="submit">Log in</button>
+              <p class="form-footer">
+                Don't have an account?
+                <button class="form-footer-link" type="button">Register</button>
+              </p>
             </form>
-            <p class="auth-switch">Already have an account? <a>Log in</a></p>
-          </main>
+          </div>
         </div>
       </div>
 
-      <!-- ── Screen 4: Todo list (authenticated) ── -->
-      <div>
-        <div class="screen-label">Todo list (authenticated)</div>
-        <div class="app-shell">
-          <header class="app-header">
-            <h1 class="app-title">Todos</h1>
-            <button type="button" class="btn-logout">Log out</button>
-          </header>
-          <main class="todo-main">
-            <form class="add-form" onsubmit="return false;">
-              <div class="add-input-wrapper">
-                <input
-                  class="add-input"
-                  type="text"
-                  placeholder="What needs to be done?"
-                />
-                <textarea
-                  class="add-textarea"
-                  placeholder="Add details… (optional)"
-                ></textarea>
+      <!-- ── 3. Login — pending (submitting) ── -->
+      <div class="frame">
+        <span class="frame-label">Login · pending</span>
+        <div class="shell shell--desktop">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <nav class="header-nav">
+                <button type="button" class="nav-link--active">Log in</button>
+                <button type="button" class="nav-link">Register</button>
+              </nav>
+            </header>
+            <form class="auth-form" onsubmit="return false">
+              <div class="form-field">
+                <label class="form-label">Email</label>
+                <input class="form-input" type="email" value="user@example.com" disabled />
               </div>
-              <button class="add-btn" type="submit">Add</button>
+              <div class="form-field">
+                <label class="form-label">Password</label>
+                <input class="form-input" type="password" value="password" disabled />
+              </div>
+              <button class="btn-primary btn-primary--disabled" type="button" disabled>
+                Logging in…
+              </button>
+              <p class="form-footer">
+                Don't have an account?
+                <button class="form-footer-link" type="button">Register</button>
+              </p>
             </form>
-            <ul
-              class="todo-list"
-              style="list-style: none; margin: 0; padding: 0"
-            >
-              <li class="todo-item">
-                <input class="todo-check" type="checkbox" />
-                <div class="todo-text-col">
-                  <span class="todo-title">Buy groceries</span>
-                  <span class="todo-desc">Milk, eggs, bread</span>
-                </div>
-                <button type="button" class="todo-delete">✕</button>
-              </li>
-              <li class="todo-item">
-                <input class="todo-check" type="checkbox" checked />
-                <div class="todo-text-col">
-                  <span class="todo-title done">Book dentist appointment</span>
-                </div>
-                <button type="button" class="todo-delete">✕</button>
-              </li>
-              <li class="todo-item">
-                <input class="todo-check" type="checkbox" />
-                <div class="todo-text-col">
-                  <span class="todo-title">Finish the auth UI</span>
-                </div>
-                <button type="button" class="todo-delete">✕</button>
-              </li>
-            </ul>
-          </main>
+          </div>
         </div>
       </div>
-    </div>
+
+      <!-- ── 4. Register — default ── -->
+      <div class="frame">
+        <span class="frame-label">Register · default</span>
+        <div class="shell shell--desktop">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <nav class="header-nav">
+                <button type="button" class="nav-link">Log in</button>
+                <button type="button" class="nav-link--active">Register</button>
+              </nav>
+            </header>
+            <form class="auth-form" onsubmit="return false">
+              <div class="form-field">
+                <label class="form-label">Name</label>
+                <input class="form-input form-input--focus" type="text" placeholder="Your name" />
+                <!-- focus ring — name auto-focuses on mount -->
+              </div>
+              <div class="form-field">
+                <label class="form-label">Email</label>
+                <input class="form-input" type="email" placeholder="you@example.com" />
+              </div>
+              <div class="form-field">
+                <label class="form-label">Password</label>
+                <input class="form-input" type="password" placeholder="Min. 8 characters" />
+              </div>
+              <button class="btn-primary" type="submit">Create account</button>
+              <p class="form-footer">
+                Already have an account?
+                <button class="form-footer-link" type="button">Log in</button>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 5. Register — duplicate email (409) ── -->
+      <div class="frame">
+        <span class="frame-label">Register · duplicate email (409)</span>
+        <div class="shell shell--desktop">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <nav class="header-nav">
+                <button type="button" class="nav-link">Log in</button>
+                <button type="button" class="nav-link--active">Register</button>
+              </nav>
+            </header>
+            <form class="auth-form" onsubmit="return false">
+              <div class="form-field">
+                <label class="form-label">Name</label>
+                <input class="form-input" type="text" value="Andrea" />
+              </div>
+              <div class="form-field">
+                <label class="form-label">Email</label>
+                <input class="form-input form-input--error" type="email" value="andrea@example.com" />
+              </div>
+              <div class="form-field">
+                <label class="form-label">Password</label>
+                <input class="form-input" type="password" value="securepassword" />
+              </div>
+              <div class="form-error-box" role="alert">
+                An account with this email already exists
+              </div>
+              <button class="btn-primary" type="submit">Create account</button>
+              <p class="form-footer">
+                Already have an account?
+                <button class="form-footer-link" type="button">Log in</button>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /gallery desktop -->
+
+
+    <!-- ══════════════════════════════════════════
+         SECTION: MOBILE (375px)
+    ══════════════════════════════════════════ -->
+    <p class="section-heading">Mobile — 375px (≤ 1024px viewport)</p>
+
+    <div class="gallery">
+
+      <!-- ── 1m. Login — default ── -->
+      <div class="frame">
+        <span class="frame-label">Login · default</span>
+        <div class="shell shell--mobile">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <nav class="header-nav">
+                <button type="button" class="nav-link--active">Log in</button>
+                <button type="button" class="nav-link">Register</button>
+              </nav>
+            </header>
+            <form class="auth-form" onsubmit="return false">
+              <div class="form-field">
+                <label class="form-label">Email</label>
+                <input class="form-input form-input--focus" type="email" placeholder="you@example.com" />
+              </div>
+              <div class="form-field">
+                <label class="form-label">Password</label>
+                <input class="form-input" type="password" placeholder="••••••••" />
+              </div>
+              <button class="btn-primary" type="submit">Log in</button>
+              <p class="form-footer">
+                Don't have an account?
+                <button class="form-footer-link" type="button">Register</button>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 2m. Login — error ── -->
+      <div class="frame">
+        <span class="frame-label">Login · error (401)</span>
+        <div class="shell shell--mobile">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <nav class="header-nav">
+                <button type="button" class="nav-link--active">Log in</button>
+                <button type="button" class="nav-link">Register</button>
+              </nav>
+            </header>
+            <form class="auth-form" onsubmit="return false">
+              <div class="form-field">
+                <label class="form-label">Email</label>
+                <input class="form-input form-input--error" type="email" value="wrong@example.com" />
+              </div>
+              <div class="form-field">
+                <label class="form-label">Password</label>
+                <input class="form-input form-input--error" type="password" value="badpass" />
+              </div>
+              <div class="form-error-box" role="alert">
+                Incorrect email or password
+              </div>
+              <button class="btn-primary" type="submit">Log in</button>
+              <p class="form-footer">
+                Don't have an account?
+                <button class="form-footer-link" type="button">Register</button>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 3m. Register — default ── -->
+      <div class="frame">
+        <span class="frame-label">Register · default</span>
+        <div class="shell shell--mobile">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <nav class="header-nav">
+                <button type="button" class="nav-link">Log in</button>
+                <button type="button" class="nav-link--active">Register</button>
+              </nav>
+            </header>
+            <form class="auth-form" onsubmit="return false">
+              <div class="form-field">
+                <label class="form-label">Name</label>
+                <input class="form-input form-input--focus" type="text" placeholder="Your name" />
+              </div>
+              <div class="form-field">
+                <label class="form-label">Email</label>
+                <input class="form-input" type="email" placeholder="you@example.com" />
+              </div>
+              <div class="form-field">
+                <label class="form-label">Password</label>
+                <input class="form-input" type="password" placeholder="Min. 8 characters" />
+              </div>
+              <button class="btn-primary" type="submit">Create account</button>
+              <p class="form-footer">
+                Already have an account?
+                <button class="form-footer-link" type="button">Log in</button>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 4m. Register — duplicate email ── -->
+      <div class="frame">
+        <span class="frame-label">Register · duplicate email (409)</span>
+        <div class="shell shell--mobile">
+          <div class="app">
+            <header class="app-header">
+              <h1 class="app-title">Todos</h1>
+              <nav class="header-nav">
+                <button type="button" class="nav-link">Log in</button>
+                <button type="button" class="nav-link--active">Register</button>
+              </nav>
+            </header>
+            <form class="auth-form" onsubmit="return false">
+              <div class="form-field">
+                <label class="form-label">Name</label>
+                <input class="form-input" type="text" value="Andrea" />
+              </div>
+              <div class="form-field">
+                <label class="form-label">Email</label>
+                <input class="form-input form-input--error" type="email" value="andrea@example.com" />
+              </div>
+              <div class="form-field">
+                <label class="form-label">Password</label>
+                <input class="form-input" type="password" value="securepassword" />
+              </div>
+              <div class="form-error-box" role="alert">
+                An account with this email already exists
+              </div>
+              <button class="btn-primary" type="submit">Create account</button>
+              <p class="form-footer">
+                Already have an account?
+                <button class="form-footer-link" type="button">Log in</button>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /gallery mobile -->
+
   </body>
 </html>

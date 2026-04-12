@@ -1221,6 +1221,36 @@ This story includes a structural refactor of the app shell — not just new form
 
 Rendered mockups are in [`docs/mockups/auth-ui.html`](../../docs/mockups/auth-ui.html) with screenshots in [`docs/mockups/screenshots/`](../../docs/mockups/screenshots/). Update them if the implementation deviates from the design.
 
+### Story 6.5: UI Component Architecture Refactor
+
+As a maintainer,
+I want the web UI rebuilt on an explicit atom/molecule component hierarchy aligned to the design system,
+so that markup is DRY, design tokens are consistently applied across all components, and `AddTodoCard` matches the intended card + `expandOnFocus` UX.
+
+**Acceptance Criteria:**
+
+**AC1 — Atom components extracted:** `Button` (primary/ghost), `Input` (with error state, forward-ref), `Checkbox` (forward-ref), `NavLink` (active/inactive state) — all under `packages/web/src/components/atoms/`.
+
+**AC2 — FormField molecule extracted:** Wraps label + input + optional error paragraph; used by `LoginForm` and `RegisterForm`.
+
+**AC3 — AddTodoCard rebuilt:** Replaces `AddTodoForm`. Card structure per `adr-add-todo-card.md`: collapsed (title only, quiet border) → expanded (textarea + footer visible, accent border) on focus. `expandOnFocus` prop (default: `true`) enables A/B testing with always-expanded variant. Cancel clears and collapses. Success clears and collapses.
+
+**AC4 — Existing components updated to use atoms:** `LoginForm`, `RegisterForm`, `AppHeader`, `TodoItem`, `GlobalErrorBanner`, `AddTodoCard` all compose extracted atoms instead of duplicating raw HTML + CSS.
+
+**AC5 — All existing functional tests remain green:** `App.*.test.tsx` files are untouched. Component-level tests pass with updated imports.
+
+**AC6 — New tests for atoms and AddTodoCard expandOnFocus:** `Button.test.tsx` covers variants, loading, disabled. `AddTodoCard.test.tsx` covers all prior add-form scenarios plus collapse/expand/cancel behavior.
+
+**Technical notes:**
+
+- Pure markup/CSS/structure refactor — zero hook logic, API, validation, or behavior changes.
+- `App.tsx` import: `AddTodoForm` → `AddTodoCard` (same prop interface).
+- `AddTodoForm.tsx` + `AddTodoForm.module.css` are deleted after `AddTodoCard` is ready.
+- Blur-collapse in `AddTodoCard` uses `onBlur` on a wrapper `<div>` and checks `relatedTarget` containment — same pattern as `TodoItem.tsx#L85-93`.
+- Title input inside `AddTodoCard` is borderless (`all: unset`) — does NOT use the `Input` atom. The card container is the visual boundary.
+- Design system reference: `docs/ui-overview.md`, `docs/mockups/design-system.html`, `docs/decisions/adr-add-todo-card.md`.
+- Story file: `_bmad-output/implementation-artifacts/6-5-ui-component-architecture-refactor.md`
+
 ### Backlog: GET /api/auth/me
 
 Deferred. Returns the currently authenticated user. Not needed until the UI requires displaying user profile info. Can be added when profile features are introduced.

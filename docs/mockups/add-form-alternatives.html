@@ -1,0 +1,1032 @@
+<!doctype html>
+<!--
+  UX Mockup — Add-todo form layout alternatives
+  ===============================================
+  Four approaches to the create-todo form, each shown at
+  desktop (640px) and mobile (375px).
+
+  CURRENT PROBLEM
+  ---------------
+  The existing layout places the Add button to the right of the input
+  stack (top-aligned with the title only). This creates an asymmetric,
+  floating relationship — the button is visually anchored to just the
+  title while the description textarea below it is orphaned.
+
+  THE FOUR ALTERNATIVES
+  ----------------------
+  A · Stacked + button bottom-right
+      Both inputs are full-width. The Add button sits at the bottom-right
+      of the form, naturally associated with all content above it.
+
+  B · Progressive disclosure (recommended)
+      Default view: just the title + Add button on one row.
+      A "Add details..." affordance appears below when the title has content.
+      Keeps the UI minimal until the user needs more.
+
+  C · Card form with full-width button
+      A lightly elevated form card groups both inputs. The Add button
+      spans the full card width at the bottom — creates a clear,
+      contained action area.
+
+  D · Borderless / underline style
+      Inputs lose their full border and use border-bottom only.
+      The form feels lightweight and editorial.
+      Add button is right-aligned below, using an icon prefix.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>bmad-todo — Add Form Alternatives</title>
+    <style>
+      :root {
+        --p-gray-100: #f3f4f6;
+        --p-gray-400: #9ca3af;
+        --p-gray-500: #6b6375;
+        --p-gray-900: #08060d;
+        --p-purple-600: #aa3bff;
+        --p-indigo-500: #6366f1;
+        --p-indigo-600: #4f46e5;
+        --p-white: #fff;
+        --p-font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+
+        --s-text: var(--p-gray-500);
+        --s-text-heading: var(--p-gray-900);
+        --s-bg: var(--p-white);
+        --s-border: #e5e4e7;
+        --s-border-focus: var(--p-indigo-500);
+        --s-accent: var(--p-purple-600);
+        --s-accent-hover: var(--p-indigo-600);
+        --s-text-on-accent: var(--p-white);
+        --s-focus-ring: rgba(99, 102, 241, 0.15);
+        --s-space-1: 4px;
+        --s-space-1-5: 6px;
+        --s-space-2: 8px;
+        --s-space-2-5: 10px;
+        --s-space-3: 12px;
+        --s-space-4: 16px;
+        --s-space-5: 20px;
+        --s-space-6: 24px;
+        --s-space-8: 32px;
+        --s-radius-md: 6px;
+        --s-radius-lg: 8px;
+        --s-font-size-xs: 11px;
+        --s-font-size-sm: 13px;
+        --s-font-size-base: 14px;
+        --s-font-body: var(--p-font-sans);
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        background: #ece9f3;
+        font: 14px / 1.5 var(--s-font-body);
+        color: var(--s-text);
+        padding-bottom: 80px;
+      }
+
+      /* ── Page chrome ── */
+      .page-header {
+        padding: 40px 40px 0;
+      }
+      .page-eyebrow {
+        font: 600 11px / 1 var(--s-font-body);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #9a8caf;
+        margin-bottom: 6px;
+      }
+      .page-title {
+        font: 600 22px / 1 var(--s-font-body);
+        color: #2a1e40;
+        margin-bottom: 6px;
+      }
+      .page-desc {
+        font-size: 13px;
+        color: #7c6e8f;
+        line-height: 1.6;
+        max-width: 560px;
+      }
+
+      .option-block {
+        padding: 40px 40px 0;
+      }
+
+      .option-label {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .option-tag {
+        font: 700 11px / 22px var(--s-font-body);
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        color: #fff;
+        background: #6c4fa0;
+        padding: 0 10px;
+        border-radius: 11px;
+      }
+      .option-name {
+        font: 600 16px / 1 var(--s-font-body);
+        color: #2a1e40;
+      }
+      .option-note {
+        font: 13px / 1 var(--s-font-body);
+        color: #9a8caf;
+      }
+
+      .divider {
+        height: 1px;
+        background: linear-gradient(to right, transparent, #d8d3e4 20%, #d8d3e4 80%, transparent);
+        margin: 40px 40px 0;
+      }
+
+      /* ── Gallery row ── */
+      .gallery {
+        display: flex;
+        gap: 32px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .frame {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .frame-label {
+        font: 600 11px / 1 var(--s-font-body);
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        color: #888;
+      }
+
+      /* ── App shells ── */
+      .shell {
+        background: var(--s-bg);
+        border: 1px solid var(--s-border);
+        border-radius: 2px;
+        box-shadow: 0 2px 20px rgba(100, 60, 160, 0.1);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .shell--desktop { width: 640px; }
+      .shell--mobile  { width: 375px; }
+
+      /* ── App chrome ── */
+      .app {
+        display: flex;
+        flex-direction: column;
+        padding: var(--s-space-8) 0 var(--s-space-8);
+      }
+
+      .app-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin: 0 var(--s-space-4);
+        margin-bottom: var(--s-space-6);
+      }
+      .app-title {
+        font-size: 32px;
+        font-weight: 500;
+        letter-spacing: -0.5px;
+        color: var(--s-text-heading);
+      }
+      .shell--mobile .app-title { font-size: 28px; }
+
+      .btn-logout {
+        padding: var(--s-space-1-5) var(--s-space-4);
+        font-size: var(--s-font-size-base);
+        font-family: inherit;
+        background: none;
+        border: 1px solid var(--s-border);
+        border-radius: var(--s-radius-md);
+        color: var(--s-text);
+        cursor: pointer;
+      }
+
+      /* ── Shared input/button tokens ── */
+      .inp {
+        padding: var(--s-space-2-5) var(--s-space-3);
+        font-size: var(--s-font-size-base);
+        font-family: inherit;
+        border: 1px solid var(--s-border);
+        border-radius: var(--s-radius-md);
+        background: var(--s-bg);
+        color: var(--s-text);
+        outline: none;
+        width: 100%;
+      }
+      .inp::placeholder { color: var(--s-text); opacity: 0.45; }
+      .inp--focus {
+        border-color: var(--s-border-focus);
+        box-shadow: 0 0 0 2px var(--s-focus-ring);
+      }
+
+      .ta {
+        padding: var(--s-space-2-5) var(--s-space-3);
+        font-size: var(--s-font-size-sm);
+        font-family: inherit;
+        line-height: 1.5;
+        border: 1px solid var(--s-border);
+        border-radius: var(--s-radius-md);
+        background: var(--s-bg);
+        color: var(--s-text);
+        outline: none;
+        resize: none;
+        width: 100%;
+      }
+      .ta::placeholder { color: var(--s-text); opacity: 0.45; }
+
+      .btn-add {
+        padding: var(--s-space-2-5) var(--s-space-5);
+        font-size: var(--s-font-size-base);
+        font-weight: 500;
+        font-family: inherit;
+        border: 1px solid transparent;
+        border-radius: var(--s-radius-md);
+        background: var(--s-accent);
+        color: var(--s-text-on-accent);
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .btn-add:hover { background: var(--s-accent-hover); }
+
+      /* ── LIST SEPARATOR (shared visual) ── */
+      .sep {
+        height: 1px;
+        background: var(--s-border);
+        margin-top: var(--s-space-4);
+      }
+
+      /* ── Placeholder list (shared, same in all options) ── */
+      .todo-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .todo-item {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto auto;
+        column-gap: var(--s-space-3);
+        padding: 14px var(--s-space-4);
+        border-bottom: 1px solid var(--s-border);
+      }
+      .todo-item:last-child { border-bottom: none; }
+      .todo-cb {
+        grid-column: 1; grid-row: 1 / span 3;
+        align-self: start; margin-top: 3px;
+        accent-color: var(--s-accent);
+        width: 16px; height: 16px; cursor: pointer;
+      }
+      .todo-t {
+        grid-column: 2; grid-row: 1;
+        font-size: 15px; font-weight: 500;
+        color: var(--s-text-heading); line-height: 1.4;
+      }
+      .todo-d {
+        grid-column: 2; grid-row: 2;
+        font-size: 13px; color: var(--s-text); opacity: .75;
+        margin-top: 2px; line-height: 1.45;
+      }
+      .todo-meta {
+        grid-column: 2; grid-row: 3;
+        display: flex; justify-content: space-between; align-items: center;
+        margin-top: var(--s-space-2); gap: var(--s-space-2);
+      }
+      .todo-date {
+        font-size: 11px; color: var(--s-text); opacity: .45; white-space: nowrap;
+      }
+      .btn-del {
+        padding: 2px var(--s-space-2); font-size: 11px; font-weight: 500;
+        font-family: inherit; letter-spacing: .3px; border: 1px solid var(--s-border);
+        border-radius: 4px; background: none; color: var(--s-text);
+        opacity: .5; cursor: pointer;
+      }
+
+
+      /* ══════════════════════════════════════════
+         OPTION A — Stacked + button bottom-right
+      ══════════════════════════════════════════ */
+      .opt-a {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-space-1-5);
+        margin: 0 var(--s-space-4);
+      }
+      .opt-a-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: var(--s-space-1);
+      }
+
+
+      /* ══════════════════════════════════════════
+         OPTION B — Progressive disclosure
+      ══════════════════════════════════════════ */
+      /* Default state: just the title row */
+      .opt-b-row {
+        display: flex;
+        gap: var(--s-space-2);
+        align-items: center;
+        margin: 0 var(--s-space-4);
+      }
+      /* "Expanded" state: description row appears below */
+      .opt-b-expanded {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-space-1-5);
+        margin: 0 var(--s-space-4);
+      }
+      .opt-b-title-row {
+        display: flex;
+        gap: var(--s-space-2);
+        align-items: center;
+      }
+      .opt-b-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: var(--s-space-1);
+      }
+      /* Affordance: small "Add details" toggle below title (when title focused) */
+      .opt-b-affordance {
+        font-size: var(--s-font-size-xs);
+        color: var(--s-text);
+        opacity: 0.45;
+        padding-left: 1px;
+        margin-top: 2px;
+      }
+
+
+      /* ══════════════════════════════════════════
+         OPTION C — Card with full-width button
+      ══════════════════════════════════════════ */
+      .opt-c {
+        margin: 0 var(--s-space-4);
+        border: 1px solid var(--s-border);
+        border-radius: var(--s-radius-lg);
+        overflow: hidden;
+        /* very subtle inner shadow for card lift */
+        box-shadow: 0 1px 4px rgba(100, 60, 160, 0.07);
+      }
+      .opt-c-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .opt-c-title {
+        padding: var(--s-space-3) var(--s-space-3) var(--s-space-2-5);
+        font-size: var(--s-font-size-base);
+        font-family: inherit;
+        border: none;
+        border-bottom: 1px solid var(--s-border);
+        background: var(--s-bg);
+        color: var(--s-text);
+        outline: none;
+        width: 100%;
+      }
+      .opt-c-title::placeholder { color: var(--s-text); opacity: 0.45; }
+      .opt-c-title--focus {
+        background: #fdfdff;
+      }
+      .opt-c-desc {
+        padding: var(--s-space-2-5) var(--s-space-3);
+        font-size: var(--s-font-size-sm);
+        font-family: inherit;
+        line-height: 1.5;
+        border: none;
+        background: var(--s-bg);
+        color: var(--s-text);
+        outline: none;
+        resize: none;
+        width: 100%;
+      }
+      .opt-c-desc::placeholder { color: var(--s-text); opacity: 0.4; }
+      .opt-c-footer {
+        border-top: 1px solid var(--s-border);
+        padding: var(--s-space-2) var(--s-space-3);
+        display: flex;
+        justify-content: flex-end;
+        background: #faf9fd; /* very subtle tint to distinguish footer */
+      }
+      .btn-add-sm {
+        padding: var(--s-space-1-5) var(--s-space-4);
+        font-size: var(--s-font-size-sm);
+        font-weight: 500;
+        font-family: inherit;
+        border: 1px solid transparent;
+        border-radius: var(--s-radius-md);
+        background: var(--s-accent);
+        color: var(--s-text-on-accent);
+        cursor: pointer;
+      }
+
+
+      /* ══════════════════════════════════════════
+         OPTION D — Borderless / underline style
+      ══════════════════════════════════════════ */
+      .opt-d {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        margin: 0 var(--s-space-4);
+      }
+      .opt-d-title {
+        padding: var(--s-space-2) 0;
+        font-size: var(--s-font-size-base);
+        font-family: inherit;
+        border: none;
+        border-bottom: 1px solid var(--s-border);
+        background: transparent;
+        color: var(--s-text);
+        outline: none;
+        width: 100%;
+        transition: border-color 0.15s;
+      }
+      .opt-d-title::placeholder { color: var(--s-text); opacity: 0.4; }
+      .opt-d-title--focus {
+        border-bottom-color: var(--s-border-focus);
+      }
+      .opt-d-desc {
+        padding: var(--s-space-2) 0;
+        font-size: var(--s-font-size-sm);
+        font-family: inherit;
+        line-height: 1.5;
+        border: none;
+        border-bottom: 1px solid #eeecf1; /* even lighter — tertiary field */
+        background: transparent;
+        color: var(--s-text);
+        outline: none;
+        resize: none;
+        width: 100%;
+      }
+      .opt-d-desc::placeholder { color: var(--s-text); opacity: 0.35; }
+      .opt-d-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: var(--s-space-3);
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="page-header">
+      <p class="page-eyebrow">Add-todo form · Layout alternatives</p>
+      <h1 class="page-title">Four approaches to todo creation</h1>
+      <p class="page-desc">
+        Each option addresses the core issue with the current layout —
+        the Add button floating to the right of only the title, leaving the
+        description textarea visually orphaned.
+        Both desktop (640px) and mobile (375px) are shown for each.
+      </p>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════
+         OPTION A — Stacked + button bottom-right
+    ══════════════════════════════════════════ -->
+    <div class="option-block">
+      <div class="option-label">
+        <span class="option-tag">A</span>
+        <span class="option-name">Stacked + button bottom-right</span>
+        <span class="option-note">Simplest fix. Both inputs full-width, button anchors below all content.</span>
+      </div>
+      <div class="gallery">
+
+        <!-- Desktop — empty -->
+        <div class="frame">
+          <span class="frame-label">Desktop · empty</span>
+          <div class="shell shell--desktop">
+            <div class="app">
+              <header class="app-header">
+                <h1 class="app-title">Todos</h1>
+                <button type="button" class="btn-logout">Log out</button>
+              </header>
+              <div class="opt-a">
+                <input class="inp" type="text" placeholder="What needs to be done?" />
+                <textarea class="ta" rows="2" placeholder="Add details… (optional)"></textarea>
+                <div class="opt-a-actions">
+                  <button type="button" class="btn-add">Add</button>
+                </div>
+              </div>
+              <div class="sep"></div>
+              <ul class="todo-list">
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Finish the UI refactor</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Buy groceries</span>
+                  <span class="todo-d">Milk, eggs, bread, coffee</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop — title filled + desc focused -->
+        <div class="frame">
+          <span class="frame-label">Desktop · typing</span>
+          <div class="shell shell--desktop">
+            <div class="app">
+              <header class="app-header">
+                <h1 class="app-title">Todos</h1>
+                <button type="button" class="btn-logout">Log out</button>
+              </header>
+              <div class="opt-a">
+                <input class="inp" type="text" value="Call the bank about fraud alert" />
+                <textarea class="ta inp--focus" rows="2">Dispute the Apr 9 charge</textarea>
+                <div class="opt-a-actions">
+                  <button type="button" class="btn-add">Add</button>
+                </div>
+              </div>
+              <div class="sep"></div>
+              <ul class="todo-list">
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Finish the UI refactor</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile -->
+        <div class="frame">
+          <span class="frame-label">Mobile · empty</span>
+          <div class="shell shell--mobile">
+            <div class="app">
+              <header class="app-header">
+                <h1 class="app-title">Todos</h1>
+                <button type="button" class="btn-logout">Log out</button>
+              </header>
+              <div class="opt-a">
+                <input class="inp" type="text" placeholder="What needs to be done?" />
+                <textarea class="ta" rows="2" placeholder="Add details… (optional)"></textarea>
+                <div class="opt-a-actions">
+                  <button type="button" class="btn-add">Add</button>
+                </div>
+              </div>
+              <div class="sep"></div>
+              <ul class="todo-list">
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Finish the UI refactor</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Buy groceries</span>
+                  <span class="todo-d">Milk, eggs, bread, coffee</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+
+    <!-- ══════════════════════════════════════════
+         OPTION B — Progressive disclosure
+    ══════════════════════════════════════════ -->
+    <div class="option-block">
+      <div class="option-label">
+        <span class="option-tag">B</span>
+        <span class="option-name">Progressive disclosure</span>
+        <span class="option-note">Minimal by default. Description row only appears when title has content.</span>
+      </div>
+      <div class="gallery">
+
+        <!-- Desktop — default (no description visible) -->
+        <div class="frame">
+          <span class="frame-label">Desktop · default (collapsed)</span>
+          <div class="shell shell--desktop">
+            <div class="app">
+              <header class="app-header">
+                <h1 class="app-title">Todos</h1>
+                <button type="button" class="btn-logout">Log out</button>
+              </header>
+              <div class="opt-b-row">
+                <input class="inp" type="text" placeholder="What needs to be done?" style="flex:1;" />
+                <button type="button" class="btn-add">Add</button>
+              </div>
+              <div class="sep"></div>
+              <ul class="todo-list">
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Finish the UI refactor</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Buy groceries</span>
+                  <span class="todo-d">Milk, eggs, bread, coffee</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop — expanded (description revealed after title filled) -->
+        <div class="frame">
+          <span class="frame-label">Desktop · expanded</span>
+          <div class="shell shell--desktop">
+            <div class="app">
+              <header class="app-header">
+                <h1 class="app-title">Todos</h1>
+                <button type="button" class="btn-logout">Log out</button>
+              </header>
+              <div class="opt-b-expanded">
+                <div class="opt-b-title-row">
+                  <input class="inp" type="text" value="Call the bank about fraud alert" style="flex:1;" />
+                  <button type="button" class="btn-add">Add</button>
+                </div>
+                <textarea class="ta inp--focus" rows="2">Dispute the Apr 9 charge</textarea>
+              </div>
+              <div class="sep"></div>
+              <ul class="todo-list">
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Finish the UI refactor</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile — default -->
+        <div class="frame">
+          <span class="frame-label">Mobile · default</span>
+          <div class="shell shell--mobile">
+            <div class="app">
+              <header class="app-header">
+                <h1 class="app-title">Todos</h1>
+                <button type="button" class="btn-logout">Log out</button>
+              </header>
+              <div class="opt-b-row">
+                <input class="inp" type="text" placeholder="What needs to be done?" style="flex:1;" />
+                <button type="button" class="btn-add">Add</button>
+              </div>
+              <div class="sep"></div>
+              <ul class="todo-list">
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Finish the UI refactor</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Buy groceries</span>
+                  <span class="todo-d">Milk, eggs, bread, coffee</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile — expanded -->
+        <div class="frame">
+          <span class="frame-label">Mobile · expanded</span>
+          <div class="shell shell--mobile">
+            <div class="app">
+              <header class="app-header">
+                <h1 class="app-title">Todos</h1>
+                <button type="button" class="btn-logout">Log out</button>
+              </header>
+              <div class="opt-b-expanded">
+                <div class="opt-b-title-row">
+                  <input class="inp" type="text" value="Call the bank" style="flex:1;" />
+                  <button type="button" class="btn-add">Add</button>
+                </div>
+                <textarea class="ta inp--focus" rows="2">Dispute the charge</textarea>
+              </div>
+              <div class="sep"></div>
+              <ul class="todo-list">
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Finish the UI refactor</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+
+    <!-- ══════════════════════════════════════════
+         OPTION C — Card with footer button
+    ══════════════════════════════════════════ -->
+    <div class="option-block">
+      <div class="option-label">
+        <span class="option-tag">C</span>
+        <span class="option-name">Card with footer button</span>
+        <span class="option-note">Self-contained form card. Action clearly scoped to all card content.</span>
+      </div>
+      <div class="gallery">
+
+        <!-- Desktop — empty -->
+        <div class="frame">
+          <span class="frame-label">Desktop · empty</span>
+          <div class="shell shell--desktop">
+            <div class="app">
+              <header class="app-header">
+                <h1 class="app-title">Todos</h1>
+                <button type="button" class="btn-logout">Log out</button>
+              </header>
+              <div class="opt-c">
+                <div class="opt-c-body">
+                  <input class="opt-c-title" type="text" placeholder="What needs to be done?" />
+                  <textarea class="opt-c-desc" rows="2" placeholder="Add details… (optional)"></textarea>
+                </div>
+                <div class="opt-c-footer">
+                  <button type="button" class="btn-add-sm">Add</button>
+                </div>
+              </div>
+              <div class="sep"></div>
+              <ul class="todo-list">
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Finish the UI refactor</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Buy groceries</span>
+                  <span class="todo-d">Milk, eggs, bread, coffee</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop — title focused -->
+        <div class="frame">
+          <span class="frame-label">Desktop · title focused</span>
+          <div class="shell shell--desktop">
+            <div class="app">
+              <header class="app-header">
+                <h1 class="app-title">Todos</h1>
+                <button type="button" class="btn-logout">Log out</button>
+              </header>
+              <div class="opt-c" style="border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,0.15), 0 1px 4px rgba(100,60,160,0.07);">
+                <div class="opt-c-body">
+                  <input class="opt-c-title opt-c-title--focus" type="text" value="Call the bank about fraud alert" />
+                  <textarea class="opt-c-desc" rows="2" placeholder="Add details… (optional)"></textarea>
+                </div>
+                <div class="opt-c-footer">
+                  <button type="button" class="btn-add-sm">Add</button>
+                </div>
+              </div>
+              <div class="sep"></div>
+              <ul class="todo-list">
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Finish the UI refactor</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile -->
+        <div class="frame">
+          <span class="frame-label">Mobile · empty</span>
+          <div class="shell shell--mobile">
+            <div class="app">
+              <header class="app-header">
+                <h1 class="app-title">Todos</h1>
+                <button type="button" class="btn-logout">Log out</button>
+              </header>
+              <div class="opt-c">
+                <div class="opt-c-body">
+                  <input class="opt-c-title" type="text" placeholder="What needs to be done?" />
+                  <textarea class="opt-c-desc" rows="2" placeholder="Add details… (optional)"></textarea>
+                </div>
+                <div class="opt-c-footer">
+                  <button type="button" class="btn-add-sm">Add</button>
+                </div>
+              </div>
+              <div class="sep"></div>
+              <ul class="todo-list">
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Finish the UI refactor</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Buy groceries</span>
+                  <span class="todo-d">Milk, eggs, bread, coffee</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+
+    <!-- ══════════════════════════════════════════
+         OPTION D — Borderless / underline style
+    ══════════════════════════════════════════ -->
+    <div class="option-block">
+      <div class="option-label">
+        <span class="option-tag">D</span>
+        <span class="option-name">Borderless / underline</span>
+        <span class="option-note">Lightweight, editorial. Inputs use only a bottom border — form recedes, list content leads.</span>
+      </div>
+      <div class="gallery">
+
+        <!-- Desktop — empty -->
+        <div class="frame">
+          <span class="frame-label">Desktop · empty</span>
+          <div class="shell shell--desktop">
+            <div class="app">
+              <header class="app-header">
+                <h1 class="app-title">Todos</h1>
+                <button type="button" class="btn-logout">Log out</button>
+              </header>
+              <div class="opt-d">
+                <input class="opt-d-title" type="text" placeholder="What needs to be done?" />
+                <textarea class="opt-d-desc" rows="2" placeholder="Add details… (optional)"></textarea>
+                <div class="opt-d-actions">
+                  <button type="button" class="btn-add">Add</button>
+                </div>
+              </div>
+              <div class="sep"></div>
+              <ul class="todo-list">
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Finish the UI refactor</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Buy groceries</span>
+                  <span class="todo-d">Milk, eggs, bread, coffee</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop — title focused -->
+        <div class="frame">
+          <span class="frame-label">Desktop · title focused</span>
+          <div class="shell shell--desktop">
+            <div class="app">
+              <header class="app-header">
+                <h1 class="app-title">Todos</h1>
+                <button type="button" class="btn-logout">Log out</button>
+              </header>
+              <div class="opt-d">
+                <input class="opt-d-title opt-d-title--focus" type="text" value="Call the bank about fraud alert" />
+                <textarea class="opt-d-desc" rows="2" placeholder="Add details… (optional)"></textarea>
+                <div class="opt-d-actions">
+                  <button type="button" class="btn-add">Add</button>
+                </div>
+              </div>
+              <div class="sep"></div>
+              <ul class="todo-list">
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Finish the UI refactor</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile -->
+        <div class="frame">
+          <span class="frame-label">Mobile · empty</span>
+          <div class="shell shell--mobile">
+            <div class="app">
+              <header class="app-header">
+                <h1 class="app-title">Todos</h1>
+                <button type="button" class="btn-logout">Log out</button>
+              </header>
+              <div class="opt-d">
+                <input class="opt-d-title" type="text" placeholder="What needs to be done?" />
+                <textarea class="opt-d-desc" rows="2" placeholder="Add details… (optional)"></textarea>
+                <div class="opt-d-actions">
+                  <button type="button" class="btn-add">Add</button>
+                </div>
+              </div>
+              <div class="sep"></div>
+              <ul class="todo-list">
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Finish the UI refactor</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+                <li class="todo-item">
+                  <input type="checkbox" class="todo-cb" />
+                  <span class="todo-t">Buy groceries</span>
+                  <span class="todo-d">Milk, eggs, bread, coffee</span>
+                  <div class="todo-meta">
+                    <time class="todo-date">Apr 12, 2026</time>
+                    <button type="button" class="btn-del">Delete</button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </body>
+</html>
