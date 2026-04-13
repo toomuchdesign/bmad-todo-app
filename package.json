@@ -15,7 +15,7 @@
     "dev:api": "npm -w api run dev",
     "dev:api:ci": "npm -w api run dev:ci",
     "kill:ports": "for p in 5173 3001 5174 3002; do lsof -ti:$p | xargs kill -9 2>/dev/null; done; exit 0",
-    "build": "npm -w shared run build && npm -w api run build && npm -w web run build",
+    "build": "npm -w shared run build && concurrently --kill-others-on-fail -s first -n api,web \"npm -w api run build\" \"npm -w web run build\"",
     "build:openapi": "npm -w api run build:openapi",
     "build:api-types": "npm -w web run build:api-types",
     "build:openapi:api-types": "npm run build:openapi && npm run build:api-types",
