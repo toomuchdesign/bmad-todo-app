@@ -18,7 +18,8 @@
       "!!packages/api/drizzle",
       "!!packages/api/openapi.json",
       "!!packages/web/src/api/generated",
-      "!!**/test-results"
+      "!!**/test-results",
+      ".github/workflows"
     ]
   },
   "formatter": {

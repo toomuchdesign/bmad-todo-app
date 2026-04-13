@@ -15,7 +15,7 @@ env:
 
 jobs:
   source-check:
-    name: 'Source check'
+    name: "Source check"
     runs-on: ubuntu-latest
 
     steps:
@@ -23,8 +23,8 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
       - run: npm ci --ignore-scripts
 
@@ -32,7 +32,7 @@ jobs:
         run: npm run source:check
 
   unit-tests:
-    name: 'Unit tests'
+    name: "Unit tests"
     runs-on: ubuntu-latest
 
     services:
@@ -43,6 +43,7 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: bmad_todo_test
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/bmad_todo_test
         ports:
           - 5432:5432
         options: >-
@@ -56,8 +57,8 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
       - run: npm ci --ignore-scripts
 
@@ -73,7 +74,7 @@ jobs:
           path: coverage
 
   e2e-tests:
-    name: 'E2E tests'
+    name: "E2E tests"
     runs-on: ubuntu-latest
 
     services:
@@ -96,8 +97,8 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
       - run: npm ci --ignore-scripts
 
@@ -120,7 +121,7 @@ jobs:
           retention-days: 7
 
   build:
-    name: 'Build'
+    name: "Build"
     runs-on: ubuntu-latest
 
     steps:
@@ -128,8 +129,8 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
       - run: npm ci --ignore-scripts
 
@@ -137,8 +138,8 @@ jobs:
         run: npm run build
 
   upload-code-coverage:
-    name: 'Upload code coverage'
-    needs: ['unit-tests']
+    name: "Upload code coverage"
+    needs: ["unit-tests"]
     runs-on: ubuntu-latest
 
     steps:
