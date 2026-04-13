@@ -13,8 +13,9 @@
     "dev": "concurrently -k --kill-others-on-fail -s first -n web,api \"npm run dev:web\" \"npm run dev:api\"",
     "dev:web": "npm -w web run dev",
     "dev:api": "npm -w api run dev",
+    "dev:api:ci": "npm -w api run dev:ci",
     "kill:ports": "for p in 5173 3001 5174 3002; do lsof -ti:$p | xargs kill -9 2>/dev/null; done; exit 0",
-    "build": "npm -w shared run build && npm -w api run build && npm -w web run build",
+    "build": "npm -w shared run build && concurrently --kill-others-on-fail -s first -n api,web \"npm -w api run build\" \"npm -w web run build\"",
     "build:openapi": "npm -w api run build:openapi",
     "build:api-types": "npm -w web run build:api-types",
     "build:openapi:api-types": "npm run build:openapi && npm run build:api-types",
@@ -25,14 +26,15 @@
     "source:check": "npm run biome:check && npm run type:check",
     "source:fix": "npm run biome:fix",
     "test": "npm -w api run docker-compose:start && vitest",
-    "test:ci": "npm run test -- --run",
+    "test:ci": "vitest --run",
     "test:web": "npm -w web run test",
     "test:api": "npm -w api run test",
     "test:e2e": "npm -w web run test:e2e",
     "test:e2e:ui": "npm -w web run test:e2e -- --ui",
     "docker:build": "docker compose -f docker-compose.prod.yml --env-file /dev/null build",
     "docker:up": "docker compose -f docker-compose.prod.yml --env-file /dev/null up -d --build",
-    "docker:smoke": "node --import tsx --test --test-concurrency=1 scripts/docker-smoke-test.ts"
+    "docker:smoke": "node --import tsx --test --test-concurrency=1 scripts/docker-smoke-test.ts",
+    "db:migrate:ci": "npm -w api run db:migrate:ci"
   },
   "simple-git-hooks": {
     "pre-commit": "npm run build:openapi:api-types:stage && npm run source:fix && npm run source:check && npm run test:ci && npm run test:e2e"
@@ -40,10 +42,18 @@
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",
     "@playwright/cli": "^0.1.7",
+    "@vitest/coverage-v8": "^4.1.2",
     "concurrently": "^9.2.1",
     "rimraf": "^6.1.3",
     "simple-git-hooks": "^2.12.1",
     "typescript": "6.0.2",
     "vitest": "^4.1.2"
+  },
+  "optionalDependencies": {
+    "@biomejs/cli-linux-x64": "^2.4.11",
+    "@esbuild/linux-x64": "^0.28.0",
+    "@rolldown/binding-linux-arm64-gnu": "1.0.0-rc.12",
+    "@rolldown/binding-linux-x64-gnu": "1.0.0-rc.12",
+    "lightningcss-linux-x64-gnu": "^1.32.0"
   }
 }
