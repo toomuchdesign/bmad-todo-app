@@ -21,8 +21,12 @@ env:
   JWT_SECRET: test-jwt-secret
 
 jobs:
-  source-check:
-    name: "Source check"
+  # Pre-build the `shared` workspace once and hand its dist/ to every
+  # downstream job as an artifact. api/web consume `shared` via its
+  # compiled entry (./dist/index.js + .d.ts), so without this step
+  # tsc and vitest fail to resolve `import … from "shared"`.
+  prepare:
+    name: "Prepare"
     runs-on: ubuntu-latest
 
     steps:
@@ -35,16 +39,41 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
-      # api/web consume `shared` as a built package — its .d.ts files must
-      # exist before tsc can type-check the workspaces that import from it.
       - name: Build shared package
         run: npm -w shared run build
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: shared-dist
+          path: packages/shared/dist
+          retention-days: 1
+
+  source-check:
+    name: "Source check"
+    needs: [prepare]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - run: npm ci --ignore-scripts
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: shared-dist
+          path: packages/shared/dist
 
       - name: source:check
         run: npm run source:check
 
   unit-tests:
     name: "Unit tests"
+    needs: [prepare]
     runs-on: ubuntu-latest
 
     services:
@@ -73,10 +102,10 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
-      # The `shared` workspace is consumed by api/web as a built package
-      # (main: ./dist/index.js), so it must be compiled before tests run.
-      - name: Build shared package
-        run: npm -w shared run build
+      - uses: actions/download-artifact@v8
+        with:
+          name: shared-dist
+          path: packages/shared/dist
 
       - name: Run database migrations
         run: npm run db:migrate:ci
@@ -91,6 +120,7 @@ jobs:
 
   e2e-tests:
     name: "E2E tests"
+    needs: [prepare]
     runs-on: ubuntu-latest
 
     services:
@@ -118,10 +148,10 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
-      # The `shared` workspace is consumed by api/web as a built package
-      # (main: ./dist/index.js), so it must be compiled before tests run.
-      - name: Build shared package
-        run: npm -w shared run build
+      - uses: actions/download-artifact@v8
+        with:
+          name: shared-dist
+          path: packages/shared/dist
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -143,6 +173,7 @@ jobs:
 
   build:
     name: "Build"
+    needs: [prepare]
     runs-on: ubuntu-latest
 
     steps:
@@ -155,12 +186,14 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
+      # The root `build` script rebuilds `shared` too, so no artifact
+      # download is needed here — this job is self-contained.
       - name: build
         run: npm run build
 
   upload-code-coverage:
     name: "Upload code coverage"
-    needs: ["unit-tests"]
+    needs: [unit-tests]
     runs-on: ubuntu-latest
 
     steps:
