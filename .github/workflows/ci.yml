@@ -12,6 +12,13 @@ concurrency:
 
 env:
   CI: true
+  # Mirror .env.test — keep in sync if either is changed.
+  WEB_PORT: 5174
+  API_PORT: 3002
+  API_HOST: 127.0.0.1
+  WEB_ORIGIN: http://localhost:5174
+  DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/bmad_todo_test
+  JWT_SECRET: test-jwt-secret
 
 jobs:
   source-check:
@@ -61,9 +68,6 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
-      - name: Load .env.test into job env
-        run: cat .env.test >> "$GITHUB_ENV"
-
       - name: Run database migrations
         run: npm run db:migrate:ci
 
@@ -104,14 +108,8 @@ jobs:
 
       - run: npm ci --ignore-scripts
 
-      - name: Load .env.test into job env
-        run: cat .env.test >> "$GITHUB_ENV"
-
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
-
-      - name: Load .env.test into job env
-        run: cat .env.test >> "$GITHUB_ENV"
 
       - name: Run database migrations
         run: npm run db:migrate:ci
