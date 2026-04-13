@@ -6,8 +6,9 @@ import { execSync } from "node:child_process";
  * so DATABASE_URL points to bmad_todo_test.
  */
 export default function globalSetup() {
-  execSync("npm -w api run db:reset", {
-    env: { ...process.env },
-    stdio: "inherit",
-  });
+  // In CI, skip docker-compose:start — postgres is provided by the CI service.
+  const cmd = process.env.CI
+    ? "npm -w api run db:reset:ci"
+    : "npm -w api run db:reset";
+  execSync(cmd, { env: { ...process.env }, stdio: "inherit" });
 }

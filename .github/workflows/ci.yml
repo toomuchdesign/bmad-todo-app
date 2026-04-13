@@ -1,0 +1,154 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: true
+
+jobs:
+  source-check:
+    name: 'Source check'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - run: npm ci --ignore-scripts
+
+      - name: source:check
+        run: npm run source:check
+
+  unit-tests:
+    name: 'Unit tests'
+    runs-on: ubuntu-latest
+
+    services:
+      # Matches the DATABASE_URL in .env.test — localhost:5432/bmad_todo_test.
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bmad_todo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - run: npm ci --ignore-scripts
+
+      - name: Run database migrations
+        run: npm run db:migrate:ci
+
+      - name: test:ci
+        run: npm run test:ci -- --coverage
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: code-coverage
+          path: coverage
+
+  e2e-tests:
+    name: 'E2E tests'
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bmad_todo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - run: npm ci --ignore-scripts
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run database migrations
+        run: npm run db:migrate:ci
+
+      - name: test:e2e
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            packages/web/e2e/playwright-report/
+            packages/web/e2e/test-results/
+          retention-days: 7
+
+  build:
+    name: 'Build'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - run: npm ci --ignore-scripts
+
+      - name: build
+        run: npm run build
+
+  upload-code-coverage:
+    name: 'Upload code coverage'
+    needs: ['unit-tests']
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: code-coverage
+          path: coverage
+
+      - uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

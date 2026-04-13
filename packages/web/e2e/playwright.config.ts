@@ -20,7 +20,8 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: "npm run dev:api",
+      // In CI, skip docker-compose:start — postgres is provided by the CI service.
+      command: process.env.CI ? "npm run dev:api:ci" : "npm run dev:api",
       url: `http://${apiHost}:${apiPort}/healthcheck`,
       cwd: "../../..",
       reuseExistingServer: !process.env.CI,

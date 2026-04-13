@@ -7,6 +7,7 @@
   "scripts": {
     "docker-compose:start": "docker-compose -p bmad-todo up -d",
     "dev": "npm run docker-compose:start && tsx watch src/server.ts",
+    "dev:ci": "tsx src/server.ts",
     "build": "rimraf ./dist && tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "test": "npm run docker-compose:start && vitest --watch",
@@ -19,7 +20,9 @@
     "db:migrate:test": "npm run docker-compose:start && node --env-file=../../.env.test --import=tsx src/db/migrate.ts",
     "db:studio:local": "npm run docker-compose:start && node --env-file=../../.env $(which drizzle-kit) studio",
     "db:studio:test": "npm run docker-compose:start && node --env-file=../../.env.test $(which drizzle-kit) studio",
-    "db:reset": "npm run docker-compose:start && tsx scripts/db-reset.ts"
+    "db:migrate:ci": "node --import=tsx src/db/migrate.ts",
+    "db:reset": "npm run docker-compose:start && tsx scripts/db-reset.ts",
+    "db:reset:ci": "tsx scripts/db-reset.ts"
   },
   "keywords": [],
   "author": "",
