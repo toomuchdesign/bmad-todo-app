@@ -48,5 +48,12 @@
     "simple-git-hooks": "^2.12.1",
     "typescript": "6.0.2",
     "vitest": "^4.1.2"
+  },
+  "optionalDependencies": {
+    "@biomejs/cli-linux-x64": "^2.4.11",
+    "@esbuild/linux-x64": "^0.28.0",
+    "@rolldown/binding-linux-arm64-gnu": "1.0.0-rc.12",
+    "@rolldown/binding-linux-x64-gnu": "1.0.0-rc.12",
+    "lightningcss-linux-x64-gnu": "^1.32.0"
   }
 }

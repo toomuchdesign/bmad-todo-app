@@ -26,12 +26,7 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
 
-      # Use `npm install` (not `npm ci`) to work around npm bug #4828:
-      # package-lock.json generated on macOS omits Linux optional deps for
-      # native bindings (e.g. @rolldown/binding-linux-x64-gnu), so `npm ci`
-      # strictly follows the lockfile and skips them, breaking vite build.
-      # --prefer-offline still leverages setup-node's npm cache for speed.
-      - run: npm install --prefer-offline --no-audit --ignore-scripts
+      - run: npm ci --ignore-scripts
 
       - name: source:check
         run: npm run source:check
@@ -64,12 +59,7 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
 
-      # Use `npm install` (not `npm ci`) to work around npm bug #4828:
-      # package-lock.json generated on macOS omits Linux optional deps for
-      # native bindings (e.g. @rolldown/binding-linux-x64-gnu), so `npm ci`
-      # strictly follows the lockfile and skips them, breaking vite build.
-      # --prefer-offline still leverages setup-node's npm cache for speed.
-      - run: npm install --prefer-offline --no-audit --ignore-scripts
+      - run: npm ci --ignore-scripts
 
       - name: Run database migrations
         run: npm run db:migrate:ci
@@ -109,12 +99,7 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
 
-      # Use `npm install` (not `npm ci`) to work around npm bug #4828:
-      # package-lock.json generated on macOS omits Linux optional deps for
-      # native bindings (e.g. @rolldown/binding-linux-x64-gnu), so `npm ci`
-      # strictly follows the lockfile and skips them, breaking vite build.
-      # --prefer-offline still leverages setup-node's npm cache for speed.
-      - run: npm install --prefer-offline --no-audit --ignore-scripts
+      - run: npm ci --ignore-scripts
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -146,12 +131,7 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
 
-      # Use `npm install` (not `npm ci`) to work around npm bug #4828:
-      # package-lock.json generated on macOS omits Linux optional deps for
-      # native bindings (e.g. @rolldown/binding-linux-x64-gnu), so `npm ci`
-      # strictly follows the lockfile and skips them, breaking vite build.
-      # --prefer-offline still leverages setup-node's npm cache for speed.
-      - run: npm install --prefer-offline --no-audit --ignore-scripts
+      - run: npm ci --ignore-scripts
 
       - name: build
         run: npm run build
