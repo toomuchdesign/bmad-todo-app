@@ -1,0 +1,20 @@
+.checkbox {
+  /* Oversized hit area via padding + negative margin, so the visible box
+   * stays ~16px while taps/clicks register on a 32px target. */
+  padding: var(--s-space-2);
+  margin: calc(-1 * var(--s-space-2)) 0;
+  /* Paint the native check and filled-box in the brand accent. */
+  accent-color: var(--s-accent);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.checkbox:focus-visible {
+  outline: 2px solid var(--s-border-focus);
+  outline-offset: 2px;
+}
+
+.checkbox:disabled {
+  cursor: default;
+}

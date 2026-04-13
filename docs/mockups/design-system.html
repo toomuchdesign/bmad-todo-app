@@ -32,20 +32,13 @@
     <style>
       /* ─── Design tokens ─── */
       :root {
-        --p-gray-100: #f3f4f6;
-        --p-gray-400: #9ca3af;
         --p-gray-500: #6b6375;
         --p-gray-900: #08060d;
-        --p-purple-400: #c084fc;
         --p-purple-600: #aa3bff;
         --p-red-600: #dc2626;
-        --p-indigo-400: #818cf8;
         --p-indigo-500: #6366f1;
         --p-indigo-600: #4f46e5;
         --p-white: #fff;
-        --p-dark-bg: #16171d;
-        --p-dark-surface: #1f2028;
-        --p-dark-border: #2e303a;
         --p-font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
 
         --s-text: var(--p-gray-500);
@@ -738,7 +731,7 @@
       <p class="ds-section-desc">
         All colors are accessed via semantic tokens (<code class="ds-token">--s-*</code>).
         Never use primitives (<code class="ds-token">--p-*</code>) directly in components —
-        only in the token definitions themselves. This ensures dark-mode overrides work automatically.
+        only in the token definitions themselves. This keeps the palette swappable from a single source.
       </p>
 
       <div class="color-grid">

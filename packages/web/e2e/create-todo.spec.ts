@@ -147,7 +147,9 @@ test.describe("create todo", () => {
       await expect(page.getByLabel("New todo description")).toBeFocused();
       await page.keyboard.type("Keyboard desc");
 
-      // Tab to Add button and press Enter
+      // Tab past Cancel, then to Add button, and press Enter
+      await page.keyboard.press("Tab");
+      await expect(page.getByRole("button", { name: "Cancel" })).toBeFocused();
       await page.keyboard.press("Tab");
       await expect(page.getByRole("button", { name: "Add" })).toBeFocused();
       await page.keyboard.press("Enter");

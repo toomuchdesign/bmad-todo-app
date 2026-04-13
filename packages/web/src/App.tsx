@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 
 import styles from "./App.module.css";
-import { AddTodoForm } from "./components/AddTodoForm";
+import { AddTodoCard } from "./components/AddTodoCard";
 import { AppHeader } from "./components/AppHeader";
 import { GlobalErrorBanner } from "./components/GlobalErrorBanner";
 import { LoginForm } from "./components/LoginForm";
@@ -45,7 +45,11 @@ function TodoApp({
       {error && (
         <GlobalErrorBanner message={error} onRetry={retry} loading={loading} />
       )}
-      <AddTodoForm onSubmit={createTodo} titleInputRef={addTitleInputRef} />
+      <AddTodoCard
+        onSubmit={createTodo}
+        titleInputRef={addTitleInputRef}
+        expandOnFocus={false}
+      />
       <TodoList
         todos={todos}
         loading={loading}

@@ -6,6 +6,7 @@
 
   /* Backgrounds */
   --s-bg: var(--p-white);
+  --s-bg-page: #ece9f3; /* warm lavender-gray — surrounds the elevated app shell */
   --s-bg-code: #f4f3ec;
   --s-bg-accent: rgba(170, 59, 255, 0.1);
   --s-bg-error: #fef2f2;
@@ -43,37 +44,11 @@
   --s-font-size-xs: 12px;
   --s-font-size-sm: 13px;
   --s-font-size-base: 14px;
-  --s-font-size-md: 16px;
+  --s-font-size-md: 15px;
   --s-font-size-xl: 28px;
   --s-font-size-2xl: 32px;
 
   /* Fonts */
   --s-font-body: var(--p-font-sans);
   --s-font-heading: var(--p-font-sans);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Text */
-    --s-text: var(--p-gray-400);
-    --s-text-heading: var(--p-gray-100);
-    --s-text-error: #fca5a5;
-
-    /* Backgrounds */
-    --s-bg: var(--p-dark-bg);
-    --s-bg-code: var(--p-dark-surface);
-    --s-bg-accent: rgba(192, 132, 252, 0.15);
-    --s-bg-error: rgba(153, 27, 27, 0.15);
-
-    /* Borders */
-    --s-border: var(--p-dark-border);
-    --s-border-accent: rgba(192, 132, 252, 0.5);
-    --s-border-focus: var(--p-indigo-400);
-    --s-border-error: rgba(239, 68, 68, 0.3);
-
-    /* Interactive */
-    --s-accent: var(--p-purple-400);
-    --s-accent-hover: var(--p-indigo-500);
-    --s-focus-ring: rgba(129, 140, 248, 0.2);
-  }
 }

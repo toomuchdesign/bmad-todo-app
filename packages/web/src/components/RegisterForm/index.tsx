@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { AuthResult, RegisterCredentials } from "../../hooks/useAuth";
+import { Button, Input } from "../atoms";
+import { FormField } from "../FormField";
 import styles from "./RegisterForm.module.css";
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -61,61 +63,61 @@ function RegisterForm({ onRegister, onNavigateLogin }: RegisterFormProps) {
     }
   }
 
-  const inputClassName = error
-    ? `${styles.input} ${styles.inputError}`
-    : styles.input;
+  const hasError = !!error;
 
   return (
     <form onSubmit={handleSubmit} className={styles.form} aria-label="Register">
-      <div className={styles.field}>
-        <label htmlFor="register-name">Name</label>
-        <input
+      <FormField id="register-name" label="Name">
+        <Input
           ref={nameRef}
           id="register-name"
           name="name"
           type="text"
           required
           autoComplete="name"
-          className={inputClassName}
+          error={hasError}
           onChange={handleInputChange}
           placeholder="Your name"
         />
-      </div>
-      <div className={styles.field}>
-        <label htmlFor="register-email">Email</label>
-        <input
+      </FormField>
+      <FormField id="register-email" label="Email">
+        <Input
           id="register-email"
           name="email"
           type="email"
           required
           autoComplete="email"
-          className={inputClassName}
+          error={hasError}
           onChange={handleInputChange}
           placeholder="you@example.com"
         />
-      </div>
-      <div className={styles.field}>
-        <label htmlFor="register-password">Password</label>
-        <input
+      </FormField>
+      <FormField id="register-password" label="Password">
+        <Input
           id="register-password"
           name="password"
           type="password"
           required
           minLength={MIN_PASSWORD_LENGTH}
           autoComplete="new-password"
-          className={inputClassName}
+          error={hasError}
           onChange={handleInputChange}
           placeholder="Min. 8 characters"
         />
-      </div>
+      </FormField>
       {error && (
         <p role="alert" className={styles.error}>
           {error}
         </p>
       )}
-      <button type="submit" className={styles.submitButton} disabled={loading}>
-        {loading ? "Creating account\u2026" : "Create account"}
-      </button>
+      <Button
+        variant="primary"
+        type="submit"
+        loading={loading}
+        loadingText={"Creating account\u2026"}
+      >
+        Create account
+      </Button>
       <p className={styles.footer}>
         Already have an account?{" "}
         <button

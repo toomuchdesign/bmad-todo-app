@@ -15,25 +15,3 @@
   color: var(--s-text-error);
   font-size: var(--s-font-size-base);
 }
-
-.retryButton {
-  padding: var(--s-space-1-5) var(--s-space-4);
-  font-size: var(--s-font-size-base);
-  font-weight: 500;
-  border: 1px solid var(--s-border-error);
-  border-radius: var(--s-radius-md);
-  background: var(--s-bg);
-  color: var(--s-text-error);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.2s;
-}
-
-.retryButton:focus-visible {
-  outline: 2px solid var(--s-border-focus);
-  outline-offset: 2px;
-}
-
-.retryButton:hover {
-  background: var(--s-bg-error);
-}

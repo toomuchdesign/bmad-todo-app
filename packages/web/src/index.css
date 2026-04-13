@@ -4,9 +4,9 @@
 :root {
   font: 18px / 145% var(--s-font-body);
   letter-spacing: 0.18px;
-  color-scheme: light dark;
+  color-scheme: light;
   color: var(--s-text);
-  background: var(--s-bg);
+  background: var(--s-bg-page);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -17,12 +17,19 @@
   }
 }
 
+/*
+ * Elevated application shell: white surface against the warm lavender page
+ * background, with side borders and a soft drop-shadow to anchor the app
+ * visually as the primary content surface.
+ */
 #root {
   width: 640px;
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
+  background: var(--s-bg);
   border-inline: 1px solid var(--s-border);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
@@ -31,6 +38,7 @@
 
 body {
   margin: 0;
+  background: var(--s-bg-page);
 }
 
 h1,

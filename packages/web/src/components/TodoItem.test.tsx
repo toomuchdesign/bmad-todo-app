@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { MAX_TODO_TITLE_LENGTH, type Todo } from "shared";
 import { describe, expect, it, vi } from "vitest";
 import type { TodoUpdatableFields } from "../contracts";
+import { formatShortDate } from "../utils";
 import { TodoItem } from "./TodoItem";
 
 const incompleteTodo: Todo = {
@@ -71,13 +72,11 @@ describe("TodoItem", () => {
       expect(checkbox).toBeEnabled();
     });
 
-    it("renders the creation date", () => {
+    it("renders the creation date in short month format", () => {
       renderTodoItem();
 
       expect(
-        screen.getByText(
-          new Date(incompleteTodo.createdAt).toLocaleDateString(),
-        ),
+        screen.getByText(formatShortDate(incompleteTodo.createdAt)),
       ).toBeInTheDocument();
     });
 

@@ -606,6 +606,15 @@ bmad-todo/
 │       │   ├── test-utils/
 │       │   │   └── index.ts                # shared fixtures + fetch mock helpers
 │       │   ├── components/
+│       │   │   ├── atoms/                  # reusable design-system primitives
+│       │   │   │   ├── Button/             # primary / ghost variants
+│       │   │   │   ├── Checkbox/
+│       │   │   │   ├── Input/              # forward-ref input with error state
+│       │   │   │   ├── NavLink/            # button-as-link with active underline
+│       │   │   │   └── index.ts            # barrel export
+│       │   │   ├── FormField/              # molecule: label + input + error slot
+│       │   │   │   ├── index.tsx
+│       │   │   │   └── FormField.module.css
 │       │   │   ├── AppHeader/
 │       │   │   │   ├── index.tsx           # persistent header — nav links or logout
 │       │   │   │   ├── AppHeader.module.css
@@ -618,9 +627,10 @@ bmad-todo/
 │       │   │   │   ├── index.tsx           # register form with name/email/password
 │       │   │   │   ├── RegisterForm.module.css
 │       │   │   │   └── RegisterForm.test.tsx
-│       │   │   ├── AddTodoForm.tsx
-│       │   │   ├── AddTodoForm.module.css
-│       │   │   ├── AddTodoForm.test.tsx
+│       │   │   ├── AddTodoCard/
+│       │   │   │   ├── index.tsx           # card-based add-todo with expandOnFocus flag
+│       │   │   │   ├── AddTodoCard.module.css
+│       │   │   │   └── AddTodoCard.test.tsx
 │       │   │   ├── GlobalErrorBanner.tsx
 │       │   │   ├── GlobalErrorBanner.module.css
 │       │   │   ├── TodoList.tsx
@@ -668,7 +678,7 @@ bmad-todo/
 ### Requirements → Structure Mapping
 
 - **FR1 list on load / retry on failure:** `packages/web/src/hooks/useTodos.ts` + `GlobalErrorBanner.tsx`; API `GET /todos` in `packages/api/src/routes/todos/index.ts`.
-- **FR2 create + validation:** `AddTodoForm.tsx` + shared `MAX_TODO_TEXT_LENGTH`; API `POST /todos`.
+- **FR2 create + validation:** `AddTodoCard/` + shared `MAX_TODO_TEXT_LENGTH`; API `POST /todos`.
 - **FR3 edit:** `TodoItem.tsx` inline edit + API `PATCH /todos/:id`.
 - **FR4 toggle:** `TodoItem.tsx` + API `PATCH /todos/:id`.
 - **FR5 soft delete:** `TodoItem.tsx` delete action + API `DELETE /todos/:id` + DB `deleted_at`.

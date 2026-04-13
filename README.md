@@ -159,9 +159,10 @@ The `docker-compose.prod.yml` file mirrors the intended deployment topology. It 
 
 | Command           | Effect                                                   |
 | ----------------- | -------------------------------------------------------- |
-| `npm run dev`     | Start web + API concurrently (requires Postgres running) |
-| `npm run dev:web` | Start only the web dev server                            |
-| `npm run dev:api` | Start only the API dev server                            |
+| `npm run dev`        | Start web + API concurrently (requires Postgres running)           |
+| `npm run dev:web`    | Start only the web dev server                                      |
+| `npm run dev:api`    | Start only the API dev server                                      |
+| `npm run kill:ports` | Kill any process still holding the dev/test ports (5173/3001/5174/3002) |
 
 Default ports:
 

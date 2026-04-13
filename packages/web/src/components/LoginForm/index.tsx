@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { AuthResult, LoginCredentials } from "../../hooks/useAuth";
+import { Button, Input } from "../atoms";
+import { FormField } from "../FormField";
 import styles from "./LoginForm.module.css";
 
 type LoginFormProps = {
@@ -53,46 +55,47 @@ function LoginForm({ onLogin, onNavigateRegister }: LoginFormProps) {
     }
   }
 
-  const inputClassName = error
-    ? `${styles.input} ${styles.inputError}`
-    : styles.input;
+  const hasError = !!error;
 
   return (
     <form onSubmit={handleSubmit} className={styles.form} aria-label="Log in">
-      <div className={styles.field}>
-        <label htmlFor="login-email">Email</label>
-        <input
+      <FormField id="login-email" label="Email">
+        <Input
           ref={emailRef}
           id="login-email"
           name="email"
           type="email"
           required
           autoComplete="email"
-          className={inputClassName}
+          error={hasError}
           onChange={handleInputChange}
           placeholder="you@example.com"
         />
-      </div>
-      <div className={styles.field}>
-        <label htmlFor="login-password">Password</label>
-        <input
+      </FormField>
+      <FormField id="login-password" label="Password">
+        <Input
           id="login-password"
           name="password"
           type="password"
           required
           autoComplete="current-password"
-          className={inputClassName}
+          error={hasError}
           onChange={handleInputChange}
         />
-      </div>
+      </FormField>
       {error && (
         <p role="alert" className={styles.error}>
           {error}
         </p>
       )}
-      <button type="submit" className={styles.submitButton} disabled={loading}>
-        {loading ? "Logging in\u2026" : "Log in"}
-      </button>
+      <Button
+        variant="primary"
+        type="submit"
+        loading={loading}
+        loadingText={"Logging in\u2026"}
+      >
+        Log in
+      </Button>
       <p className={styles.footer}>
         Don&apos;t have an account?{" "}
         <button

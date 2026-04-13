@@ -86,9 +86,10 @@ test.describe("toggle completion", () => {
       await addButton.click();
       await expect(page.getByText("Keyboard toggle")).toBeVisible();
 
-      // Tab from title input through the todo item controls to reach the checkbox
+      // Tab from title input through the card footer controls to reach the checkbox
       await titleInput.focus();
       await page.keyboard.press("Tab"); // description
+      await page.keyboard.press("Tab"); // Cancel button
       await page.keyboard.press("Tab"); // Add button
       await page.keyboard.press("Tab"); // checkbox
       const checkbox = page.getByRole("checkbox", {

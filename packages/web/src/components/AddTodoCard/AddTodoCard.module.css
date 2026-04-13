@@ -1,0 +1,93 @@
+.card {
+  border-radius: var(--s-radius-lg);
+  border: 1px solid var(--s-border);
+  margin: 0 var(--s-space-4);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.card.expanded {
+  border-color: var(--s-border-accent);
+  box-shadow: 0 2px 16px rgba(100, 60, 160, 0.1);
+}
+
+.cardBody {
+  padding: var(--s-space-3) var(--s-space-3) 0;
+}
+
+/*
+ * Title input — matches the read-mode title typography (15px / 500).
+ * The card already has its own border + footer, so the input itself
+ * stays borderless and lets the typography do the hierarchy work.
+ */
+.titleInput {
+  all: unset;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: var(--s-font-size-md);
+  font-weight: 500;
+  color: var(--s-text-heading);
+  padding: var(--s-space-2) 0;
+}
+
+.titleInput::placeholder {
+  color: var(--s-text);
+  font-weight: 400;
+  opacity: 0.5;
+}
+
+.titleInput.invalid {
+  color: var(--s-text-error);
+}
+
+/*
+ * Description textarea — matches the read-mode description typography.
+ * Subtle border at rest, accent + soft focus ring on focus.
+ */
+.textarea {
+  margin-top: var(--s-space-2);
+  border: 1px solid var(--s-border);
+  background: rgba(170, 59, 255, 0.02);
+  border-radius: var(--s-radius-sm);
+  padding: var(--s-space-2-5) var(--s-space-3);
+  font-size: var(--s-font-size-sm);
+  font-weight: 400;
+  font-family: inherit;
+  line-height: 1.5;
+  color: var(--s-text);
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.textarea::placeholder {
+  color: var(--s-text);
+  opacity: 0.5;
+}
+
+.textarea:focus-visible {
+  border-color: var(--s-border-focus);
+  box-shadow: 0 0 0 2px var(--s-focus-ring);
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-space-2);
+  padding: var(--s-space-2) var(--s-space-3);
+  background: rgba(170, 59, 255, 0.04);
+  margin-top: var(--s-space-2);
+  border-bottom-left-radius: var(--s-radius-lg);
+  border-bottom-right-radius: var(--s-radius-lg);
+}
+
+.validationError {
+  margin: var(--s-space-1) var(--s-space-3) 0;
+  font-size: var(--s-font-size-sm);
+  color: var(--s-text-error);
+}

@@ -144,6 +144,12 @@
 - No credential recovery path after logout — random UUID credentials are never shown to the user; acknowledged scope limitation of temporary UI. Story 6.4 replaces this with real login/register forms.
 - `AUTH_TOKEN_KEY` is a hardcoded string literal in test `localStorage.setItem` calls rather than imported from `useAuth.ts` — minor DX concern; importing would couple tests to implementation internals.
 
+## Deferred from: code review of 6-5-ui-component-architecture-refactor (2026-04-13)
+
+- Both form fields in `LoginForm` and `RegisterForm` receive error styling when only one may be invalid — `hasError = !!error` applies red border to all Input atoms on any error. Pre-existing behavior, not introduced by this change.
+- No per-component error display when `onSubmit` Promise rejects — uncaught rejection propagates to App-level `GlobalErrorBanner`. Same pattern as prior `AddTodoForm`.
+- `formatShortDate` does not validate ISO input — silently produces "Invalid Date" if `createdAt` is malformed. Data comes from typed API response so this is a theoretical risk only.
+
 ## Deferred from: code review of 6-2-1-parallelize-e2e-tests-with-per-user-isolation (2026-04-10)
 
 - `create-todo.spec.ts` test 3 implicitly depends on test 2's accumulated DB state — spec designed for sequential accumulation (`fullyParallel: false`); fragile if tests are individually retried or skipped.

@@ -2,7 +2,19 @@ import { useEffect, useRef } from "react";
 import type { Todo } from "shared";
 import type { TodoUpdatableFields } from "../contracts";
 import { useTodoEdit } from "../hooks/useTodoEdit";
+import { formatShortDate } from "../utils";
+import { Checkbox } from "./atoms";
 import styles from "./TodoItem.module.css";
+
+/**
+ * Auto-grow the description textarea so it expands with its content and
+ * never shows an internal scrollbar. Resetting to "auto" first lets the
+ * height shrink back down when characters are deleted.
+ */
+function autoResizeTextarea(textarea: HTMLTextAreaElement): void {
+  textarea.style.height = "auto";
+  textarea.style.height = `${textarea.scrollHeight}px`;
+}
 
 type TodoItemProps = {
   todo: Todo;
@@ -62,6 +74,21 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
     }
   }, [focusCheckbox]);
 
+  // Sync the textarea height when edit mode opens (initial content may span
+  // multiple lines). Subsequent keystrokes are handled by the onChange wrapper.
+  useEffect(() => {
+    if (todoEdit.isEditing && textareaRef.current) {
+      autoResizeTextarea(textareaRef.current);
+    }
+  }, [todoEdit.isEditing]);
+
+  function handleTextareaChange(
+    event: React.ChangeEvent<HTMLTextAreaElement>,
+  ): void {
+    handleTextChange(event);
+    autoResizeTextarea(event.currentTarget);
+  }
+
   function handleTitleKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -96,15 +123,18 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
     ? `${styles.text} ${styles.completed}`
     : styles.text;
 
+  const itemClassName = todo.completed
+    ? `${styles.item} ${styles.itemCompleted}`
+    : styles.item;
+
   const editTitleClassName = todoEdit.validationError
     ? `${styles.editInput} ${styles.invalid}`
     : styles.editInput;
 
   return (
-    <li ref={itemRef} className={styles.item}>
-      <input
+    <li ref={itemRef} className={itemClassName}>
+      <Checkbox
         ref={checkboxRef}
-        type="checkbox"
         className={styles.checkbox}
         checked={todo.completed}
         onChange={toggleCompleted}
@@ -130,12 +160,12 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
               ref={textareaRef}
               className={styles.editTextarea}
               value={todoEdit.text}
-              onChange={handleTextChange}
+              onChange={handleTextareaChange}
               onKeyDown={handleTextareaKeyDown}
               onBlur={handleBlur}
               aria-label="Edit todo description"
               placeholder="Add details... (optional)"
-              rows={2}
+              rows={1}
             />
             {todoEdit.validationError && (
               <p className={styles.validationError} aria-live="polite">
@@ -172,17 +202,30 @@ function TodoItem({ todo, onUpdate, onDelete, focusCheckbox }: TodoItemProps) {
             ))}
         </>
       )}
-      <div className={styles.actions}>
-        <time className={styles.timestamp} dateTime={todo.createdAt}>
-          {new Date(todo.createdAt).toLocaleDateString()}
+      <div className={styles.meta}>
+        <time className={styles.date} dateTime={todo.createdAt}>
+          {formatShortDate(todo.createdAt)}
         </time>
         <button
           type="button"
           className={styles.deleteButton}
           onClick={deleteTodo}
           aria-label={`Delete ${todo.title}`}
+          title="Delete"
         >
-          Delete
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M3 4l.7 10h8.6L13 4M6.5 7v5M9.5 7v5" />
+          </svg>
         </button>
       </div>
     </li>

@@ -13,6 +13,7 @@
     "dev": "concurrently -k --kill-others-on-fail -s first -n web,api \"npm run dev:web\" \"npm run dev:api\"",
     "dev:web": "npm -w web run dev",
     "dev:api": "npm -w api run dev",
+    "kill:ports": "for p in 5173 3001 5174 3002; do lsof -ti:$p | xargs kill -9 2>/dev/null; done; exit 0",
     "build": "npm -w shared run build && npm -w api run build && npm -w web run build",
     "build:openapi": "npm -w api run build:openapi",
     "build:api-types": "npm -w web run build:api-types",

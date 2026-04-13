@@ -15,6 +15,7 @@
     "build:api-types:stage": "npm run build:api-types && git add src/api/generated/index.ts"
   },
   "dependencies": {
+    "clsx": "^2.1.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "shared": "*"

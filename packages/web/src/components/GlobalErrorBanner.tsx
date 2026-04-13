@@ -1,3 +1,4 @@
+import { Button } from "./atoms";
 import styles from "./GlobalErrorBanner.module.css";
 
 type GlobalErrorBannerProps = {
@@ -16,14 +17,9 @@ function GlobalErrorBanner({
     <div className={styles.banner} role="alert">
       <p className={styles.message}>{message}</p>
       {onRetry && (
-        <button
-          type="button"
-          className={styles.retryButton}
-          onClick={onRetry}
-          disabled={loading}
-        >
+        <Button variant="ghost" onClick={onRetry} disabled={loading}>
           Retry
-        </button>
+        </Button>
       )}
     </div>
   );

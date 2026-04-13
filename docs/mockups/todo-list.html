@@ -17,15 +17,23 @@
   1. TODO ITEM LAYOUT — single 2-column grid (auto | 1fr) for ALL sizes.
      The checkbox occupies col 1 (rows 1–3, align-self: start).
      Col 2 stacks: title (row 1) → description (row 2, optional) →
-     meta row (row 3: date left / delete button right).
+     meta row (row 3: date + delete grouped on the right — [date][delete]).
      This eliminates the cramped col-3 layout on narrow screens where
-     the title and date competed for the same horizontal space.
+     the title and date competed for the same horizontal space, and
+     keeps the row visually calm by pushing the secondary actions to the edge.
 
-  2. TYPOGRAPHY HIERARCHY — three distinct levels:
+  2. TYPOGRAPHY HIERARCHY — applied IDENTICALLY in read / edit / add modes,
+     so a title looks like a title and a description looks like a description
+     no matter where it appears.
      · Title (incomplete): 15px / weight 500 / --s-text-heading
      · Title (complete):   14px / weight 400 / --s-text / opacity 0.65
      · Description:        13px / weight 400 / --s-text / opacity 0.75
      · Meta (date):        11px / weight 400 / --s-text / opacity 0.45
+
+     The title is always slightly more primary than the description — even
+     inside the add card, where the title input now matches the read-mode
+     title (15px / 500) and the description textarea inherits the smaller
+     description scale (13px / 400). Hierarchy stays stable across states.
 
   3. COMPLETED TODOS — elegant treatment:
      · No harsh full-opacity strikethrough.
@@ -33,11 +41,19 @@
      · Item background: very light purple tint (rgba(170,59,255,0.035))
      · Checkbox accent fills to signal "done".
 
-  4. EDIT MODE — neat, contextual:
+  4. EDIT MODE — neat, contextual, calm-at-rest:
      · The editing item gets border-left: 3px solid --s-border-accent (accent bar).
      · Its background shifts to rgba(170,59,255,0.05).
-     · Title input: underline-style (border-bottom only, transparent bg).
-     · Textarea keeps a subtle full border.
+     · Title input: underline-style (1px border-bottom, transparent bg).
+       At rest the underline is a faint purple tint; on focus it darkens
+       to the accent color. No loud always-on indigo bar.
+     · Description textarea: SAME underline-only strategy as the title.
+       No padding, no box, no background — so the description text sits
+       in the exact same position as its read-mode counterpart. Entering
+       or leaving edit mode does not shift the text vertically or add a
+       visible box around it. Border-bottom-only: faint purple at rest,
+       accent on focus. The container's accent bar + tinted background
+       already signal "editing".
 
   5. ADD FORM — Option C: Card with footer button.
      Feature flag: expandOnFocus (prop, default: true)
@@ -48,8 +64,9 @@
      The card has a lightly elevated border on expansion and a tinted footer.
 
   6. DELETE BUTTON — circular icon button with trash SVG.
-     28×28px circle, transparent border that reveals on hover with a red tint.
-     Visible but quiet at rest (opacity 0.35); danger-state on hover.
+     28×28px circle, transparent border at rest. On hover it reveals a neutral
+     gray border + subtle bg tint — softer than a red danger-state so the row
+     stays calm. Visible but quiet at rest (opacity 0.35).
 
   7. BACKGROUND CONTRAST — page bg is #ece9f3 (warm lavender-gray);
      the app shell is pure white. This gives the shell clear visual lift.
@@ -72,20 +89,13 @@
     <style>
       /* ─── Design tokens (verbatim from packages/web/src/tokens/) ─── */
       :root {
-        --p-gray-100: #f3f4f6;
-        --p-gray-400: #9ca3af;
         --p-gray-500: #6b6375;
         --p-gray-900: #08060d;
-        --p-purple-400: #c084fc;
         --p-purple-600: #aa3bff;
         --p-red-600: #dc2626;
-        --p-indigo-400: #818cf8;
         --p-indigo-500: #6366f1;
         --p-indigo-600: #4f46e5;
         --p-white: #fff;
-        --p-dark-bg: #16171d;
-        --p-dark-surface: #1f2028;
-        --p-dark-border: #2e303a;
         --p-font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
 
         --s-text: var(--p-gray-500);
@@ -334,9 +344,11 @@
         border-top: 1px solid rgba(170, 59, 255, 0.1);
       }
 
+      /* Title input — matches read-mode title typography (15px / 500). */
       .add-title-input {
         padding: var(--s-space-2) 0;
-        font-size: var(--s-font-size-base);
+        font-size: var(--s-font-size-md);   /* 15px */
+        font-weight: 500;
         font-family: inherit;
         background: transparent;
         border: none;
@@ -346,15 +358,18 @@
       }
       .add-title-input::placeholder {
         color: var(--s-text);
-        opacity: 0.45;
+        font-weight: 400;
+        opacity: 0.5;
       }
       .add-title-input--error {
         color: var(--s-text-error);
       }
 
+      /* Description textarea — matches read-mode description typography (13px / 400). */
       .add-desc-textarea {
         padding: var(--s-space-2) var(--s-space-2-5);
-        font-size: var(--s-font-size-sm);
+        font-size: var(--s-font-size-sm);   /* 13px */
+        font-weight: 400;
         font-family: inherit;
         line-height: 1.5;
         border: 1px solid var(--s-border);
@@ -365,7 +380,11 @@
         resize: vertical;
         min-height: 52px;
         width: 100%;
-        transition: border-color 0.2s;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      .add-desc-textarea::placeholder {
+        color: var(--s-text);
+        opacity: 0.5;
       }
       .add-desc-textarea--focus {
         border-color: var(--s-border-focus);
@@ -526,7 +545,9 @@
         word-break: break-word;
       }
 
-      /* Description — button (clickable to enter edit focused on desc) */
+      /* Description — button (clickable to enter edit focused on desc).
+       * No top margin — the edit-mode textarea sits in the same spot,
+       * so switching modes does not shift the description vertically. */
       .todo-desc-btn {
         all: unset;
         grid-column: 2;
@@ -536,7 +557,6 @@
         opacity: 0.75;
         line-height: 1.45;
         cursor: pointer;
-        margin-top: var(--s-space-0-5);
         word-break: break-word;
         border-radius: var(--s-radius-sm);
       }
@@ -553,17 +573,20 @@
         color: var(--s-text);
         opacity: 0.45;
         line-height: 1.45;
-        margin-top: var(--s-space-0-5);
         word-break: break-word;
       }
 
-      /* Meta row (date + delete) — always bottom of the item content */
+      /*
+       * Meta row (date + delete) — always bottom of the item content.
+       * Both elements are grouped on the right ([date][delete]) so the
+       * left side stays visually quiet under the title/description block.
+       */
       .todo-meta {
         grid-column: 2;
         grid-row: 3;
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-end;
         margin-top: var(--s-space-2);
         gap: var(--s-space-2);
       }
@@ -578,7 +601,8 @@
       /*
        * Delete button — circular icon button
        * 28×28 circle, transparent border at rest (opacity 0.35).
-       * On hover: border + background reveal red tint.
+       * On hover: neutral gray border + subtle bg tint — softer than a red
+       * danger-state, keeps the row calm while staying discoverable.
        */
       .btn-delete {
         display: inline-flex;
@@ -597,9 +621,9 @@
         transition: border-color 0.15s, color 0.15s, opacity 0.15s, background 0.15s;
       }
       .btn-delete:hover {
-        border-color: rgba(239, 68, 68, 0.45);
-        color: var(--s-text-error);
-        background: rgba(239, 68, 68, 0.06);
+        border-color: var(--s-border);
+        color: var(--s-text);
+        background: rgba(0, 0, 0, 0.04);
         opacity: 1;
       }
       .btn-delete--pending {
@@ -630,19 +654,26 @@
         grid-row: 1;
       }
 
+      /* Title input — matches read-mode title typography exactly.
+       * Quiet-at-rest underline (faint purple tint) → accent on focus.
+       * The container's accent bar + tint already announce "editing",
+       * so the input itself doesn't need a loud always-on border. */
       .edit-title-input {
         width: 100%;
         padding: 2px 0;
-        font-size: var(--s-font-size-md);  /* matches read-mode title */
+        font-size: var(--s-font-size-md);   /* 15px — matches read-mode title */
         font-weight: 500;
         font-family: inherit;
         color: var(--s-text-heading);
         background: transparent;
         border: none;
-        border-bottom: 2px solid var(--s-border-focus);
+        border-bottom: 1px solid rgba(170, 59, 255, 0.25);
         border-radius: 0;
         outline: none;
         transition: border-color 0.15s;
+      }
+      .edit-title-input:focus {
+        border-bottom-color: var(--s-border-focus);
       }
       .edit-title-input--invalid {
         border-bottom-color: var(--s-border-error);
@@ -653,23 +684,31 @@
         grid-row: 2;
         display: flex;
         flex-direction: column;
-        margin-top: var(--s-space-2);
       }
 
+      /* Description textarea — underline-only treatment that mirrors the
+       * title input exactly. Same typography and zero box chrome as the
+       * read-mode description, so the text does not jump position or gain
+       * a border when entering/leaving edit mode. */
       .edit-desc-textarea {
         width: 100%;
-        padding: var(--s-space-1-5) var(--s-space-2);
-        font-size: var(--s-font-size-sm);
+        padding: 2px 0;
+        font-size: var(--s-font-size-sm);   /* 13px — matches read-mode description */
+        font-weight: 400;
         font-family: inherit;
         line-height: 1.45;
         color: var(--s-text);
-        background: var(--s-bg);
-        border: 1px solid var(--s-border-focus);
-        border-radius: var(--s-radius-sm);
+        opacity: 0.75;                       /* matches read-mode description */
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid rgba(170, 59, 255, 0.25);
+        border-radius: 0;
         outline: none;
-        resize: vertical;
-        min-height: 52px;
+        resize: none;
         transition: border-color 0.15s;
+      }
+      .edit-desc-textarea:focus {
+        border-bottom-color: var(--s-border-focus);
       }
 
       .edit-validation-error {

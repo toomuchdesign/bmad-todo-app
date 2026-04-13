@@ -1,0 +1,42 @@
+.button {
+  padding: var(--s-space-2-5) var(--s-space-5);
+  font-size: var(--s-font-size-base);
+  font-weight: 500;
+  border-radius: var(--s-radius-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    opacity 0.2s;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--s-border-focus);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.primary {
+  background: var(--s-accent);
+  color: var(--s-text-on-accent);
+  border: 1px solid transparent;
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--s-accent-hover);
+}
+
+.ghost {
+  background: transparent;
+  border: 1px solid var(--s-border);
+  color: var(--s-text);
+}
+
+.ghost:hover:not(:disabled) {
+  border-color: var(--s-border-focus);
+}

@@ -1,21 +1,27 @@
 /*
- * TodoItem grid layout (read mode):
+ * TodoItem grid layout — named areas so the checkbox owns col 1 and the
+ * stacked title / description / meta share col 2. Edit mode swaps the
+ * title button for an <input> and the description button for a
+ * <textarea> but keeps the same areas, so text positions do not shift
+ * between read and edit modes.
  *
- *   col 1 (auto)  |  col 2 (1fr)  |  col 3 (auto)
- *   ──────────────┼───────────────┼──────────────────
- *   [checkbox]    |  Title        |  date  [Delete]     ← row 1
- *   ──────────────┼───────────────┼──────────────────
- *                 |  Description (spans col 2–3)        ← row 2
+ *   [checkbox]  title
+ *   [checkbox]  description (optional — collapses to 0 when absent)
+ *   [checkbox]  meta: date ←→ delete
  *
- * Edit mode replaces Title with an <input> and Description with a <textarea>.
+ * Typography rhythm is driven by explicit line-heights and matching
+ * padding on both read-mode and edit-mode elements, so switching modes
+ * never moves the text vertically.
  */
 .item {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-rows: auto auto;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "checkbox title"
+    "checkbox description"
+    "checkbox meta";
   column-gap: var(--s-space-3);
-  align-items: center;
-  padding: var(--s-space-3) var(--s-space-4);
+  padding: 14px var(--s-space-4);
   border-bottom: 1px solid var(--s-border);
 }
 
@@ -23,39 +29,54 @@
   border-bottom: none;
 }
 
+.item:hover {
+  background: rgba(0, 0, 0, 0.01);
+}
+
+/* Very subtle tint on completed rows to reinforce "done" state */
+.itemCompleted {
+  background: rgba(170, 59, 255, 0.035);
+}
+
 .checkbox {
-  grid-column: 1;
-  grid-row: 1;
-  padding: var(--s-space-2);
-  margin: calc(-1 * var(--s-space-2)) 0;
-  cursor: pointer;
+  grid-area: checkbox;
+  align-self: start;
+  margin-top: 3px; /* optical alignment with title cap-height */
 }
 
-.checkbox:focus-visible {
-  outline: 2px solid var(--s-border-focus);
-  outline-offset: 2px;
-}
-
-.checkbox:disabled {
-  cursor: default;
-}
-
+/*
+ * Typography hierarchy is identical in read / edit / add modes:
+ *   Title       — 15px / weight 500 / line-height 1.4 / padding 2px 0
+ *   Description — 13px / weight 400 / line-height 1.45 / padding 2px 0
+ * Same padding and line-height in every mode keeps the text baseline
+ * stationary when switching read ↔ edit.
+ */
 .text {
-  grid-column: 2;
-  grid-row: 1;
+  grid-area: title;
   text-align: left;
   color: var(--s-text-heading);
   font-size: var(--s-font-size-md);
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 2px 0;
   min-width: 0;
 }
 
+/*
+ * `.textButton` is always paired with `.text` on the same element. It uses
+ * `all: unset` to strip the UA button styles, then redeclares the shared
+ * typography so those values survive the reset (the later rule would
+ * otherwise override `.text`).
+ */
 .textButton {
   all: unset;
-  grid-column: 2;
-  grid-row: 1;
+  grid-area: title;
   text-align: left;
   color: var(--s-text-heading);
   font-size: var(--s-font-size-md);
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 2px 0;
   cursor: pointer;
   border-radius: var(--s-radius-sm);
   min-width: 0;
@@ -71,38 +92,50 @@
   opacity: 0.6;
 }
 
-.actions {
-  grid-column: 3;
-  grid-row: 1;
-  display: flex;
-  align-items: center;
-  gap: var(--s-space-2);
-}
-
-.timestamp {
-  font-size: var(--s-font-size-xs);
-  color: var(--s-text);
-  opacity: 0.7;
-  white-space: nowrap;
-}
-
 .description {
-  grid-column: 2 / -1;
-  grid-row: 2;
-  font-size: var(--s-font-size-base);
+  grid-area: description;
+  font-size: var(--s-font-size-sm);
+  font-weight: 400;
+  line-height: 1.45;
   color: var(--s-text);
-  opacity: 0.7;
-  margin-top: var(--s-space-0-5);
+  opacity: 0.75;
+  padding: 2px 0;
   text-align: left;
+  /* Preserve line breaks entered in the edit-mode textarea, and wrap long
+   * lines so they don't overflow the item. Without this, HTML collapses
+   * all whitespace and multi-line descriptions render as a single line. */
+  white-space: pre-wrap;
+  word-break: break-word;
+  /* Cap very long descriptions so the row stays manageable. Overflow is
+   * clipped (no scrollbar in read mode) — the full content is reachable
+   * by clicking into edit mode. */
+  max-height: 200px;
+  overflow: hidden;
 }
 
+/*
+ * `.descriptionButton` is always paired with `.description`. Declare the
+ * shared typography here too, since this rule comes later and would
+ * otherwise win on conflicts (single-class, same specificity).
+ */
 .descriptionButton {
   border: none;
   background: none;
-  padding: 0;
-  font: inherit;
+  font-family: inherit;
+  font-weight: 400;
+  font-size: var(--s-font-size-sm);
+  line-height: 1.45;
+  color: inherit;
+  padding: 2px 0;
+  text-align: left;
   cursor: pointer;
   border-radius: var(--s-radius-sm);
+  /* Buttons have a UA white-space default that would collapse line breaks;
+   * redeclare here since this rule cascades later than `.description`. */
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow: hidden;
 }
 
 .descriptionButton:focus-visible {
@@ -110,57 +143,105 @@
   outline-offset: 2px;
 }
 
-.editWrapper {
-  grid-column: 2;
-  grid-row: 1;
+/*
+ * Meta row — date + delete grouped on the right ([date][delete]). Right-aligning
+ * both keeps the row visually calm and puts secondary actions at the edge,
+ * away from the title/description reading flow. The top margin gives breathing
+ * room between the content block and the meta line, regardless of whether
+ * description is present.
+ */
+.meta {
+  grid-area: meta;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: var(--s-space-2);
+  gap: var(--s-space-2);
 }
 
+.date {
+  font-size: var(--s-font-size-xs);
+  color: var(--s-text);
+  opacity: 0.45;
+  white-space: nowrap;
+}
+
+.editWrapper {
+  grid-area: title;
+  min-width: 0;
+}
+
+/*
+ * Edit-mode title input — quiet at rest, accent on focus.
+ * Underline-only treatment matches the read-mode title typography exactly
+ * so the line doesn't visually shift when entering edit mode. The accent
+ * bar + tinted background on the row already announce "editing".
+ */
 .editInput {
   width: 100%;
-  padding: var(--s-space-1-5) var(--s-space-2);
+  padding: 2px 0;
   font-size: var(--s-font-size-md);
-  border: 1px solid var(--s-border-focus);
-  border-radius: var(--s-radius-sm);
-  background: var(--s-bg);
+  font-weight: 500;
+  line-height: 1.4;
+  font-family: inherit;
+  border: none;
+  border-bottom: 1px solid rgba(170, 59, 255, 0.25);
+  border-radius: 0;
+  background: transparent;
   color: var(--s-text-heading);
   outline: none;
   box-sizing: border-box;
+  transition: border-color 0.15s;
 }
 
-.editInput:focus-visible {
-  outline: 2px solid var(--s-border-focus);
-  outline-offset: -1px;
+.editInput:focus {
+  border-bottom-color: var(--s-border-focus);
 }
 
 .editInput.invalid {
-  border-color: var(--s-border-error);
+  border-bottom-color: var(--s-border-error);
 }
 
 .editDescriptionRow {
-  grid-column: 2 / -1;
-  grid-row: 2;
+  grid-area: description;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
+/*
+ * Edit-mode description textarea — underline-only treatment that mirrors
+ * the title input and the read-mode description exactly. No box, no
+ * background, no padding shift, so the description text stays in the
+ * same position whether the item is being edited or not. The row's
+ * accent bar + tinted background already announce "editing".
+ */
 .editTextarea {
   width: 100%;
-  padding: var(--s-space-1-5) var(--s-space-2);
-  font-size: var(--s-font-size-base);
+  padding: 2px 0;
+  font-size: var(--s-font-size-sm);
+  font-weight: 400;
   font-family: inherit;
-  border: 1px solid var(--s-border-focus);
-  border-radius: var(--s-radius-sm);
-  background: var(--s-bg);
+  line-height: 1.45;
   color: var(--s-text);
+  opacity: 0.75; /* matches read-mode description */
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(170, 59, 255, 0.25);
+  border-radius: 0;
   outline: none;
-  resize: vertical;
-  margin-top: var(--s-space-1);
+  resize: none;
+  /* Matches the read-mode description cap; the auto-resize JS sets
+   * `height` to scrollHeight and this clamps it so overly long content
+   * scrolls instead of pushing the item's height indefinitely. */
+  max-height: 200px;
+  overflow-y: auto;
   box-sizing: border-box;
+  transition: border-color 0.15s;
 }
 
-.editTextarea:focus-visible {
-  outline: 2px solid var(--s-border-focus);
-  outline-offset: -1px;
+.editTextarea:focus {
+  border-bottom-color: var(--s-border-focus);
 }
 
 .validationError {
@@ -169,27 +250,47 @@
   color: var(--s-text-error);
 }
 
+/*
+ * Delete button — circular 28×28 icon button.
+ * Quiet at rest (opacity 0.35, transparent border); neutral gray tint reveals
+ * on hover. A softer cue than a red danger-state — it keeps the row calm while
+ * staying discoverable.
+ */
 .deleteButton {
-  padding: var(--s-space-1) var(--s-space-2);
-  font-size: var(--s-font-size-sm);
-  border: 1px solid var(--s-border);
-  border-radius: var(--s-radius-sm);
-  background: var(--s-bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: none;
   color: var(--s-text);
+  opacity: 0.35;
   cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    opacity 0.15s,
+    background 0.15s;
+}
+
+.deleteButton:hover:not(:disabled) {
+  border-color: var(--s-border);
+  color: var(--s-text);
+  background: rgba(0, 0, 0, 0.04);
+  opacity: 1;
 }
 
 .deleteButton:focus-visible {
   outline: 2px solid var(--s-border-focus);
   outline-offset: 2px;
-}
-
-.deleteButton:hover:not(:disabled) {
-  border-color: var(--s-border-error);
-  color: var(--s-text-error);
+  opacity: 1;
 }
 
 .deleteButton:disabled {
-  opacity: 0.6;
+  opacity: 0.2;
   cursor: not-allowed;
 }
